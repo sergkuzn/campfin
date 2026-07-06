@@ -1,26 +1,49 @@
-@import "tailwindcss";
+/* Global styles + design tokens (plain CSS — no framework).
+   Custom properties (CSS variables) declared on :root are the project's design
+   tokens: define a value once here, reference it everywhere as var(--name).
+   Overriding them inside a media query (below) re-themes the whole app for free. */
 
-/* Tailwind v4 is configured here in CSS (not a JS config file). Add design tokens
-   with @theme, custom variants with @custom-variant. Prefer utility classes in JSX
-   over @apply — base element styles below stay as plain CSS so tooling stays happy. */
+:root {
+  /* Spacing scale — reference as var(--space-4) etc. Keeps rhythm consistent. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
 
-@layer base {
-  html {
-    /* Let the browser render form controls / scrollbars for both schemes. */
-    color-scheme: light dark;
+  --radius: 1rem;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Light theme (default). Dark overrides these same names in the media query. */
+  --bg: #fafafa; /* neutral-50 */
+  --fg: #171717; /* neutral-900 */
+  --muted: #737373; /* neutral-500 */
+  --border: #e5e5e5; /* neutral-200 */
+  --surface: #ffffff;
+
+  color-scheme: light dark; /* native controls/scrollbars follow the theme */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0a0a; /* neutral-950 */
+    --fg: #f5f5f5; /* neutral-100 */
+    --muted: #a3a3a3; /* neutral-400 */
+    --border: #262626; /* neutral-800 */
+    --surface: #141414;
   }
+}
 
-  body {
-    margin: 0;
-    background-color: #ffffff; /* neutral-50-ish */
-    color: #171717; /* neutral-900 */
-    -webkit-font-smoothing: antialiased;
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* padding/border count inside width — saner layout math */
+}
 
-  @media (prefers-color-scheme: dark) {
-    body {
-      background-color: #0a0a0a; /* neutral-950 */
-      color: #f5f5f5; /* neutral-100 */
-    }
-  }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
 }

@@ -1,5 +1,4 @@
 /// <reference types="vitest/config" />
-import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -8,8 +7,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
-    // Tailwind v4 is configured entirely in CSS (see src/index.css); no config file.
-    tailwindcss(),
     VitePWA({
       // 'autoUpdate' silently installs new versions and auto-injects SW registration,
       // so there's no register code to write for the MVP. Revisit in milestone 5 if you
