@@ -1,42 +1,53 @@
 /**
- * Budget math for the per-diem funding pot.
- *
- * RULES (see CLAUDE.md → "Golden rules"):
- *  - All money is INTEGER CENTS. Never store or compute currency as floating
- *    euros — `0.1 + 0.2 !== 0.3` in JS, and a budget tool must not lose cents.
- *  - These are PURE functions: plain data in, numbers out, no React, no DB, no
- *    side effects. That's what makes them trivially unit-testable (see budget.test.ts).
+ * Pure budget math. All money is integer cents; euros exist only at the display
+ * edge (`formatEuros`).
  */
 
-/** Inputs needed to size the funded per-diem budget. */
-export type PerDiemConfig = {
-  /** Funded rate per person per day, in whole cents (e.g. €12.50 → 1250). */
-  ratePerPersonDayCents: number
-  numParticipants: number
-  numLeaders: number
-  /** Participant camp length, in days. */
-  numDays: number
-  /** Days leaders arrive before participants — they draw per-diem for these too. */
-  leaderLeadDays: number
+import { dayCount } from './dates'
+import type { Contribution, Expense, FixedGrantSource, IncomeSource, PerDiemBlock } from './types'
+
+/** Total funded per-diem money = Σ people × rate × inclusive day count, per block. */
+export function perDiemBudgetCents(blocks: PerDiemBlock[]): number {
+  let sum = 0
+  blocks.forEach((block) => {
+    sum =
+      sum +
+      block.numPersons * dayCount(block.startDate, block.endDate) * block.ratePerPersonDayCents
+  })
+  return sum
+}
+
+/** Σ fixedAmountCents of the fixed grants matching `use`. */
+export function fixedGrantTotalCents(sources: IncomeSource[], use: 'gradual' | 'reserved'): number {
+  return sources
+    .filter((s): s is FixedGrantSource => s.kind === 'fixed' && s.use === use)
+    .reduce((sum, s) => sum + s.fixedAmountCents, 0)
+}
+
+/** Σ amountCents of all pass-through contributions. */
+export function passthroughTotalCents(contributions: Contribution[]): number {
+  return contributions.reduce((sum, c) => sum + c.amountCents, 0)
+}
+
+/** Σ amountCents of all expenses (gradual + reserved). */
+export function spentTotalCents(expenses: Expense[]): number {
+  return expenses.reduce((sum, e) => sum + e.amountCents, 0)
 }
 
 /**
- * Total person-days the funder pays for: every participant across the camp
- * length, plus every leader across the camp length AND their early lead days.
+ * Remaining money in one reserved pot: its grant minus everything spent against
+ * it. Negative when overspent; callers floor it before reporting a return.
  */
-export function basePersonDays(c: PerDiemConfig): number {
-  return c.numParticipants * c.numDays + c.numLeaders * (c.numDays + c.leaderLeadDays)
-}
-
-/** Funded per-diem budget, in cents = rate × total person-days. */
-export function perDiemBudgetCents(c: PerDiemConfig): number {
-  return c.ratePerPersonDayCents * basePersonDays(c)
+export function reservedRemainingCents(source: FixedGrantSource, expenses: Expense[]): number {
+  const spent = expenses
+    .filter((e) => e.sourceId === source.id)
+    .reduce((sum, e) => sum + e.amountCents, 0)
+  return source.fixedAmountCents - spent
 }
 
 /**
- * Format an integer-cent amount as a localized euro string. This is the ONLY
- * place cents become a fractional euro value — the display edge. German locale
- * to match the target users (e.g. 212500 → "2.125,00 €").
+ * Format integer cents as a euro string: 212500 → "2.125,00 €". The only place
+ * cents become a fractional value.
  */
 export function formatEuros(cents: number): string {
   return new Intl.NumberFormat('de-DE', {
