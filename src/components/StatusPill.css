@@ -1,0 +1,30 @@
+.pill {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 999px; /* any large value = fully rounded ends */
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+
+  /* Defaults, overridden per modifier below. */
+  color: var(--muted);
+  background-color: color-mix(in srgb, var(--muted) 12%, transparent);
+}
+
+/* color-mix() lets one token drive both the text and a faint tinted background. */
+.pill--running {
+  color: var(--ok);
+  background-color: color-mix(in srgb, var(--ok) 14%, transparent);
+}
+
+.pill--upcoming {
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.pill--finished {
+  color: var(--muted);
+  background-color: color-mix(in srgb, var(--muted) 12%, transparent);
+}

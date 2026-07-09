@@ -1,57 +1,66 @@
+import { useState } from 'react'
 import './App.css'
-import { formatEuros, perDiemBudgetCents } from './lib/budget'
-import { dayCount } from './lib/dates'
-import type { PerDiemBlock } from './lib/types'
+import { CampDashboard } from './components/CampDashboard'
+import { CampList } from './components/CampList'
+import { useCamps } from './hooks/useCamps'
 
-// Placeholder data until the Setup screen exists: participants for the camp
-// proper, leaders arriving a day early and leaving a day late.
-const EXAMPLE_BLOCKS: PerDiemBlock[] = [
-  {
-    id: 'b1',
-    campId: 'demo',
-    sourceId: 'pd',
-    label: 'participants',
-    numPersons: 10,
-    ratePerPersonDayCents: 1200,
-    startDate: '2026-07-01',
-    endDate: '2026-07-14',
-  },
-  {
-    id: 'b2',
-    campId: 'demo',
-    sourceId: 'pd',
-    label: 'leaders',
-    numPersons: 2,
-    ratePerPersonDayCents: 1200,
-    startDate: '2026-06-30',
-    endDate: '2026-07-15',
-  },
-]
-
+/**
+ * Two screens, no router: the app is a camp list, or one open camp. Which one is
+ * *derived* from a single piece of state (the open camp's id) rather than stored
+ * twice — "derive, don't duplicate". A real router arrives only if we need URLs.
+ */
 export default function App() {
-  const budgetCents = perDiemBudgetCents(EXAMPLE_BLOCKS)
+  const { camps, error, createCamp, renameCamp, deleteCamp, clearError } = useCamps()
+  const [openCampId, setOpenCampId] = useState<string | null>(null)
+
+  // `find` returns `Camp | undefined`; if the open camp was just deleted we fall
+  // back to the list automatically, with no effect and no stale state to clean up.
+  const openCamp = camps.find((camp) => camp.id === openCampId)
+
+  // createCamp returns null when the name is taken; only navigate on success.
+  // Returning the outcome lets the form keep the typed name so it can be corrected.
+  const handleCreate = (name: string): boolean => {
+    const camp = createCamp(name)
+    if (camp === null) return false
+    setOpenCampId(camp.id) // jump straight into the camp you just made
+    return true
+  }
+
+  // Clear any pending validation error when switching screens, so a rejected
+  // create/rename on one screen doesn't linger on the next.
+  const handleOpen = (campId: string) => {
+    clearError()
+    setOpenCampId(campId)
+  }
+
+  const handleBack = () => {
+    clearError()
+    setOpenCampId(null)
+  }
+
+  const handleDelete = (campId: string) => {
+    deleteCamp(campId)
+    setOpenCampId(null)
+  }
 
   return (
     <main className="app">
-      <header>
+      <header className="app__header">
         <h1 className="app__title">campfin</h1>
-        <p className="app__subtitle">Camp budget tracker — scaffold is alive ✅</p>
+        <p className="app__subtitle">Camp budget tracker</p>
       </header>
 
-      <section className="card">
-        <p className="card__label">Example per-diem budget</p>
-        <p className="card__amount">{formatEuros(budgetCents)}</p>
-        <ul className="card__meta">
-          {EXAMPLE_BLOCKS.map((block) => (
-            <li key={block.id}>
-              {block.numPersons} {block.label} · {dayCount(block.startDate, block.endDate)} days ·{' '}
-              {formatEuros(block.ratePerPersonDayCents)}/person/day
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <p className="app__next">Next: milestone 2 — setup screen &amp; dashboard.</p>
+      {openCamp === undefined ? (
+        <CampList camps={camps} error={error} onOpen={handleOpen} onCreate={handleCreate} />
+      ) : (
+        <CampDashboard
+          camp={openCamp}
+          error={error}
+          onBack={handleBack}
+          onRename={renameCamp}
+          onDelete={handleDelete}
+        />
+      )}
     </main>
   )
 }

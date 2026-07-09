@@ -16,6 +16,15 @@ export function isWithin(dayIso: string, startIso: string, endIso: string): bool
   return toUtcMs(startIso) <= toUtcMs(dayIso) && toUtcMs(dayIso) <= toUtcMs(endIso)
 }
 
+/**
+ * Today as ISO "YYYY-MM-DD" (UTC). The one impure function in this file — it reads
+ * the clock. Call it at the *edge* (a component) and pass the result into the pure
+ * math, so the math stays testable.
+ */
+export function todayIso(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
 /** Every ISO day from start to end inclusive, ascending: ["2026-07-01", …]. */
 export function eachDay(startIso: string, endIso: string): string[] {
   const isoDates: string[] = []
