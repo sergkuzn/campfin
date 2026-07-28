@@ -38,3 +38,30 @@ export function saveCamps(camps: Camp[]): void {
     // Quota exceeded or storage disabled. Losing a write is bad but crashing is worse.
   }
 }
+
+/**
+ * Generic namespace persistence. A namespace is a flat array of rows, validated by a
+ * type guard on the way *out* of storage — the same untrusted-boundary discipline as
+ * loadCamps, now reusable for any row type. `<T>` makes it work for sources, blocks,
+ * contributions without three near-identical copies. This flat-array-per-namespace
+ * shape is also how InstantDB stores data, so milestone 7 swaps the body, not the callers.
+ */
+export function loadCollection<T>(key: string, isRow: (value: unknown) => value is T): T[] {
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw === null) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(isRow) // isRow is a type guard, so unknown[] narrows to T[]
+  } catch {
+    return []
+  }
+}
+
+export function saveCollection<T>(key: string, rows: T[]): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(rows))
+  } catch {
+    // Quota exceeded or storage disabled — losing a write beats crashing.
+  }
+}

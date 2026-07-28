@@ -1,0 +1,202 @@
+.income {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+}
+
+.income__title {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.income__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+
+.income__heading {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.income__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.income__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+}
+
+.income__item button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.income__item button:hover {
+  color: var(--danger);
+}
+
+.income__add {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--bg);
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+/* Shared form shell: the fields wrap on a phone and sit in a row on wider screens. */
+.income-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.income-form__input {
+  flex: 1 1 8rem;
+  min-width: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background-color: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.income-form__input--amount {
+  flex: 0 1 9rem;
+}
+
+.income-form__input--persons {
+  flex: 0 1 5rem;
+}
+
+.income-form__input--date {
+  flex: 0 1 9rem;
+}
+
+.income-form__button {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--space-2);
+  background-color: var(--accent);
+  color: var(--surface);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.income-form__button:disabled {
+  background-color: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.per-diem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--bg);
+}
+
+.per-diem__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.per-diem__name {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.per-diem__remove {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.per-diem__remove:hover {
+  color: var(--danger);
+}
+
+.per-diem__empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.per-diem__blocks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.per-diem__block {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.per-diem__block-desc {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.per-diem__block-label {
+  font-size: 0.875rem;
+}
+
+.per-diem__block-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.per-diem__block-sum {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.per-diem__total {
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}

@@ -1,28 +1,49 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import './App.css'
 import { CampDashboard } from './components/CampDashboard'
 import { CampList } from './components/CampList'
+import { IncomeSetup } from './components/IncomeSetup'
 import { useCamps } from './hooks/useCamps'
+import { useIncome } from './hooks/useIncome'
+import { campSlice } from './lib/income'
 
 /**
- * Two screens, no router: the app is a camp list, or one open camp. Which one is
- * *derived* from a single piece of state (the open camp's id) rather than stored
- * twice — "derive, don't duplicate". A real router arrives only if we need URLs.
+ * Three screens, no router. `View` is a discriminated union rather than two
+ * independent pieces of state: `campId` exists only on the screens that have a camp
+ * open, so "income screen with no camp" cannot be represented at all. A real router
+ * arrives only if we need URLs.
  */
+type View =
+  | { screen: 'list' }
+  | { screen: 'dashboard'; campId: string }
+  | { screen: 'income'; campId: string }
+
 export default function App() {
   const { camps, error, createCamp, renameCamp, deleteCamp, clearError } = useCamps()
-  const [openCampId, setOpenCampId] = useState<string | null>(null)
+  // One hook instance for the whole app: a single source of truth in memory and a
+  // single persistence effect. Per-screen instances would drift and fight over the keys.
+  const income = useIncome()
+  const [view, setView] = useState<View>({ screen: 'list' })
 
-  // `find` returns `Camp | undefined`; if the open camp was just deleted we fall
-  // back to the list automatically, with no effect and no stale state to clean up.
-  const openCamp = camps.find((camp) => camp.id === openCampId)
+  // `find` returns `Camp | undefined`; if the open camp was just deleted we fall back
+  // to the list automatically, with no effect and no stale state to clean up.
+  const openCamp = view.screen === 'list' ? undefined : camps.find((c) => c.id === view.campId)
+
+  const { sources, blocks, contributions } = income
+  const openCampId = openCamp?.id ?? ''
+  // The dashboard renders only its own camp's rows. Destructuring the arrays first
+  // keeps the dependency list honest: they change identity exactly when data changes.
+  const openCampIncome = useMemo(
+    () => campSlice({ sources, blocks, contributions }, openCampId),
+    [sources, blocks, contributions, openCampId],
+  )
 
   // createCamp returns null when the name is taken; only navigate on success.
   // Returning the outcome lets the form keep the typed name so it can be corrected.
   const handleCreate = (name: string): boolean => {
     const camp = createCamp(name)
     if (camp === null) return false
-    setOpenCampId(camp.id) // jump straight into the camp you just made
+    setView({ screen: 'dashboard', campId: camp.id }) // jump straight into the new camp
     return true
   }
 
@@ -30,17 +51,43 @@ export default function App() {
   // create/rename on one screen doesn't linger on the next.
   const handleOpen = (campId: string) => {
     clearError()
-    setOpenCampId(campId)
+    setView({ screen: 'dashboard', campId })
   }
 
-  const handleBack = () => {
+  const handleBackToList = () => {
     clearError()
-    setOpenCampId(null)
+    setView({ screen: 'list' })
   }
 
   const handleDelete = (campId: string) => {
     deleteCamp(campId)
-    setOpenCampId(null)
+    setView({ screen: 'list' })
+  }
+
+  const renderScreen = () => {
+    if (openCamp === undefined) {
+      return <CampList camps={camps} error={error} onOpen={handleOpen} onCreate={handleCreate} />
+    }
+    if (view.screen === 'income') {
+      return (
+        <IncomeSetup
+          campId={openCamp.id}
+          income={income}
+          onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
+        />
+      )
+    }
+    return (
+      <CampDashboard
+        camp={openCamp}
+        income={openCampIncome}
+        error={error}
+        onBack={handleBackToList}
+        onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
+        onRename={renameCamp}
+        onDelete={handleDelete}
+      />
+    )
   }
 
   return (
@@ -50,17 +97,7 @@ export default function App() {
         <p className="app__subtitle">Camp budget tracker</p>
       </header>
 
-      {openCamp === undefined ? (
-        <CampList camps={camps} error={error} onOpen={handleOpen} onCreate={handleCreate} />
-      ) : (
-        <CampDashboard
-          camp={openCamp}
-          error={error}
-          onBack={handleBack}
-          onRename={renameCamp}
-          onDelete={handleDelete}
-        />
-      )}
+      {renderScreen()}
     </main>
   )
 }

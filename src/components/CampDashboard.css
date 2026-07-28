@@ -57,6 +57,12 @@
   border-radius: var(--radius);
 }
 
+/* Solid border once the slot holds real content rather than a placeholder. */
+.dashboard__slot--filled {
+  border-style: solid;
+  background-color: var(--surface);
+}
+
 .dashboard__slot-title {
   margin: 0;
   font-size: 0.75rem;
@@ -70,6 +76,21 @@
   margin: var(--space-2) 0 0;
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+.dashboard__slot .received {
+  margin-top: var(--space-2);
+}
+
+.dashboard__slot-link {
+  margin-top: var(--space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
 }
 
 .dashboard__actions {

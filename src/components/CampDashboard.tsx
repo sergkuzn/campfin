@@ -1,13 +1,18 @@
 import './CampDashboard.css'
 import { campStatus } from '../lib/camps'
 import { todayIso } from '../lib/dates'
+import type { IncomeState } from '../lib/income'
 import type { Camp } from '../lib/types'
+import { ReceivedTotals } from './ReceivedTotals'
 import { StatusPill } from './StatusPill'
 
 type Props = {
   camp: Camp
+  /** This camp's income rows only — the parent has already filtered by campId. */
+  income: IncomeState
   error: string | null
   onBack: () => void
+  onOpenIncome: () => void
   onRename: (campId: string, name: string) => void
   onDelete: (campId: string) => void
 }
@@ -15,7 +20,15 @@ type Props = {
 /**
  * The camp hub.
  */
-export function CampDashboard({ camp, error, onBack, onRename, onDelete }: Props) {
+export function CampDashboard({
+  camp,
+  income,
+  error,
+  onBack,
+  onOpenIncome,
+  onRename,
+  onDelete,
+}: Props) {
   const handleRename = () => {
     const next = window.prompt('Rename camp', camp.name)
     // `prompt` returns null on cancel — an empty string means "cleared it", also a no-op.
@@ -41,9 +54,22 @@ export function CampDashboard({ camp, error, onBack, onRename, onDelete }: Props
         Join code <code>{camp.id}</code>
       </p>
 
-      <section className="dashboard__slot">
+      <section
+        className={
+          income.sources.length === 0
+            ? 'dashboard__slot'
+            : 'dashboard__slot dashboard__slot--filled'
+        }
+      >
         <p className="dashboard__slot-title">Received total</p>
-        <p className="dashboard__slot-hint">No income sources yet.</p>
+        <ReceivedTotals
+          sources={income.sources}
+          blocks={income.blocks}
+          contributions={income.contributions}
+        />
+        <button className="dashboard__slot-link" type="button" onClick={onOpenIncome}>
+          Set up income →
+        </button>
       </section>
 
       <section className="dashboard__slot">
