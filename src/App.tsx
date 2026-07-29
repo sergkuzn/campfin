@@ -6,6 +6,7 @@ import { IncomeSetup } from './components/IncomeSetup'
 import { useCamps } from './hooks/useCamps'
 import { useIncome } from './hooks/useIncome'
 import { campSlice } from './lib/income'
+import { summarisePools } from './lib/pools'
 
 /**
  * Three screens, no router. `View` is a discriminated union rather than two
@@ -29,14 +30,15 @@ export default function App() {
   // to the list automatically, with no effect and no stale state to clean up.
   const openCamp = view.screen === 'list' ? undefined : camps.find((c) => c.id === view.campId)
 
-  const { sources, blocks, contributions } = income
+  const { pools, sources, blocks } = income
   const openCampId = openCamp?.id ?? ''
   // The dashboard renders only its own camp's rows. Destructuring the arrays first
   // keeps the dependency list honest: they change identity exactly when data changes.
-  const openCampIncome = useMemo(
-    () => campSlice({ sources, blocks, contributions }, openCampId),
-    [sources, blocks, contributions, openCampId],
-  )
+  // Expenses are [] until milestone 4 — received money is independent of spending.
+  const openCampPools = useMemo(() => {
+    const slice = campSlice({ pools, sources, blocks }, openCampId)
+    return summarisePools(slice.pools, slice.sources, slice.blocks, [])
+  }, [pools, sources, blocks, openCampId])
 
   // createCamp returns null when the name is taken; only navigate on success.
   // Returning the outcome lets the form keep the typed name so it can be corrected.
@@ -80,7 +82,7 @@ export default function App() {
     return (
       <CampDashboard
         camp={openCamp}
-        income={openCampIncome}
+        summaries={openCampPools}
         error={error}
         onBack={handleBackToList}
         onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}

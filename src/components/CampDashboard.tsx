@@ -1,15 +1,15 @@
 import './CampDashboard.css'
 import { campStatus } from '../lib/camps'
 import { todayIso } from '../lib/dates'
-import type { IncomeState } from '../lib/income'
+import type { PoolSummary } from '../lib/pools'
 import type { Camp } from '../lib/types'
 import { ReceivedTotals } from './ReceivedTotals'
 import { StatusPill } from './StatusPill'
 
 type Props = {
   camp: Camp
-  /** This camp's income rows only — the parent has already filtered by campId. */
-  income: IncomeState
+  /** This camp's pools only — the parent has already filtered by campId. */
+  summaries: PoolSummary[]
   error: string | null
   onBack: () => void
   onOpenIncome: () => void
@@ -22,7 +22,7 @@ type Props = {
  */
 export function CampDashboard({
   camp,
-  income,
+  summaries,
   error,
   onBack,
   onOpenIncome,
@@ -56,17 +56,11 @@ export function CampDashboard({
 
       <section
         className={
-          income.sources.length === 0
-            ? 'dashboard__slot'
-            : 'dashboard__slot dashboard__slot--filled'
+          summaries.length === 0 ? 'dashboard__slot' : 'dashboard__slot dashboard__slot--filled'
         }
       >
         <p className="dashboard__slot-title">Received total</p>
-        <ReceivedTotals
-          sources={income.sources}
-          blocks={income.blocks}
-          contributions={income.contributions}
-        />
+        <ReceivedTotals summaries={summaries} />
         <button className="dashboard__slot-link" type="button" onClick={onOpenIncome}>
           Set up income →
         </button>

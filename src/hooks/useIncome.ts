@@ -1,19 +1,14 @@
 /**
- * All camps' income as React state, persisted to localStorage. Same shape as
- * `useCamps`: lazy-initialised reducer + one synchronising effect + stable mutators.
- * Ids and timestamps are minted here, at the edge, so the reducer stays pure.
+ * All camps' income as React state, persisted to localStorage. Lazy-initialised reducer
+ * + one synchronising effect + stable mutators. Ids and timestamps are minted here so
+ * the reducer stays pure.
  */
 
 import { useCallback, useEffect, useReducer } from 'react'
 import { loadIncome, saveIncome } from '../db/incomeStorage'
+import type { SaveSourceInput } from '../lib/drafts'
 import { incomeReducer } from '../lib/income'
-import type {
-  Contribution,
-  FixedGrantSource,
-  PassthroughSource,
-  PerDiemBlock,
-  PerDiemSource,
-} from '../lib/types'
+import type { IncomeSource, PerDiemBlock, Pool } from '../lib/types'
 
 const newId = () => crypto.randomUUID()
 
@@ -21,98 +16,60 @@ const newId = () => crypto.randomUUID()
 export type UseIncome = ReturnType<typeof useIncome>
 
 export function useIncome() {
-  // Lazy init: loadIncome() runs once on the first render, reading all three namespaces.
   const [state, dispatch] = useReducer(incomeReducer, undefined, loadIncome)
 
   // Mirroring state into localStorage is synchronisation with something outside React,
-  // which is what effects are for. Every reducer case returns a NEW state object, so
-  // this fires exactly when the data changed.
+  // which is what effects are for. Every reducer case that changes data returns a NEW
+  // state object, so this fires exactly when the data changed.
   useEffect(() => {
     saveIncome(state)
   }, [state])
 
-  const addPerDiemSource = useCallback((campId: string, name: string): PerDiemSource => {
-    const source: PerDiemSource = {
-      id: newId(),
-      campId,
-      kind: 'per_diem',
-      use: 'gradual',
-      name,
-      createdAt: Date.now(),
-    }
-    dispatch({ type: 'sourceAdded', source })
-    return source
-  }, [])
+  /**
+   * Create-or-update one income source with its blocks, and its pool if it's new —
+   * a single dispatch, so a half-saved card can never exist. The `existing` row is
+   * what carries `id` and `createdAt` across an edit.
+   */
+  const saveSource = useCallback((input: SaveSourceInput): void => {
+    const now = Date.now()
+    const sourceId = input.existing?.id ?? newId()
+    const createdAt = input.existing?.createdAt ?? now
 
-  const addFixedGrant = useCallback(
-    (
-      campId: string,
-      name: string,
-      use: 'gradual' | 'reserved',
-      fixedAmountCents: number,
-    ): FixedGrantSource => {
-      const source: FixedGrantSource = {
-        id: newId(),
-        campId,
-        kind: 'fixed',
-        use,
-        name,
-        fixedAmountCents,
-        createdAt: Date.now(),
-      }
-      dispatch({ type: 'sourceAdded', source })
-      return source
-    },
-    [],
-  )
+    const pool: Pool | undefined =
+      input.pool.mode === 'new'
+        ? { id: newId(), campId: input.campId, name: input.pool.name, createdAt: now }
+        : undefined
+    const poolId = pool?.id ?? (input.pool.mode === 'existing' ? input.pool.poolId : '')
 
-  const addPassthroughSource = useCallback((campId: string, name: string): PassthroughSource => {
-    const source: PassthroughSource = {
-      id: newId(),
-      campId,
-      kind: 'passthrough',
-      use: 'passthrough',
-      name,
-      createdAt: Date.now(),
-    }
-    dispatch({ type: 'sourceAdded', source })
-    return source
+    const base = { id: sourceId, campId: input.campId, poolId, name: input.name, createdAt }
+    const source: IncomeSource =
+      input.kind === 'per_diem'
+        ? { ...base, kind: 'per_diem' }
+        : { ...base, kind: input.kind, amountCents: input.amountCents ?? 0 }
+
+    // Rows the user deleted in the form simply aren't in this array; the reducer
+    // replaces the source's whole block set, so they disappear.
+    const blocks: PerDiemBlock[] = input.blocks.map((b) => ({
+      ...b,
+      id: b.id ?? newId(),
+      campId: input.campId,
+      sourceId,
+    }))
+
+    dispatch({ type: 'sourceSaved', source, blocks, pool })
   }, [])
 
   const deleteSource = useCallback((sourceId: string): void => {
     dispatch({ type: 'sourceDeleted', sourceId })
   }, [])
 
-  // `Omit<PerDiemBlock, 'id'>` is "every field of PerDiemBlock except id" — the caller
-  // supplies the data, the hook supplies identity. Components never mint ids.
-  const addBlock = useCallback((draft: Omit<PerDiemBlock, 'id'>): void => {
-    dispatch({ type: 'blockAdded', block: { ...draft, id: newId() } })
+  const renamePool = useCallback((poolId: string, name: string): void => {
+    dispatch({ type: 'poolRenamed', poolId, name })
   }, [])
 
-  const deleteBlock = useCallback((blockId: string): void => {
-    dispatch({ type: 'blockDeleted', blockId })
+  const deletePool = useCallback((poolId: string): void => {
+    dispatch({ type: 'poolDeleted', poolId })
   }, [])
 
-  const addContribution = useCallback((draft: Omit<Contribution, 'id' | 'createdAt'>): void => {
-    dispatch({
-      type: 'contributionAdded',
-      contribution: { ...draft, id: newId(), createdAt: Date.now() },
-    })
-  }, [])
-
-  const deleteContribution = useCallback((contributionId: string): void => {
-    dispatch({ type: 'contributionDeleted', contributionId })
-  }, [])
-
-  return {
-    ...state,
-    addPerDiemSource,
-    addFixedGrant,
-    addPassthroughSource,
-    deleteSource,
-    addBlock,
-    deleteBlock,
-    addContribution,
-    deleteContribution,
-  }
+  return { ...state, saveSource, deleteSource, renamePool, deletePool }
 }

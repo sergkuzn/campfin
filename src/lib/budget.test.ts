@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
-  fixedGrantTotalCents,
+  blockCents,
+  blockPersonDays,
   formatEuros,
-  passthroughTotalCents,
   perDiemBudgetCents,
-  reservedRemainingCents,
   spentTotalCents,
 } from './budget'
-import type { Contribution, Expense, FixedGrantSource, IncomeSource, PerDiemBlock } from './types'
+import type { Expense, PerDiemBlock } from './types'
 
 const block = (over: Partial<PerDiemBlock>): PerDiemBlock => ({
   id: 'b',
@@ -20,26 +19,40 @@ const block = (over: Partial<PerDiemBlock>): PerDiemBlock => ({
   ...over,
 })
 
-const fixed = (over: Partial<FixedGrantSource>): FixedGrantSource => ({
-  id: 'f',
-  campId: 'c',
-  kind: 'fixed',
-  use: 'gradual',
-  name: 'grant',
-  fixedAmountCents: 0,
-  createdAt: 0,
-  ...over,
-})
-
 const expense = (over: Partial<Expense>): Expense => ({
   id: 'e',
   campId: 'c',
-  sourceId: 'f',
+  poolId: 'p',
   name: 'receipt',
   amountCents: 0,
   date: '2026-07-02',
   createdAt: 0,
   ...over,
+})
+
+describe('blockPersonDays', () => {
+  it('multiplies people by inclusive days', () => {
+    expect(blockPersonDays(10, '2026-07-01', '2026-07-14')).toBe(140)
+  })
+
+  it('counts a single-day block as one day per person', () => {
+    expect(blockPersonDays(3, '2026-07-01', '2026-07-01')).toBe(3)
+  })
+})
+
+describe('blockCents', () => {
+  it('multiplies people × inclusive days × rate', () => {
+    // 10 people × 14 days × 1200 = 168000
+    expect(blockCents(10, 1200, '2026-07-01', '2026-07-14')).toBe(168_000)
+  })
+
+  it('counts a single-day block as one day, not zero', () => {
+    expect(blockCents(3, 1000, '2026-07-01', '2026-07-01')).toBe(3000)
+  })
+
+  it('is 0 for zero people', () => {
+    expect(blockCents(0, 1200, '2026-07-01', '2026-07-14')).toBe(0)
+  })
 })
 
 describe('perDiemBudgetCents', () => {
@@ -59,55 +72,6 @@ describe('perDiemBudgetCents', () => {
   })
 })
 
-describe('fixedGrantTotalCents', () => {
-  const sources: IncomeSource[] = [
-    fixed({ id: 'g1', use: 'gradual', fixedAmountCents: 5000 }),
-    fixed({ id: 'g2', use: 'gradual', fixedAmountCents: 3000 }),
-    fixed({ id: 'r1', use: 'reserved', fixedAmountCents: 10000 }),
-    { id: 'pd', campId: 'c', kind: 'per_diem', use: 'gradual', name: 'pd', createdAt: 0 },
-    { id: 'pt', campId: 'c', kind: 'passthrough', use: 'passthrough', name: 'pt', createdAt: 0 },
-  ]
-
-  it('sums only gradual fixed grants', () => {
-    expect(fixedGrantTotalCents(sources, 'gradual')).toBe(8000)
-  })
-  it('sums only reserved fixed grants', () => {
-    expect(fixedGrantTotalCents(sources, 'reserved')).toBe(10000)
-  })
-  it('is 0 for no sources', () => {
-    expect(fixedGrantTotalCents([], 'gradual')).toBe(0)
-  })
-})
-
-describe('passthroughTotalCents', () => {
-  const contribs: Contribution[] = [
-    {
-      id: 'x',
-      campId: 'c',
-      sourceId: 'pt',
-      name: 'a',
-      amountCents: 1000,
-      date: '2026-07-01',
-      createdAt: 0,
-    },
-    {
-      id: 'y',
-      campId: 'c',
-      sourceId: 'pt',
-      name: 'b',
-      amountCents: 2500,
-      date: '2026-07-02',
-      createdAt: 0,
-    },
-  ]
-  it('sums contributions', () => {
-    expect(passthroughTotalCents(contribs)).toBe(3500)
-  })
-  it('is 0 for none', () => {
-    expect(passthroughTotalCents([])).toBe(0)
-  })
-})
-
 describe('spentTotalCents', () => {
   it('sums every expense', () => {
     expect(spentTotalCents([expense({ amountCents: 200 }), expense({ amountCents: 800 })])).toBe(
@@ -116,26 +80,6 @@ describe('spentTotalCents', () => {
   })
   it('is 0 for none', () => {
     expect(spentTotalCents([])).toBe(0)
-  })
-})
-
-describe('reservedRemainingCents', () => {
-  const pot = fixed({ id: 'r1', use: 'reserved', fixedAmountCents: 10000 })
-  it('subtracts only expenses tagged to that pot', () => {
-    const expenses = [
-      expense({ sourceId: 'r1', amountCents: 3000 }),
-      expense({ sourceId: 'r1', amountCents: 2000 }),
-      expense({ sourceId: 'other', amountCents: 9999 }), // ignored
-    ]
-    expect(reservedRemainingCents(pot, expenses)).toBe(5000)
-  })
-  it('is 0 when fully spent', () => {
-    expect(reservedRemainingCents(pot, [expense({ sourceId: 'r1', amountCents: 10000 })])).toBe(0)
-  })
-  it('goes negative when overspent (caller floors it)', () => {
-    expect(reservedRemainingCents(pot, [expense({ sourceId: 'r1', amountCents: 12000 })])).toBe(
-      -2000,
-    )
   })
 })
 

@@ -1,11 +1,22 @@
 /**
- * Pure income logic: type guards for the three persisted row types, the state shape,
- * and the reducer that owns every transition. No React, no storage, no Date.now().
+ * Pure income logic: type guards for the persisted row types, the state shape, and
+ * the reducer that owns every transition. No React, no storage, no Date.now().
  */
 
-import type { Contribution, IncomeSource, PerDiemBlock } from './types'
+import type { IncomeSource, PerDiemBlock, Pool } from './types'
 
 // --- Type guards: the door from unknown (JSON.parse) into the typed world ----
+
+export function isPool(value: unknown): value is Pool {
+  if (typeof value !== 'object' || value === null) return false
+  const p = value as Record<string, unknown>
+  return (
+    typeof p.id === 'string' &&
+    typeof p.campId === 'string' &&
+    typeof p.name === 'string' &&
+    typeof p.createdAt === 'number'
+  )
+}
 
 export function isIncomeSource(value: unknown): value is IncomeSource {
   if (typeof value !== 'object' || value === null) return false
@@ -13,6 +24,7 @@ export function isIncomeSource(value: unknown): value is IncomeSource {
   if (
     typeof s.id !== 'string' ||
     typeof s.campId !== 'string' ||
+    typeof s.poolId !== 'string' ||
     typeof s.name !== 'string' ||
     typeof s.createdAt !== 'number'
   ) {
@@ -21,11 +33,10 @@ export function isIncomeSource(value: unknown): value is IncomeSource {
   // The guard switches on `kind`, mirroring the discriminated union itself.
   switch (s.kind) {
     case 'per_diem':
-      return s.use === 'gradual'
+      return true
     case 'fixed':
-      return (s.use === 'gradual' || s.use === 'reserved') && typeof s.fixedAmountCents === 'number'
-    case 'passthrough':
-      return s.use === 'passthrough'
+    case 'deposit':
+      return typeof s.amountCents === 'number'
     default:
       return false
   }
@@ -46,67 +57,84 @@ export function isPerDiemBlock(value: unknown): value is PerDiemBlock {
   )
 }
 
-export function isContribution(value: unknown): value is Contribution {
-  if (typeof value !== 'object' || value === null) return false
-  const c = value as Record<string, unknown>
-  return (
-    typeof c.id === 'string' &&
-    typeof c.campId === 'string' &&
-    typeof c.sourceId === 'string' &&
-    typeof c.name === 'string' &&
-    typeof c.amountCents === 'number' &&
-    typeof c.date === 'string' &&
-    typeof c.createdAt === 'number'
-  )
-}
-
 // --- State + actions ---------------------------------------------------------
 
 export type IncomeState = {
+  pools: Pool[]
   sources: IncomeSource[]
   blocks: PerDiemBlock[]
-  contributions: Contribution[]
 }
 
-export const emptyIncome: IncomeState = { sources: [], blocks: [], contributions: [] }
+export const emptyIncome: IncomeState = { pools: [], sources: [], blocks: [] }
 
 export type IncomeAction =
   | { type: 'loaded'; state: IncomeState }
-  | { type: 'sourceAdded'; source: IncomeSource }
+  /** Create-or-replace one source together with its blocks, and optionally the new
+   *  pool it goes into. Whole-row replace, not a patch: it is idempotent, and it is
+   *  exactly what InstantDB's last-write-wins merge will do in milestone 4. */
+  | { type: 'sourceSaved'; source: IncomeSource; blocks: PerDiemBlock[]; pool?: Pool }
   | { type: 'sourceDeleted'; sourceId: string }
-  | { type: 'blockAdded'; block: PerDiemBlock }
-  | { type: 'blockDeleted'; blockId: string }
-  | { type: 'contributionAdded'; contribution: Contribution }
-  | { type: 'contributionDeleted'; contributionId: string }
+  | { type: 'poolRenamed'; poolId: string; name: string }
+  | { type: 'poolDeleted'; poolId: string }
+
+/**
+ * A pool nobody feeds is not a pool. Returning the *same* state object when nothing
+ * changed matters: useReducer bails out of the re-render, and the persistence effect
+ * in useIncome doesn't fire a pointless write.
+ */
+function dropEmptyPools(state: IncomeState): IncomeState {
+  const used = new Set(state.sources.map((s) => s.poolId))
+  const pools = state.pools.filter((p) => used.has(p.id))
+  return pools.length === state.pools.length ? state : { ...state, pools }
+}
 
 export function incomeReducer(state: IncomeState, action: IncomeAction): IncomeState {
   switch (action.type) {
     case 'loaded':
       return action.state
-    case 'sourceAdded':
-      return { ...state, sources: [...state.sources, action.source] }
+
+    case 'sourceSaved': {
+      const exists = state.sources.some((s) => s.id === action.source.id)
+      return dropEmptyPools({
+        pools: action.pool === undefined ? state.pools : [...state.pools, action.pool],
+        sources: exists
+          ? state.sources.map((s) => (s.id === action.source.id ? action.source : s))
+          : [...state.sources, action.source],
+        // Replace-all rather than merge: rows the user deleted in the form simply
+        // aren't in action.blocks, so Save commits the whole card atomically.
+        blocks: [...state.blocks.filter((b) => b.sourceId !== action.source.id), ...action.blocks],
+      })
+    }
 
     case 'sourceDeleted': {
-      // Cascade: blocks and contributions belong to their source, so they die with it.
-      // Leaving them behind would keep money in the totals that no source accounts for.
-      return {
+      // Cascade: blocks belong to their source, so they die with it. Leaving them
+      // behind would keep money in the totals that no source accounts for.
+      return dropEmptyPools({
+        pools: state.pools,
         sources: state.sources.filter((s) => s.id !== action.sourceId),
         blocks: state.blocks.filter((b) => b.sourceId !== action.sourceId),
-        contributions: state.contributions.filter((c) => c.sourceId !== action.sourceId),
+      })
+    }
+
+    case 'poolRenamed':
+      return {
+        ...state,
+        pools: state.pools.map((p) => (p.id === action.poolId ? { ...p, name: action.name } : p)),
+      }
+
+    case 'poolDeleted': {
+      // Deleting a pool takes its sources and their blocks with it. Collecting the
+      // doomed ids into a Set first keeps the block filter O(1) per row and readable.
+      const doomed = new Set(
+        state.sources.filter((s) => s.poolId === action.poolId).map((s) => s.id),
+      )
+      return {
+        pools: state.pools.filter((p) => p.id !== action.poolId),
+        sources: state.sources.filter((s) => s.poolId !== action.poolId),
+        blocks: state.blocks.filter((b) => !doomed.has(b.sourceId)),
       }
     }
 
-    case 'blockAdded':
-      return { ...state, blocks: [...state.blocks, action.block] }
-    case 'blockDeleted':
-      return { ...state, blocks: state.blocks.filter((b) => b.id !== action.blockId) }
-    case 'contributionAdded':
-      return { ...state, contributions: [...state.contributions, action.contribution] }
-    case 'contributionDeleted':
-      return {
-        ...state,
-        contributions: state.contributions.filter((c) => c.id !== action.contributionId),
-      }
     default: {
       const _never: never = action
       return _never
@@ -117,8 +145,8 @@ export function incomeReducer(state: IncomeState, action: IncomeAction): IncomeS
 /** The slice of income belonging to one camp — what a screen actually renders. */
 export function campSlice(state: IncomeState, campId: string): IncomeState {
   return {
+    pools: state.pools.filter((p) => p.campId === campId),
     sources: state.sources.filter((s) => s.campId === campId),
     blocks: state.blocks.filter((b) => b.campId === campId),
-    contributions: state.contributions.filter((c) => c.campId === campId),
   }
 }

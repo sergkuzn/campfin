@@ -11,60 +11,17 @@
   letter-spacing: -0.02em;
 }
 
-.income__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background-color: var(--surface);
-}
-
-.income__heading {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.income__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.income__item {
+.income__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2);
-  font-size: 0.875rem;
+  gap: var(--space-3);
 }
 
-.income__item button {
-  border: 0;
-  background: none;
+.income__empty {
+  margin: 0;
   color: var(--muted);
-  font: inherit;
-  cursor: pointer;
-}
-
-.income__item button:hover {
-  color: var(--danger);
-}
-
-.income__add {
-  align-self: flex-start;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background-color: var(--bg);
-  color: inherit;
-  font: inherit;
   font-size: 0.875rem;
-  cursor: pointer;
 }
 
 /* Shared form shell: the fields wrap on a phone and sit in a row on wider screens. */
@@ -74,28 +31,38 @@
   gap: var(--space-2);
 }
 
+/* Sized by its container, never by flex-basis: inside a column flex parent a basis
+   would set the input's HEIGHT, which is what made these boxes tower. */
 .income-form__input {
-  flex: 1 1 8rem;
+  width: 100%;
   min-width: 0;
-  padding: var(--space-2);
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border);
   border-radius: var(--space-2);
   background-color: var(--bg);
   color: var(--fg);
   font: inherit;
   font-size: 0.875rem;
+  line-height: 1.6;
 }
 
 .income-form__input--amount {
-  flex: 0 1 9rem;
+  max-width: 12rem;
 }
 
-.income-form__input--persons {
-  flex: 0 1 5rem;
+/* Label above its control. Height stays content-sized: a flex-basis here would be
+   read as a height by the column-flex forms and blow the field up. Side-by-side
+   sizing is the row container's job (see .block__row / .pool-select below). */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
-.income-form__input--date {
-  flex: 0 1 9rem;
+.field__label {
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
 .income-form__button {
@@ -115,88 +82,326 @@
   cursor: not-allowed;
 }
 
-.per-diem {
+.type-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.type-menu__option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.type-menu__option:hover {
+  border-color: var(--accent);
+}
+
+.type-menu__label {
+  font-size: 0.9375rem;
+}
+
+.type-menu__hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.pool {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+
+.pool__header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.pool__name {
+  flex: 1;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.pool__total {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9375rem;
+}
+
+/* The disclosure triangle is the browser's; we want a bare ⋯ button. */
+.pool__menu {
+  position: relative;
+}
+
+.pool__menu-button {
+  list-style: none;
+  padding: 0 var(--space-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.pool__menu-button::-webkit-details-marker {
+  display: none;
+}
+
+.pool__menu-items {
+  position: absolute;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 9rem;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background-color: var(--surface);
+}
+
+.pool__menu-items button {
+  padding: var(--space-2);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pool__menu-items button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background-color: var(--bg);
 }
 
-.per-diem__header {
+.card--editing {
+  border-color: var(--accent);
+}
+
+.card__header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: baseline;
   gap: var(--space-2);
 }
 
-.per-diem__name {
-  margin: 0;
+.card__name {
+  flex: 1;
   font-size: 0.9375rem;
 }
 
-.per-diem__remove {
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font: inherit;
-  cursor: pointer;
+.card__amount {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9375rem;
 }
 
-.per-diem__remove:hover {
-  color: var(--danger);
-}
-
-.per-diem__empty {
+.card__kind {
   margin: 0;
-  font-size: 0.875rem;
-  color: var(--muted);
-}
-
-.per-diem__blocks {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.per-diem__block {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-
-.per-diem__block-desc {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.per-diem__block-label {
-  font-size: 0.875rem;
-}
-
-.per-diem__block-meta {
   font-size: 0.75rem;
   color: var(--muted);
 }
 
-.per-diem__block-sum {
-  font-variant-numeric: tabular-nums;
-  font-size: 0.875rem;
-  white-space: nowrap;
+/* A saved per-diem block: heading + two detail rows, each label left, figure right. */
+.card__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-radius: var(--space-2);
+  background-color: var(--surface);
 }
 
-.per-diem__total {
+.card__block-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
   margin: 0;
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.card__block-row--head {
+  color: var(--fg);
+  font-size: 0.875rem;
+}
+
+.card__issues {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--danger);
+  font-size: 0.75rem;
+}
+
+.card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.card__button {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background-color: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.card__button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.blocks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* One block as a bordered mini-card. `position: relative` anchors the ✕ button;
+   min-inline-size overrides the fieldset's built-in min-content width, which would
+   otherwise stop it shrinking on a narrow phone. */
+.block {
+  position: relative;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+}
+
+.block__legend {
+  padding: 0 var(--space-1);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* Two fields side by side, stacking on a narrow phone. The basis lives here, on the
+   row axis, where it means width. */
+.block__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.block__row > .field {
+  flex: 1 1 8rem;
+}
+
+.block__remove {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.block__remove:hover {
+  color: var(--danger);
+}
+
+.block__summary {
   display: flex;
   justify-content: space-between;
+  margin: 0;
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
   font-size: 0.875rem;
+}
+
+.block__person-days {
+  color: var(--muted);
+}
+
+.blocks__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.blocks__add {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.pool-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pool-select__field {
+  display: flex;
+  flex: 1 1 10rem;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.pool-select__copy {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.pool-select__copy:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.income__totals {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.income__total-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  font-size: 0.9375rem;
 }
