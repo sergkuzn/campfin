@@ -61,24 +61,6 @@ export function campStatus(camp: Camp, todayIso: string): CampStatus {
   return 'finished'
 }
 
-/** Human label for the status pill. */
-export function describeCampStatus(status: CampStatus): string {
-  switch (status) {
-    case 'draft':
-      return 'No dates yet'
-    case 'upcoming':
-      return 'Upcoming'
-    case 'running':
-      return 'Running'
-    case 'finished':
-      return 'Finished'
-    default: {
-      const _never: never = status
-      return _never
-    }
-  }
-}
-
 // --- The reducer -----------------------------------------------------------
 // A *reducer* is `(state, action) => newState`: one pure function that owns every
 // legal transition of the camp list. React's `useReducer` calls it for you. The

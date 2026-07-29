@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { CampDashboard } from './components/CampDashboard'
 import { CampList } from './components/CampList'
 import { IncomeSetup } from './components/IncomeSetup'
 import { useCamps } from './hooks/useCamps'
 import { useIncome } from './hooks/useIncome'
+import { useT } from './i18n'
 import { campSlice } from './lib/income'
 import { summarisePools } from './lib/pools'
 
@@ -20,11 +21,26 @@ type View =
   | { screen: 'income'; campId: string }
 
 export default function App() {
+  const t = useT()
   const { camps, error, createCamp, renameCamp, deleteCamp, clearError } = useCamps()
   // One hook instance for the whole app: a single source of truth in memory and a
   // single persistence effect. Per-screen instances would drift and fight over the keys.
   const income = useIncome()
   const [view, setView] = useState<View>({ screen: 'list' })
+
+  // Every camp owns exactly one everyday pool, so the screens below never have to ask
+  // whether it exists. Repairing that here is an effect because it is a *write* derived
+  // from data that may arrive from anywhere — a new camp, or storage written by a build
+  // that predates pool roles. `ensureEverydayPools` no-ops when nothing is missing, so
+  // this settles after one pass instead of looping.
+  const { ensureEverydayPools } = income
+  const everydayName = t.pools.everydayDefault
+  useEffect(() => {
+    ensureEverydayPools(
+      camps.map((camp) => camp.id),
+      everydayName,
+    )
+  }, [camps, ensureEverydayPools, everydayName])
 
   // `find` returns `Camp | undefined`; if the open camp was just deleted we fall back
   // to the list automatically, with no effect and no stale state to clean up.
@@ -95,8 +111,8 @@ export default function App() {
   return (
     <main className="app">
       <header className="app__header">
-        <h1 className="app__title">campfin</h1>
-        <p className="app__subtitle">Camp budget tracker</p>
+        <h1 className="app__title">{t.app.title}</h1>
+        <p className="app__subtitle">{t.app.subtitle}</p>
       </header>
 
       {renderScreen()}

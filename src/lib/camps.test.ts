@@ -4,7 +4,6 @@ import {
   campNameExists,
   campStatus,
   campsReducer,
-  describeCampStatus,
   isCamp,
   sortCampsByRecent,
 } from './camps'
@@ -103,15 +102,6 @@ describe('campStatus', () => {
   })
   it('is finished the day after', () => {
     expect(campStatus(dated, '2026-07-15')).toBe('finished')
-  })
-})
-
-describe('describeCampStatus', () => {
-  it('labels every status', () => {
-    expect(describeCampStatus('draft')).toBe('No dates yet')
-    expect(describeCampStatus('upcoming')).toBe('Upcoming')
-    expect(describeCampStatus('running')).toBe('Running')
-    expect(describeCampStatus('finished')).toBe('Finished')
   })
 })
 

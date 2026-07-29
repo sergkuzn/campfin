@@ -5,7 +5,7 @@
 
 import { blockCents, blockPersonDays } from './budget'
 import { parseEurosToCents } from './money'
-import type { IncomeKind, IncomeSource, PerDiemBlock, Pool } from './types'
+import type { IncomeKind, IncomeSource, PerDiemBlock, PerDiemVariant, Pool } from './types'
 
 /** Sentinel for the pool `<select>`'s "＋ New pool…" option. */
 export const NEW_POOL = '__new__'
@@ -35,6 +35,7 @@ export type SourceDraft = {
 /** What the hook needs to save a card. Ids and timestamps are minted there, not here. */
 export type BlockInput = {
   id: string | null
+  variant: PerDiemVariant
   label?: string
   numPersons: number
   ratePerPersonDayCents: number
@@ -102,8 +103,15 @@ export function draftFromSource(
   }
 }
 
-/** A validated block row, or null if it isn't ready. */
-export function blockDraftToInput(draft: BlockDraft): BlockInput | null {
+/**
+ * A validated block row, or null if it isn't ready. The variant belongs to the editing
+ * session, not to the row — callers that only ask "is this row valid?" leave it at the
+ * default.
+ */
+export function blockDraftToInput(
+  draft: BlockDraft,
+  variant: PerDiemVariant = 'granted',
+): BlockInput | null {
   const numPersons = Number(draft.persons)
   if (draft.persons.trim() === '' || !Number.isInteger(numPersons) || numPersons <= 0) return null
 
@@ -117,6 +125,7 @@ export function blockDraftToInput(draft: BlockDraft): BlockInput | null {
   const label = draft.label.trim()
   return {
     id: draft.id,
+    variant,
     label: label === '' ? undefined : label, // an omitted optional field is undefined, not ''
     numPersons,
     ratePerPersonDayCents,
@@ -149,24 +158,31 @@ export function blockDraftCents(draft: BlockDraft): number | null {
   return blockCents(input.numPersons, input.ratePerPersonDayCents, input.startDate, input.endDate)
 }
 
-/** Human-readable problems with the draft. Empty array = Save is allowed. */
-export function draftIssues(draft: SourceDraft): string[] {
-  const issues: string[] = []
+/**
+ * What is wrong with the draft, as *codes* rather than sentences: `lib/` must not know
+ * which language the UI speaks, so the dictionary turns each code into text. A typo in a
+ * code is a compile error, which a free-text string could never be.
+ */
+export type DraftIssue = 'name' | 'poolName' | 'noBlocks' | 'invalidBlock' | 'amount'
 
-  if (draft.name.trim() === '') issues.push('Give this income a name.')
+/** Problems with the draft. Empty array = Save is allowed. */
+export function draftIssues(draft: SourceDraft): DraftIssue[] {
+  const issues: DraftIssue[] = []
+
+  if (draft.name.trim() === '') issues.push('name')
   if (draft.poolChoice === NEW_POOL && draft.newPoolName.trim() === '') {
-    issues.push('Name the new pool.')
+    issues.push('poolName')
   }
 
   if (draft.kind === 'per_diem') {
     if (draft.blocks.length === 0) {
-      issues.push('Add at least one block of people and days.')
+      issues.push('noBlocks')
     } else if (draft.blocks.some((b) => blockDraftToInput(b) === null)) {
-      issues.push('Every block needs people, dates (start before end) and a rate.')
+      issues.push('invalidBlock')
     }
   } else {
     const cents = parseEurosToCents(draft.amount)
-    if (cents === null || cents <= 0) issues.push('Enter an amount in euros, e.g. 120,00.')
+    if (cents === null || cents <= 0) issues.push('amount')
   }
 
   return issues
@@ -177,6 +193,7 @@ export function draftToInput(
   draft: SourceDraft,
   campId: string,
   existing: IncomeSource | null,
+  variant: PerDiemVariant = 'granted',
 ): SaveSourceInput | null {
   // One gate: a caller cannot smuggle an invalid draft past validation by calling
   // this directly instead of checking draftIssues first.
@@ -188,7 +205,7 @@ export function draftToInput(
   const blocks: BlockInput[] = []
   if (isPerDiem) {
     for (const block of draft.blocks) {
-      const input = blockDraftToInput(block)
+      const input = blockDraftToInput(block, variant)
       if (input !== null) blocks.push(input)
     }
   }

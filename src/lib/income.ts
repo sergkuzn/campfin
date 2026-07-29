@@ -3,19 +3,58 @@
  * the reducer that owns every transition. No React, no storage, no Date.now().
  */
 
-import type { IncomeSource, PerDiemBlock, Pool } from './types'
+import type {
+  IncomeKind,
+  IncomeSource,
+  Movement,
+  PerDiemBlock,
+  PerDiemVariant,
+  Pool,
+  PoolPolicy,
+  PoolRole,
+} from './types'
+
+/** Menu order of the "＋ Add income" options. Labels live in the dictionary. */
+export const INCOME_KINDS: readonly IncomeKind[] = ['per_diem', 'fixed', 'deposit']
+
+/**
+ * Per-diem money is the camp's spine and always feeds the everyday pool; a deposit is
+ * returned to one counterparty so it never shares a pool; a fixed grant is the only kind
+ * with a real choice.
+ */
+export function poolPolicyFor(kind: IncomeKind): PoolPolicy {
+  switch (kind) {
+    case 'per_diem':
+      return 'everyday'
+    case 'fixed':
+      return 'choose'
+    case 'deposit':
+      return 'own'
+    default: {
+      const _never: never = kind
+      return _never
+    }
+  }
+}
+
+/** Exactly one per-diem source per camp — the menu hides the option once one exists. */
+export function hasPerDiemSource(sources: IncomeSource[]): boolean {
+  return sources.some((s) => s.kind === 'per_diem')
+}
 
 // --- Type guards: the door from unknown (JSON.parse) into the typed world ----
 
+function isPoolRole(value: unknown): value is PoolRole {
+  return value === 'everyday' || value === 'earmarked' || value === 'deposit'
+}
+
+function isPerDiemVariant(value: unknown): value is PerDiemVariant {
+  return value === 'granted' || value === 'actual'
+}
+
 export function isPool(value: unknown): value is Pool {
-  if (typeof value !== 'object' || value === null) return false
-  const p = value as Record<string, unknown>
-  return (
-    typeof p.id === 'string' &&
-    typeof p.campId === 'string' &&
-    typeof p.name === 'string' &&
-    typeof p.createdAt === 'number'
-  )
+  if (!isLegacyPool(value)) return false
+  return isPoolRole(value.role)
 }
 
 export function isIncomeSource(value: unknown): value is IncomeSource {
@@ -43,6 +82,57 @@ export function isIncomeSource(value: unknown): value is IncomeSource {
 }
 
 export function isPerDiemBlock(value: unknown): value is PerDiemBlock {
+  if (!isLegacyBlock(value)) return false
+  return isPerDiemVariant(value.variant)
+}
+
+export function isMovement(value: unknown): value is Movement {
+  if (typeof value !== 'object' || value === null) return false
+  const m = value as Record<string, unknown>
+  if (
+    typeof m.id !== 'string' ||
+    typeof m.campId !== 'string' ||
+    typeof m.name !== 'string' ||
+    typeof m.amountCents !== 'number' ||
+    typeof m.date !== 'string' ||
+    (m.note !== undefined && typeof m.note !== 'string') ||
+    typeof m.createdAt !== 'number'
+  ) {
+    return false
+  }
+  switch (m.kind) {
+    case 'deposit_out':
+    case 'deposit_in':
+      // The union's whole point: a Kaution movement without its pool is not a Movement.
+      return typeof m.poolId === 'string'
+    case 'volunteer_in':
+      return true
+    default:
+      return false
+  }
+}
+
+// --- Migration: rows written before pools had roles and blocks had variants -----
+// The legacy shapes are the current ones minus the new field, so `role`/`variant` are
+// optional on the way in and filled in below. Reading them is the only place in the app
+// that may see a pool without a role.
+
+export type LegacyPool = Omit<Pool, 'role'> & { role?: PoolRole }
+export type LegacyBlock = Omit<PerDiemBlock, 'variant'> & { variant?: PerDiemVariant }
+
+export function isLegacyPool(value: unknown): value is LegacyPool {
+  if (typeof value !== 'object' || value === null) return false
+  const p = value as Record<string, unknown>
+  return (
+    typeof p.id === 'string' &&
+    typeof p.campId === 'string' &&
+    typeof p.name === 'string' &&
+    typeof p.createdAt === 'number' &&
+    (p.role === undefined || isPoolRole(p.role))
+  )
+}
+
+export function isLegacyBlock(value: unknown): value is LegacyBlock {
   if (typeof value !== 'object' || value === null) return false
   const b = value as Record<string, unknown>
   return (
@@ -53,8 +143,35 @@ export function isPerDiemBlock(value: unknown): value is PerDiemBlock {
     typeof b.numPersons === 'number' &&
     typeof b.ratePerPersonDayCents === 'number' &&
     typeof b.startDate === 'string' &&
-    typeof b.endDate === 'string'
+    typeof b.endDate === 'string' &&
+    (b.variant === undefined || isPerDiemVariant(b.variant))
   )
+}
+
+/**
+ * Give every pool a role, derived from what feeds it: per-diem money makes the everyday
+ * pot, a Kaution makes a deposit pool, anything else is earmarked. A role already on the
+ * row wins — the derivation is a one-time repair, not a rule.
+ *
+ * A camp whose pools yield no everyday pool is *not* fixed here: minting an id is not
+ * something a pure function may do. `useIncome.ensureEverydayPools` covers that.
+ */
+export function upgradePools(pools: LegacyPool[], sources: IncomeSource[]): Pool[] {
+  return pools.map((pool) => {
+    if (pool.role !== undefined) return { ...pool, role: pool.role }
+    const kinds = new Set(sources.filter((s) => s.poolId === pool.id).map((s) => s.kind))
+    const role: PoolRole = kinds.has('per_diem')
+      ? 'everyday'
+      : kinds.has('deposit')
+        ? 'deposit'
+        : 'earmarked'
+    return { ...pool, role }
+  })
+}
+
+/** Blocks written before the granted/actual split are what the organisation granted. */
+export function upgradeBlocks(blocks: LegacyBlock[]): PerDiemBlock[] {
+  return blocks.map((block) => ({ ...block, variant: block.variant ?? 'granted' }))
 }
 
 // --- State + actions ---------------------------------------------------------
@@ -76,15 +193,18 @@ export type IncomeAction =
   | { type: 'sourceDeleted'; sourceId: string }
   | { type: 'poolRenamed'; poolId: string; name: string }
   | { type: 'poolDeleted'; poolId: string }
+  /** Give the named camps their everyday pool. One per camp, enforced below. */
+  | { type: 'everydayPoolsEnsured'; pools: Pool[] }
 
 /**
- * A pool nobody feeds is not a pool. Returning the *same* state object when nothing
- * changed matters: useReducer bails out of the re-render, and the persistence effect
- * in useIncome doesn't fire a pointless write.
+ * A pool nobody feeds is not a pool — except the everyday pool, which exists from the
+ * camp's birth and outlives every source in it. Returning the *same* state object when
+ * nothing changed matters: useReducer bails out of the re-render, and the persistence
+ * effect in useIncome doesn't fire a pointless write.
  */
 function dropEmptyPools(state: IncomeState): IncomeState {
   const used = new Set(state.sources.map((s) => s.poolId))
-  const pools = state.pools.filter((p) => used.has(p.id))
+  const pools = state.pools.filter((p) => p.role === 'everyday' || used.has(p.id))
   return pools.length === state.pools.length ? state : { ...state, pools }
 }
 
@@ -122,7 +242,26 @@ export function incomeReducer(state: IncomeState, action: IncomeAction): IncomeS
         pools: state.pools.map((p) => (p.id === action.poolId ? { ...p, name: action.name } : p)),
       }
 
+    case 'everydayPoolsEnsured': {
+      // Idempotent on purpose: a camp that already has an everyday pool is skipped, so
+      // dispatching this twice — which React does in development, where it runs every
+      // effect twice to surface exactly this class of bug — cannot mint a second one.
+      const covered = new Set(state.pools.filter((p) => p.role === 'everyday').map((p) => p.campId))
+      const added: Pool[] = []
+      for (const pool of action.pools) {
+        if (covered.has(pool.campId)) continue
+        covered.add(pool.campId)
+        added.push(pool)
+      }
+      return added.length === 0 ? state : { ...state, pools: [...state.pools, ...added] }
+    }
+
     case 'poolDeleted': {
+      // The everyday pool is not deletable — the UI hides the button, and this is the
+      // backstop that keeps the "exactly one per camp" invariant true regardless.
+      const target = state.pools.find((p) => p.id === action.poolId)
+      if (target === undefined || target.role === 'everyday') return state
+
       // Deleting a pool takes its sources and their blocks with it. Collecting the
       // doomed ids into a Set first keeps the block filter O(1) per row and readable.
       const doomed = new Set(

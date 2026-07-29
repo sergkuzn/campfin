@@ -1,4 +1,5 @@
 import './CampList.css'
+import { useT } from '../i18n'
 import { campStatus, sortCampsByRecent } from '../lib/camps'
 import { todayIso } from '../lib/dates'
 import type { Camp } from '../lib/types'
@@ -34,6 +35,7 @@ type Props = {
 }
 
 export function CampList({ camps, error, onOpen, onCreate }: Props) {
+  const t = useT()
   // Reading the clock at the edge, then passing it down: `campStatus` stays pure.
   const today = todayIso()
   const ordered = sortCampsByRecent(camps)
@@ -43,7 +45,7 @@ export function CampList({ camps, error, onOpen, onCreate }: Props) {
       <CreateCampForm error={error} onCreate={onCreate} />
 
       {ordered.length === 0 ? (
-        <p className="camp-list__empty">No camps yet. Create one above.</p>
+        <p className="camp-list__empty">{t.camps.empty}</p>
       ) : (
         <ul className="camp-list__items">
           {ordered.map((camp) => (

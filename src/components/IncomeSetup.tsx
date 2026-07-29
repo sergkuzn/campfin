@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState } from 'react'
 import './IncomeSetup.css'
 import type { UseIncome } from '../hooks/useIncome'
-import { formatEuros } from '../lib/budget'
+import { type Dict, useFormat, useT } from '../i18n'
 import type { SaveSourceInput } from '../lib/drafts'
-import { campSlice } from '../lib/income'
+import { campSlice, hasPerDiemSource, INCOME_KINDS } from '../lib/income'
 import {
+  everydayPool,
   type PoolSummary,
   receivedTotalCents,
   sourceAmountCents,
@@ -14,7 +15,6 @@ import type { IncomeKind, IncomeSource, PerDiemBlock } from '../lib/types'
 import { ConfirmDialog } from './ConfirmDialog'
 import { IncomeSourceCard } from './IncomeSourceCard'
 import { IncomeSourceForm } from './IncomeSourceForm'
-import { INCOME_TYPES } from './incomeTypes'
 
 type Props = {
   campId: string
@@ -30,6 +30,8 @@ type Editing = { mode: 'new'; kind: IncomeKind } | { mode: 'edit'; sourceId: str
 type Pending = { target: 'source'; sourceId: string } | { target: 'pool'; poolId: string }
 
 export function IncomeSetup({ campId, income, onBack }: Props) {
+  const t = useT()
+  const format = useFormat()
   const { pools, sources, blocks } = income
 
   const slice = useMemo(
@@ -62,7 +64,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   }
 
   const handleRenamePool = (poolId: string, currentName: string) => {
-    const next = window.prompt('Rename pool', currentName)
+    const next = window.prompt(t.pools.renamePrompt, currentName)
     // `prompt` returns null on cancel — an empty string means "cleared it", also a no-op.
     if (next !== null && next.trim() !== '') income.renamePool(poolId, next.trim())
   }
@@ -74,44 +76,50 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
     setPending(null)
   }
 
-  const confirmContent = describePending(pending, summaries, slice.blocks)
+  const confirmContent = describePending(pending, summaries, slice.blocks, t, format.euros)
+
+  // The per-diem grant is the camp's spine and there is exactly one of it, so the menu
+  // stops offering it once it exists rather than letting a second one be created.
+  const offeredKinds = INCOME_KINDS.filter(
+    (kind) => kind !== 'per_diem' || !hasPerDiemSource(slice.sources),
+  )
 
   return (
     <div className="income">
       <button className="dashboard__back" type="button" onClick={onBack}>
-        ← Back to camp
+        {t.income.back}
       </button>
 
       <header className="income__header">
-        <h2 className="income__title">Set up income</h2>
+        <h2 className="income__title">{t.income.title}</h2>
         <button
           className="income-form__button"
           type="button"
           disabled={locked}
           onClick={() => setPicking((open) => !open)}
         >
-          ＋ Add income
+          {t.income.add}
         </button>
       </header>
 
       {picking && (
         <div className="type-menu">
-          {INCOME_TYPES.map((option) => (
+          {offeredKinds.map((kind) => (
             <button
-              key={option.kind}
+              key={kind}
               className="type-menu__option"
               type="button"
-              onClick={() => handleAdd(option.kind)}
+              onClick={() => handleAdd(kind)}
             >
-              <span className="type-menu__label">{option.label}</span>
-              <span className="type-menu__hint">{option.hint}</span>
+              <span className="type-menu__label">{t.income.kinds[kind].label}</span>
+              <span className="type-menu__hint">{t.income.kinds[kind].hint}</span>
             </button>
           ))}
         </div>
       )}
 
-      {summaries.length === 0 && !picking && editing === null && (
-        <p className="income__empty">No income yet — tap ＋ Add income.</p>
+      {slice.sources.length === 0 && !picking && editing === null && (
+        <p className="income__empty">{t.income.empty}</p>
       )}
 
       {summaries.map((summary) => (
@@ -132,7 +140,11 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
               campId={campId}
               kind={source.kind}
               source={source}
-              blocks={slice.blocks.filter((b) => b.sourceId === source.id)}
+              // Granted blocks only — the actual-attendance ones get their own tab in a
+              // later stage and must not appear as extra rows in this editor.
+              blocks={slice.blocks.filter(
+                (b) => b.sourceId === source.id && b.variant === 'granted',
+              )}
               pools={slice.pools}
               defaultPool={summary.pool}
               onSave={handleSave}
@@ -151,9 +163,9 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
           source={null}
           blocks={[]}
           pools={slice.pools}
-          // Everyday money joins the pot that already exists; a fixed grant or a
-          // deposit starts its own, so it gets no pre-selection.
-          defaultPool={editing.kind === 'per_diem' ? slice.pools[0] : undefined}
+          // Per-diem money always lands in the everyday pool; a fixed grant or a deposit
+          // starts its own, so it gets no pre-selection.
+          defaultPool={editing.kind === 'per_diem' ? everydayPool(slice.pools, campId) : undefined}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
         />
@@ -161,8 +173,8 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
 
       <footer className="income__totals">
         <p className="income__total-row">
-          <span>Received total</span>
-          <strong>{formatEuros(receivedTotalCents(summaries))}</strong>
+          <span>{t.income.receivedTotal}</span>
+          <strong>{format.euros(receivedTotalCents(summaries))}</strong>
         </p>
       </footer>
 
@@ -170,7 +182,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
         open={pending !== null}
         title={confirmContent.title}
         lines={confirmContent.lines}
-        confirmLabel="Delete"
+        confirmLabel={t.pools.confirmDelete}
         onConfirm={handleConfirm}
         onCancel={() => setPending(null)}
       />
@@ -186,35 +198,35 @@ function describePending(
   pending: Pending | null,
   summaries: PoolSummary[],
   blocks: PerDiemBlock[],
+  t: Dict,
+  euros: (cents: number) => string,
 ): { title: string; lines: string[] } {
   if (pending === null) return { title: '', lines: [] }
 
   if (pending.target === 'pool') {
     const summary = summaries.find((s) => s.pool.id === pending.poolId)
-    if (summary === undefined) return { title: 'Delete pool?', lines: [] }
-    const count = summary.sources.length
+    if (summary === undefined) return { title: t.pools.deleteTitleFallback, lines: [] }
     return {
-      title: `Delete the ${summary.pool.name} pool?`,
-      lines: [
-        `Its ${count} income ${count === 1 ? 'source' : 'sources'} worth ${formatEuros(summary.fundedCents)} will be deleted too.`,
-      ],
+      title: t.pools.deleteTitle(summary.pool.name),
+      lines: [t.pools.deleteSources(summary.sources.length, euros(summary.fundedCents))],
     }
   }
 
   const summary = summaries.find((s) => s.sources.some((src) => src.id === pending.sourceId))
   const source = summary?.sources.find((src) => src.id === pending.sourceId)
   if (summary === undefined || source === undefined) {
-    return { title: 'Delete this income?', lines: [] }
+    return { title: t.pools.sourceDeleteTitleFallback, lines: [] }
   }
 
   const lines = [
-    `This removes ${formatEuros(sourceAmountCents(source, blocks))} from the ${summary.pool.name} pool.`,
+    t.pools.sourceDeleteLine(euros(sourceAmountCents(source, blocks)), summary.pool.name),
   ]
-  // The reducer drops a pool once nothing feeds it — say so before it happens.
-  if (summary.sources.length === 1) {
-    lines.push(`The ${summary.pool.name} pool goes with it — it has no other income.`)
+  // The reducer drops a pool once nothing feeds it — say so before it happens. The
+  // everyday pool is the exception: it stays whether or not anything funds it.
+  if (summary.sources.length === 1 && summary.pool.role !== 'everyday') {
+    lines.push(t.pools.sourceDeleteLastLine(summary.pool.name))
   }
-  return { title: `Delete "${source.name}"?`, lines }
+  return { title: t.pools.sourceDeleteTitle(source.name), lines }
 }
 
 type PoolSectionProps = {
@@ -242,7 +254,11 @@ function PoolSection({
   onDeletePool,
   renderForm,
 }: PoolSectionProps) {
+  const t = useT()
+  const format = useFormat()
   const menuRef = useRef<HTMLDetailsElement>(null)
+  // The everyday pool outlives every source in it, so it offers no Delete at all.
+  const deletable = summary.pool.role !== 'everyday'
 
   // <details> keeps its open state in the DOM, exactly like <dialog>. Closing it after
   // an action is a one-line reach through a ref rather than a second piece of state.
@@ -254,9 +270,9 @@ function PoolSection({
     <section className="pool">
       <header className="pool__header">
         <h3 className="pool__name">{summary.pool.name}</h3>
-        <span className="pool__total">{formatEuros(summary.fundedCents)}</span>
+        <span className="pool__total">{format.euros(summary.fundedCents)}</span>
         <details className="pool__menu" ref={menuRef}>
-          <summary className="pool__menu-button" aria-label={`Actions for ${summary.pool.name}`}>
+          <summary className="pool__menu-button" aria-label={t.pools.actions(summary.pool.name)}>
             ⋯
           </summary>
           <div className="pool__menu-items">
@@ -268,18 +284,20 @@ function PoolSection({
                 onRenamePool()
               }}
             >
-              Rename pool
+              {t.pools.rename}
             </button>
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => {
-                closeMenu()
-                onDeletePool()
-              }}
-            >
-              Delete pool
-            </button>
+            {deletable && (
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => {
+                  closeMenu()
+                  onDeletePool()
+                }}
+              >
+                {t.pools.delete}
+              </button>
+            )}
           </div>
         </details>
       </header>

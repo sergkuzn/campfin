@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './CreateCampForm.css'
+import { useT } from '../i18n'
 
 type Props = {
   error: string | null
@@ -7,6 +8,7 @@ type Props = {
 }
 
 export function CreateCampForm({ error, onCreate }: Props) {
+  const t = useT()
   // A *controlled input*: React state is the single source of truth for the value,
   // and every keystroke round-trips through setName. The DOM never holds state we
   // don't know about.
@@ -29,11 +31,11 @@ export function CreateCampForm({ error, onCreate }: Props) {
           type="text"
           value={name}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)}
-          placeholder="New camp name…"
-          aria-label="New camp name"
+          placeholder={t.camps.namePlaceholder}
+          aria-label={t.camps.nameLabel}
         />
         <button className="create-camp__button" type="submit" disabled={trimmed === ''}>
-          Create
+          {t.camps.create}
         </button>
       </div>
       {error !== null && (

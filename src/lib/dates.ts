@@ -17,12 +17,23 @@ export function isWithin(dayIso: string, startIso: string, endIso: string): bool
 }
 
 /**
- * Today as ISO "YYYY-MM-DD" (UTC). The one impure function in this file — it reads
- * the clock. Call it at the *edge* (a component) and pass the result into the pure
- * math, so the math stays testable.
+ * A Date as ISO "YYYY-MM-DD" in the *local* calendar. `toISOString()` would answer in
+ * UTC, so in Germany (UTC+2) a receipt entered at 23:00 would be filed on tomorrow's
+ * date — the day flips at 02:00 local. Every "today" in the app goes through here.
+ */
+export function toIsoDate(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
+/**
+ * Today, local. The one impure function in this file — it reads the clock. Call it at
+ * the *edge* (a component) and pass the result into the pure math, so the math stays
+ * testable.
  */
 export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
+  return toIsoDate(new Date())
 }
 
 /** Every ISO day from start to end inclusive, ascending: ["2026-07-01", …]. */

@@ -23,7 +23,11 @@ export type PoolSummary = {
 export function sourceAmountCents(source: IncomeSource, allBlocks: PerDiemBlock[]): number {
   switch (source.kind) {
     case 'per_diem':
-      return perDiemBudgetCents(allBlocks.filter((b) => b.sourceId === source.id))
+      // Granted blocks only: that is the money that actually arrived. Actual-attendance
+      // blocks describe what may be *spent*, which is a different number (stage 09).
+      return perDiemBudgetCents(
+        allBlocks.filter((b) => b.sourceId === source.id && b.variant === 'granted'),
+      )
     case 'fixed':
     case 'deposit':
       // Only after narrowing does TypeScript know `amountCents` exists at all.
@@ -61,6 +65,15 @@ export function summarisePools(
       remainingCents: fundedCents - spentCents,
     }
   })
+}
+
+/**
+ * The camp's daily pot. Every camp has exactly one, created with the camp — but this
+ * returns `undefined` anyway, because a freshly migrated camp may not have got its pool
+ * back yet, and a lie in a return type is worse than a branch at two call sites.
+ */
+export function everydayPool(pools: Pool[], campId: string): Pool | undefined {
+  return pools.find((p) => p.campId === campId && p.role === 'everyday')
 }
 
 /** Σ funded across pools — "received so far". */

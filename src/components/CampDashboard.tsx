@@ -1,4 +1,5 @@
 import './CampDashboard.css'
+import { useT } from '../i18n'
 import { campStatus } from '../lib/camps'
 import { todayIso } from '../lib/dates'
 import type { PoolSummary } from '../lib/pools'
@@ -29,20 +30,24 @@ export function CampDashboard({
   onRename,
   onDelete,
 }: Props) {
+  const t = useT()
+
   const handleRename = () => {
-    const next = window.prompt('Rename camp', camp.name)
+    const next = window.prompt(t.dashboard.renamePrompt, camp.name)
     // `prompt` returns null on cancel — an empty string means "cleared it", also a no-op.
     if (next !== null && next.trim() !== '') onRename(camp.id, next)
   }
 
   const handleDelete = () => {
-    if (window.confirm(`Delete "${camp.name}"? This cannot be undone.`)) onDelete(camp.id)
+    if (window.confirm(t.dashboard.deleteConfirm(camp.name))) onDelete(camp.id)
   }
+
+  const funded = summaries.some((summary) => summary.sources.length > 0)
 
   return (
     <div className="dashboard">
       <button className="dashboard__back" type="button" onClick={onBack}>
-        ← All camps
+        {t.dashboard.back}
       </button>
 
       <header className="dashboard__header">
@@ -51,24 +56,26 @@ export function CampDashboard({
       </header>
 
       <p className="dashboard__code">
-        Join code <code>{camp.id}</code>
+        {t.dashboard.joinCode} <code>{camp.id}</code>
       </p>
 
       <section
         className={
-          summaries.length === 0 ? 'dashboard__slot' : 'dashboard__slot dashboard__slot--filled'
+          // Every camp has an everyday pool, so "nothing here yet" means no *income*,
+          // not no pools.
+          funded ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">Received total</p>
+        <p className="dashboard__slot-title">{t.dashboard.receivedTotal}</p>
         <ReceivedTotals summaries={summaries} />
         <button className="dashboard__slot-link" type="button" onClick={onOpenIncome}>
-          Set up income →
+          {t.dashboard.setUpIncome}
         </button>
       </section>
 
       <section className="dashboard__slot">
-        <p className="dashboard__slot-title">Spending</p>
-        <p className="dashboard__slot-hint">No quittungs yet.</p>
+        <p className="dashboard__slot-title">{t.dashboard.spending}</p>
+        <p className="dashboard__slot-hint">{t.dashboard.noQuittungs}</p>
       </section>
 
       {error !== null && (
@@ -79,14 +86,14 @@ export function CampDashboard({
 
       <div className="dashboard__actions">
         <button className="dashboard__action" type="button" onClick={handleRename}>
-          Rename
+          {t.dashboard.rename}
         </button>
         <button
           className="dashboard__action dashboard__action--danger"
           type="button"
           onClick={handleDelete}
         >
-          Delete camp
+          {t.dashboard.delete}
         </button>
       </div>
     </div>

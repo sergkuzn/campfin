@@ -2,8 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { computeSettlement } from './settlement'
 import type { AmountSource, Expense, PerDiemBlock, PerDiemSource, Pool } from './types'
 
-const everyday: Pool = { id: 'pool-e', campId: 'c', name: 'Everyday', createdAt: 1 }
-const bike: Pool = { id: 'pool-b', campId: 'c', name: 'Bike deposit', createdAt: 2 }
+const everyday: Pool = {
+  id: 'pool-e',
+  campId: 'c',
+  name: 'Everyday',
+  role: 'everyday',
+  createdAt: 1,
+}
+const bike: Pool = {
+  id: 'pool-b',
+  campId: 'c',
+  name: 'Bike deposit',
+  role: 'deposit',
+  createdAt: 2,
+}
 
 const pd: PerDiemSource = {
   id: 'pd',
@@ -38,6 +50,7 @@ const blocks: PerDiemBlock[] = [
     id: 'b1',
     campId: 'c',
     sourceId: 'pd',
+    variant: 'granted',
     numPersons: 4,
     ratePerPersonDayCents: 1000,
     startDate: '2026-07-01',

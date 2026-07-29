@@ -1,3 +1,4 @@
+import { useT } from '../i18n'
 import { NEW_POOL } from '../lib/drafts'
 import type { Pool } from '../lib/types'
 
@@ -27,6 +28,7 @@ export function PoolSelect({
   onChange,
   onNewPoolNameChange,
 }: Props) {
+  const t = useT()
   const trimmedSourceName = sourceName.trim()
   // Offering the copy only when it would change something keeps the button from
   // looking live while doing nothing.
@@ -36,7 +38,7 @@ export function PoolSelect({
     <div className="pool-select">
       {allowExisting && (
         <label className="pool-select__field field">
-          <span className="field__label">Pool</span>
+          <span className="field__label">{t.poolSelect.label}</span>
           <select
             className="income-form__input"
             value={value}
@@ -47,7 +49,7 @@ export function PoolSelect({
                 {pool.name}
               </option>
             ))}
-            <option value={NEW_POOL}>＋ New pool…</option>
+            <option value={NEW_POOL}>{t.poolSelect.newOption}</option>
           </select>
         </label>
       )}
@@ -55,14 +57,14 @@ export function PoolSelect({
       {value === NEW_POOL && (
         <div className="pool-select__field">
           <label className="field">
-            <span className="field__label">New pool name</span>
+            <span className="field__label">{t.poolSelect.newNameLabel}</span>
             <input
               className="income-form__input"
               value={newPoolName}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 onNewPoolNameChange(event.target.value)
               }
-              placeholder="e.g. Everyday"
+              placeholder={t.poolSelect.newNamePlaceholder}
             />
           </label>
           <button
@@ -71,7 +73,7 @@ export function PoolSelect({
             disabled={!canCopyName}
             onClick={() => onNewPoolNameChange(trimmedSourceName)}
           >
-            ⧉ Same as income name
+            {t.poolSelect.copyName}
           </button>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { formatEuros } from '../lib/budget'
+import { type Dict, useFormat, useT } from '../i18n'
 import {
   type BlockDraft,
   blankBlockDraft,
@@ -12,9 +12,9 @@ type Props = {
 }
 
 /** "12 person-days", or an em dash while people/dates aren't usable yet. */
-function personDaysText(personDays: number | null): string {
-  if (personDays === null) return '— person-days'
-  return `${personDays} person-day${personDays === 1 ? '' : 's'}`
+function personDaysText(personDays: number | null, t: Dict): string {
+  if (personDays === null) return t.blocks.personDaysUnknown
+  return t.blocks.personDays(personDays)
 }
 
 /**
@@ -23,6 +23,9 @@ function personDaysText(personDays: number | null): string {
  * Owns no state — the form above holds the drafts.
  */
 export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
+  const t = useT()
+  const format = useFormat()
+
   // Every update produces a NEW array. Mutating a row in place would leave React
   // comparing the same array reference to itself, see no change, and drop the keystroke.
   const patchRow = (key: string, fields: Partial<BlockDraft>) => {
@@ -38,38 +41,38 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
 
   return (
     <div className="blocks">
-      {blocks.length === 0 && <p className="blocks__empty">No blocks yet — add one below.</p>}
+      {blocks.length === 0 && <p className="blocks__empty">{t.blocks.empty}</p>}
 
       {blocks.map((block, index) => {
         const cents = blockDraftCents(block)
         return (
           <fieldset key={block.key} className="block">
-            <legend className="block__legend">Block {index + 1}</legend>
+            <legend className="block__legend">{t.blocks.legend(index + 1)}</legend>
 
             <button
               className="block__remove"
               type="button"
               onClick={() => removeRow(block.key)}
-              aria-label={`Remove block ${index + 1}`}
+              aria-label={t.blocks.remove(index + 1)}
             >
               ✕
             </button>
 
             <label className="field">
-              <span className="field__label">Block name</span>
+              <span className="field__label">{t.blocks.nameLabel}</span>
               <input
                 className="income-form__input"
                 value={block.label}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   patchRow(block.key, { label: event.target.value })
                 }
-                placeholder="e.g. Participants"
+                placeholder={t.blocks.namePlaceholder}
               />
             </label>
 
             <div className="block__row">
               <label className="field">
-                <span className="field__label">Number of people</span>
+                <span className="field__label">{t.blocks.peopleLabel}</span>
                 <input
                   className="income-form__input"
                   type="number"
@@ -79,12 +82,12 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                     patchRow(block.key, { persons: event.target.value })
                   }
-                  placeholder="e.g. 24"
+                  placeholder={t.blocks.peoplePlaceholder}
                 />
               </label>
 
               <label className="field">
-                <span className="field__label">Rate per person / day</span>
+                <span className="field__label">{t.blocks.rateLabel}</span>
                 <input
                   className="income-form__input"
                   // inputMode="decimal" so a phone shows a numeric keypad. The value stays
@@ -94,14 +97,14 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                     patchRow(block.key, { rate: event.target.value })
                   }
-                  placeholder="€ e.g. 12,50"
+                  placeholder={t.blocks.ratePlaceholder}
                 />
               </label>
             </div>
 
             <div className="block__row">
               <label className="field">
-                <span className="field__label">Start date</span>
+                <span className="field__label">{t.blocks.startLabel}</span>
                 <input
                   className="income-form__input"
                   type="date"
@@ -113,7 +116,7 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
               </label>
 
               <label className="field">
-                <span className="field__label">End date</span>
+                <span className="field__label">{t.blocks.endLabel}</span>
                 <input
                   className="income-form__input"
                   type="date"
@@ -127,18 +130,18 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
 
             <p className="block__summary">
               <span className="block__person-days">
-                {personDaysText(blockDraftPersonDays(block))}
+                {personDaysText(blockDraftPersonDays(block), t)}
               </span>
               {/* An em dash while the row is incomplete: "0,00 €" would read as a real
                   (and wrong) amount. */}
-              <strong>{cents === null ? '—' : formatEuros(cents)}</strong>
+              <strong>{cents === null ? '—' : format.euros(cents)}</strong>
             </p>
           </fieldset>
         )
       })}
 
       <button className="blocks__add" type="button" onClick={addRow}>
-        ＋ Add block
+        {t.blocks.add}
       </button>
     </div>
   )

@@ -1,9 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { receivedTotalCents, sourceAmountCents, summarisePools, toReturnCents } from './pools'
+import {
+  everydayPool,
+  receivedTotalCents,
+  sourceAmountCents,
+  summarisePools,
+  toReturnCents,
+} from './pools'
 import type { AmountSource, Expense, PerDiemBlock, PerDiemSource, Pool } from './types'
 
-const everyday: Pool = { id: 'pool-e', campId: 'C', name: 'Everyday', createdAt: 1 }
-const bike: Pool = { id: 'pool-b', campId: 'C', name: 'Bike', createdAt: 2 }
+const everyday: Pool = {
+  id: 'pool-e',
+  campId: 'C',
+  name: 'Everyday',
+  role: 'everyday',
+  createdAt: 1,
+}
+const bike: Pool = { id: 'pool-b', campId: 'C', name: 'Bike', role: 'deposit', createdAt: 2 }
 
 const perDiem: PerDiemSource = {
   id: 'src-pd',
@@ -38,6 +50,7 @@ const blocks: PerDiemBlock[] = [
     id: 'b1',
     campId: 'C',
     sourceId: 'src-pd',
+    variant: 'granted',
     numPersons: 4,
     ratePerPersonDayCents: 1000,
     startDate: '2026-07-01',
@@ -48,6 +61,7 @@ const blocks: PerDiemBlock[] = [
     id: 'b2',
     campId: 'C',
     sourceId: 'other',
+    variant: 'granted',
     numPersons: 100,
     ratePerPersonDayCents: 9999,
     startDate: '2026-07-01',
@@ -81,6 +95,26 @@ describe('sourceAmountCents', () => {
 
   it('is 0 for a per-diem source with no blocks', () => {
     expect(sourceAmountCents(perDiem, [])).toBe(0)
+  })
+
+  it('counts granted blocks only — actual attendance is not money received', () => {
+    const withActual: PerDiemBlock[] = [
+      ...blocks,
+      // Two people dropped out: the same source, half the size, variant 'actual'.
+      { ...blocks[0], id: 'b1-actual', variant: 'actual', numPersons: 2 } as PerDiemBlock,
+    ]
+    expect(sourceAmountCents(perDiem, withActual)).toBe(12_000)
+  })
+})
+
+describe('everydayPool', () => {
+  it('finds the camp’s everyday pool among its pools', () => {
+    expect(everydayPool([bike, everyday], 'C')?.id).toBe('pool-e')
+  })
+
+  it('is undefined when the camp has none, or when the pool belongs to another camp', () => {
+    expect(everydayPool([bike], 'C')).toBeUndefined()
+    expect(everydayPool([everyday], 'OTHER')).toBeUndefined()
   })
 })
 

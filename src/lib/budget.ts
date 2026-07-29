@@ -35,11 +35,13 @@ export function spentTotalCents(expenses: Expense[]): number {
 }
 
 /**
- * Format integer cents as a euro string: 212500 → "2.125,00 €". The only place
- * cents become a fractional value.
+ * Format integer cents as a euro string: 212500 → "2.125,00 €". The only place cents
+ * become a fractional value. The locale is a parameter, not a constant, because `lib/`
+ * must not decide how the UI reads; components go through `useFormat()`. The currency
+ * is always EUR — the money is euros whatever language the UI speaks.
  */
-export function formatEuros(cents: number): string {
-  return new Intl.NumberFormat('de-DE', {
+export function formatEuros(cents: number, locale = 'de-DE'): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'EUR',
   }).format(cents / 100)

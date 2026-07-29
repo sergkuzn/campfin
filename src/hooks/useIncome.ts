@@ -8,6 +8,7 @@ import { useCallback, useEffect, useReducer } from 'react'
 import { loadIncome, saveIncome } from '../db/incomeStorage'
 import type { SaveSourceInput } from '../lib/drafts'
 import { incomeReducer } from '../lib/income'
+import { everydayPool } from '../lib/pools'
 import type { IncomeSource, PerDiemBlock, Pool } from '../lib/types'
 
 const newId = () => crypto.randomUUID()
@@ -37,7 +38,15 @@ export function useIncome() {
 
     const pool: Pool | undefined =
       input.pool.mode === 'new'
-        ? { id: newId(), campId: input.campId, name: input.pool.name, createdAt: now }
+        ? {
+            id: newId(),
+            campId: input.campId,
+            name: input.pool.name,
+            // A pool created by saving a source is never the everyday one — that pool is
+            // born with the camp. A deposit gets its own; anything else is earmarked.
+            role: input.kind === 'deposit' ? 'deposit' : 'earmarked',
+            createdAt: now,
+          }
         : undefined
     const poolId = pool?.id ?? (input.pool.mode === 'existing' ? input.pool.poolId : '')
 
@@ -59,6 +68,29 @@ export function useIncome() {
     dispatch({ type: 'sourceSaved', source, blocks, pool })
   }, [])
 
+  /**
+   * Give every camp in `campIds` an everyday pool if it hasn't got one — new camps, and
+   * camps migrated from before pools had roles. Idempotent: when nothing is missing it
+   * dispatches nothing, so calling it from an effect on every render is safe.
+   */
+  const ensureEverydayPools = useCallback(
+    (campIds: string[], name: string): void => {
+      const missing = campIds.filter((campId) => everydayPool(state.pools, campId) === undefined)
+      if (missing.length === 0) return
+
+      const now = Date.now()
+      const pools: Pool[] = missing.map((campId) => ({
+        id: newId(),
+        campId,
+        name,
+        role: 'everyday',
+        createdAt: now,
+      }))
+      dispatch({ type: 'everydayPoolsEnsured', pools })
+    },
+    [state.pools],
+  )
+
   const deleteSource = useCallback((sourceId: string): void => {
     dispatch({ type: 'sourceDeleted', sourceId })
   }, [])
@@ -71,5 +103,5 @@ export function useIncome() {
     dispatch({ type: 'poolDeleted', poolId })
   }, [])
 
-  return { ...state, saveSource, deleteSource, renamePool, deletePool }
+  return { ...state, ensureEverydayPools, saveSource, deleteSource, renamePool, deletePool }
 }

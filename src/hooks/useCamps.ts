@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import { loadCamps, saveCamps } from '../db/storage'
+import { useT } from '../i18n'
 import { campNameExists, campsReducer } from '../lib/camps'
 import { generateJoinCode } from '../lib/joinCode'
 import type { Camp } from '../lib/types'
@@ -36,6 +37,10 @@ export function useCamps(): UseCamps {
   // component can render it as a message and it clears itself on the next attempt.
   const [error, setError] = useState<string | null>(null)
 
+  // A hook may call other hooks: the message is user-facing text, so it comes from the
+  // dictionary rather than a literal, exactly as in a component.
+  const t = useT()
+
   // An effect synchronising with an external system — localStorage is outside React.
   // It re-runs whenever `camps` changes identity, mirroring the list back to storage.
   useEffect(() => {
@@ -50,7 +55,7 @@ export function useCamps(): UseCamps {
     (name: string): Camp | null => {
       const trimmed = name.trim()
       if (campNameExists(camps, trimmed)) {
-        setError(`A camp named "${trimmed}" already exists.`)
+        setError(t.camps.nameTaken(trimmed))
         return null
       }
       setError(null)
@@ -58,20 +63,20 @@ export function useCamps(): UseCamps {
       dispatch({ type: 'created', camp })
       return camp
     },
-    [camps],
+    [camps, t.camps],
   )
 
   const renameCamp = useCallback(
     (campId: string, name: string): void => {
       const trimmed = name.trim()
       if (campNameExists(camps, trimmed, campId)) {
-        setError(`A camp named "${trimmed}" already exists.`)
+        setError(t.camps.nameTaken(trimmed))
         return
       }
       setError(null)
       dispatch({ type: 'renamed', campId, name: trimmed })
     },
-    [camps],
+    [camps, t.camps],
   )
 
   const deleteCamp = useCallback((campId: string): void => {

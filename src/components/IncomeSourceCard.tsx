@@ -1,7 +1,7 @@
-import { blockCents, blockPersonDays, formatEuros } from '../lib/budget'
+import { useFormat, useT } from '../i18n'
+import { blockCents, blockPersonDays } from '../lib/budget'
 import { dayCount } from '../lib/dates'
 import type { IncomeSource, PerDiemBlock } from '../lib/types'
-import { incomeType } from './incomeTypes'
 
 type Props = {
   source: IncomeSource
@@ -22,6 +22,9 @@ export function IncomeSourceCard({
   onEdit,
   onDelete,
 }: Props) {
+  const t = useT()
+  const format = useFormat()
+
   return (
     <article className="card">
       <header className="card__header">
@@ -29,8 +32,8 @@ export function IncomeSourceCard({
           🔒
         </span>
         <span className="card__name">{source.name}</span>
-        <span className="card__kind">{incomeType(source.kind).label}</span>
-        <span className="card__amount">{formatEuros(amountCents)}</span>
+        <span className="card__kind">{t.income.kinds[source.kind].label}</span>
+        <span className="card__amount">{format.euros(amountCents)}</span>
       </header>
 
       {blocks.map((block) => {
@@ -39,9 +42,9 @@ export function IncomeSourceCard({
         return (
           <div key={block.id} className="card__block">
             <p className="card__block-row card__block-row--head">
-              <span>{block.label ?? 'Block'}</span>
+              <span>{block.label ?? t.blocks.fallbackLabel}</span>
               <strong>
-                {formatEuros(
+                {format.euros(
                   blockCents(
                     block.numPersons,
                     block.ratePerPersonDayCents,
@@ -53,17 +56,15 @@ export function IncomeSourceCard({
             </p>
             <p className="card__block-row">
               <span>
-                {block.numPersons} ppl × {formatEuros(block.ratePerPersonDayCents)}/day
+                {t.blocks.peopleAtRate(block.numPersons, format.euros(block.ratePerPersonDayCents))}
               </span>
-              <span>{personDays} person-days</span>
+              <span>{t.blocks.personDays(personDays)}</span>
             </p>
             <p className="card__block-row">
               <span>
                 {block.startDate} – {block.endDate}
               </span>
-              <span>
-                {days} {days === 1 ? 'day' : 'days'}
-              </span>
+              <span>{t.blocks.days(days)}</span>
             </p>
           </div>
         )
@@ -71,10 +72,10 @@ export function IncomeSourceCard({
 
       <div className="card__actions">
         <button className="card__button" type="button" onClick={onEdit} disabled={disabled}>
-          Edit
+          {t.income.edit}
         </button>
         <button className="card__button" type="button" onClick={onDelete} disabled={disabled}>
-          Delete
+          {t.income.delete}
         </button>
       </div>
     </article>

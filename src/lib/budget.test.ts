@@ -12,6 +12,7 @@ const block = (over: Partial<PerDiemBlock>): PerDiemBlock => ({
   id: 'b',
   campId: 'c',
   sourceId: 'pd',
+  variant: 'granted',
   numPersons: 1,
   ratePerPersonDayCents: 1200,
   startDate: '2026-07-01',
@@ -89,5 +90,11 @@ describe('formatEuros', () => {
     const s = formatEuros(212_500)
     expect(s).toContain('2.125')
     expect(s).toContain('€')
+  })
+
+  it('groups and separates by the locale it is given', () => {
+    const s = formatEuros(212_500, 'en-GB')
+    expect(s).toContain('2,125')
+    expect(s).toContain('€') // the currency is EUR whatever the language
   })
 })

@@ -1,5 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { dayCount, eachDay, isWithin } from './dates'
+import { dayCount, eachDay, isWithin, todayIso, toIsoDate } from './dates'
+
+describe('toIsoDate', () => {
+  // `new Date(y, m, d, h, min)` builds a *local* time, so these hold in any timezone —
+  // which is the whole point: toISOString() would answer "2026-07-06" east of UTC.
+  it('uses local date parts, not UTC ones', () => {
+    expect(toIsoDate(new Date(2026, 6, 5, 23, 30))).toBe('2026-07-05')
+    expect(toIsoDate(new Date(2026, 6, 5, 0, 30))).toBe('2026-07-05')
+  })
+
+  it('pads month and day to two digits', () => {
+    expect(toIsoDate(new Date(2026, 0, 1, 12, 0))).toBe('2026-01-01')
+  })
+
+  it('todayIso reads the clock through it', () => {
+    expect(todayIso()).toBe(toIsoDate(new Date()))
+  })
+})
 
 describe('dayCount', () => {
   it('is inclusive: a single day counts as 1', () => {
