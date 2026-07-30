@@ -7,9 +7,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import { db } from '../db/instant'
 import * as movementsDb from '../db/movementsDb'
-import { mapRows, toMovement } from '../db/rows'
 import { useT } from '../i18n'
 import type { SaveMovementInput } from '../lib/movements'
+import { mapRows, toMovement } from '../lib/rows'
 import type { Movement } from '../lib/types'
 
 export type UseMovements = {

@@ -63,7 +63,6 @@ export const en = {
     title: 'Share this camp',
     hint: 'The other leader types this code into their phone.',
     members: (count: number) => `${count} ${count === 1 ? 'leader' : 'leaders'} share this camp.`,
-    export: 'Export JSON',
   },
 
   /** Anything the database refuses. A write that only queues offline says nothing here. */
@@ -79,6 +78,14 @@ export const en = {
     create: 'Create',
     empty: 'No camps yet. Create one above.',
     nameTaken: (name: string) => `A camp named "${name}" already exists.`,
+    /** Restoring an exported dump. It always lands as a *new* camp, never a merge. */
+    import: '⤒ Restore from a file',
+    importHint: 'Reads a JSON file exported from campfin and adds it as a new camp.',
+    importFailed: {
+      json: 'That file is not readable — pick the .json file campfin exported.',
+      format: 'That file is not a campfin export.',
+      version: 'That file was written by a newer version of campfin. Update this app first.',
+    },
     status: {
       draft: 'No dates yet',
       upcoming: 'Upcoming',
@@ -324,6 +331,60 @@ export const en = {
     toReturn: (amount: string) => `${amount} goes back`,
     volunteers: 'Volunteer money to hand over',
     volunteerCount: (n: number) => `${n} ${n === 1 ? 'handover' : 'handovers'}`,
+  },
+
+  /**
+   * The end-of-camp sheet. Every row says *why* an amount is on it — the sheet is read once,
+   * by someone who has to justify the transfer back to the organisation.
+   */
+  settlement: {
+    title: 'Settle up',
+    back: '← Back to camp',
+    open: 'Settle up →',
+    /** The dashboard headline above the button. */
+    toReturn: 'To return',
+    intro: 'What goes back, and where each amount comes from.',
+    columnCategory: 'Category',
+    columnAmount: 'Amount',
+    columnWhy: 'Why',
+    received: 'Received',
+    spent: 'Spent',
+    total: 'Total to return',
+    empty: 'Nothing goes back — every pot is spent to the cent.',
+    rows: {
+      poolUnspent: (pool: string) => `${pool} — unspent`,
+      poolUnusable: (pool: string) => `${pool} — not ours to spend`,
+      depositReturn: (pool: string) => `Deposit ${pool} — coming back`,
+      volunteer: 'Volunteer money to hand over',
+    },
+    why: {
+      poolUnspent: 'What arrived, minus what was spent from it',
+      poolUnusable: 'Granted for people who never came',
+      depositReturn: 'The deposit, minus what was kept for damage',
+      volunteer: 'Collected from volunteers, passed on to the organisation',
+    },
+    warningsTitle: 'Check these before you transfer',
+    warnings: {
+      depositAtVendor: (pool: string, amount: string) =>
+        `${amount} of ${pool} is still with the counterparty — get it back first.`,
+      poolOverspent: (pool: string, amount: string) => `${pool} is ${amount} over budget.`,
+      overAttended: (pool: string, amount: string) =>
+        `${pool}: ${amount} more was used than granted — more people came than were funded.`,
+    },
+    exportJson: '⤓ Export JSON',
+    exportCsv: '⤓ Export CSV',
+    print: '⎙ Print',
+    /** Column headings inside the CSV file, for whoever opens it in a spreadsheet. */
+    csv: {
+      category: 'Category',
+      amount: 'Amount (EUR)',
+      why: 'Why',
+      receiptsTitle: 'Receipts',
+      date: 'Date',
+      pool: 'Pool',
+      name: 'What',
+      note: 'Note',
+    },
   },
 
   poolSelect: {

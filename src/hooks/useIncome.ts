@@ -10,10 +10,10 @@
 import { useCallback, useMemo, useState } from 'react'
 import * as incomeDb from '../db/incomeDb'
 import { db } from '../db/instant'
-import { mapRows, toBlock, toPool, toSource } from '../db/rows'
 import { useT } from '../i18n'
 import type { SaveBlocksInput, SaveSourceInput } from '../lib/drafts'
 import type { IncomeState } from '../lib/income'
+import { mapRows, toBlock, toPool, toSource } from '../lib/rows'
 import type { IncomeSource, PerDiemBlock, Pool } from '../lib/types'
 
 export type UseIncome = IncomeState & {

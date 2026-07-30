@@ -1,9 +1,10 @@
 import './CampDashboard.css'
-import { useT } from '../i18n'
+import { useFormat, useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus } from '../lib/camps'
 import type { CustodyReading } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
+import type { Settlement } from '../lib/settlement'
 import type { Camp } from '../lib/types'
 import { AllowedToday } from './AllowedToday'
 import { BurnChart } from './BurnChart'
@@ -32,13 +33,15 @@ type Props = {
   hasExpenses: boolean
   /** Cash held rather than spent: the deposits and the volunteer money. */
   custody: CustodyReading
+  /** The end-of-camp reading. Only its total shows here; the sheet explains it. */
+  settlement: Settlement
   onBack: () => void
   onOpenIncome: () => void
   onOpenReceipts: () => void
   onOpenMovements: () => void
+  onOpenSettlement: () => void
   onRename: (campId: string, name: string) => void
   onDelete: (campId: string) => void
-  onExport: () => void
 }
 
 /**
@@ -55,15 +58,17 @@ export function CampDashboard({
   error,
   hasExpenses,
   custody,
+  settlement,
   onBack,
   onOpenIncome,
   onOpenReceipts,
   onOpenMovements,
+  onOpenSettlement,
   onRename,
   onDelete,
-  onExport,
 }: Props) {
   const t = useT()
+  const format = useFormat()
 
   const handleRename = () => {
     const next = window.prompt(t.dashboard.renamePrompt, camp.name)
@@ -163,6 +168,20 @@ export function CampDashboard({
         </button>
       </section>
 
+      <section
+        className={
+          settlement.toReturnCents > 0
+            ? 'dashboard__slot dashboard__slot--filled'
+            : 'dashboard__slot'
+        }
+      >
+        <p className="dashboard__slot-title">{t.settlement.toReturn}</p>
+        <p className="dashboard__to-return">{format.euros(settlement.toReturnCents)}</p>
+        <button className="dashboard__slot-link" type="button" onClick={onOpenSettlement}>
+          {t.settlement.open}
+        </button>
+      </section>
+
       {error !== null && (
         <p className="dashboard__error" role="alert">
           {error}
@@ -172,9 +191,6 @@ export function CampDashboard({
       <div className="dashboard__actions">
         <button className="dashboard__action" type="button" onClick={handleRename}>
           {t.dashboard.rename}
-        </button>
-        <button className="dashboard__action" type="button" onClick={onExport}>
-          {t.share.export}
         </button>
         {isAdmin && (
           <button

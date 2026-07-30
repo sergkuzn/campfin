@@ -9,9 +9,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import * as expensesDb from '../db/expensesDb'
 import { db } from '../db/instant'
-import { mapRows, toExpense } from '../db/rows'
 import { useT } from '../i18n'
 import type { SaveExpenseInput } from '../lib/expenses'
+import { mapRows, toExpense } from '../lib/rows'
 import type { Expense } from '../lib/types'
 
 export type UseExpenses = {

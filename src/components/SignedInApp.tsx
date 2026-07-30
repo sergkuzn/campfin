@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { downloadJson } from '../db/download'
+import { downloadCsv, downloadJson } from '../db/download'
 import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
@@ -11,11 +11,13 @@ import { buildCampExport, exportFileName } from '../lib/exportJson'
 import { isCampAdmin, memberCount } from '../lib/members'
 import { custodyReading } from '../lib/movements'
 import { depositPools, everydayPool, summarisePools } from '../lib/pools'
+import { computeSettlement } from '../lib/settlement'
 import { CampDashboard } from './CampDashboard'
 import { CampList } from './CampList'
 import { IncomeSetup } from './IncomeSetup'
 import { MovementsScreen } from './MovementsScreen'
 import { ReceiptsScreen } from './ReceiptsScreen'
+import { SettlementSheet } from './SettlementSheet'
 
 /**
  * Three screens, no router. `View` is a discriminated union rather than two independent
@@ -29,6 +31,7 @@ type View =
   | { screen: 'income'; campId: string }
   | { screen: 'receipts'; campId: string }
   | { screen: 'movements'; campId: string }
+  | { screen: 'settlement'; campId: string }
 
 type Props = {
   session: Session
@@ -40,8 +43,17 @@ type Props = {
  * has to cope with "no user yet" would leak that state into every screen.
  */
 export function SignedInApp({ session }: Props) {
-  const { camps, memberships, isLoading, error, createCamp, renameCamp, deleteCamp, clearError } =
-    useCamps(session.userId)
+  const {
+    camps,
+    memberships,
+    isLoading,
+    error,
+    createCamp,
+    importCamp,
+    renameCamp,
+    deleteCamp,
+    clearError,
+  } = useCamps(session.userId)
   const [view, setView] = useState<View>({ screen: 'list' })
 
   // `find` returns `Camp | undefined`; if the open camp was just deleted — by us, or by the
@@ -70,6 +82,19 @@ export function SignedInApp({ session }: Props) {
     [summaries, movements.movements],
   )
   const deposits = useMemo(() => depositPools(summaries), [summaries])
+
+  // What goes back at the end. Derived from the same summaries as the bars, so the
+  // dashboard headline and the sheet behind it can never quote different totals.
+  const settlement = useMemo(
+    () =>
+      computeSettlement({
+        summaries,
+        blocks,
+        expenses: expenses.expenses,
+        movements: movements.movements,
+      }),
+    [summaries, blocks, expenses.expenses, movements.movements],
+  )
 
   // One clock read per render, shared by the status pill, the burn math and the chart's
   // "today" line. A camp left open across midnight keeps yesterday's date until something
@@ -120,7 +145,7 @@ export function SignedInApp({ session }: Props) {
     setView({ screen: 'list' })
   }
 
-  const handleExport = () => {
+  const handleExportJson = () => {
     if (openCamp === undefined) return
     const exportedAt = new Date().toISOString()
     const dump = buildCampExport(
@@ -130,7 +155,22 @@ export function SignedInApp({ session }: Props) {
       movements.movements,
       exportedAt,
     )
-    downloadJson(exportFileName(openCamp, exportedAt), JSON.stringify(dump, null, 2))
+    downloadJson(exportFileName(openCamp, exportedAt, 'json'), JSON.stringify(dump, null, 2))
+  }
+
+  // The sheet builds the CSV text, because the column labels are its business; the
+  // filename and the download are the app's.
+  const handleExportCsv = (text: string) => {
+    if (openCamp === undefined) return
+    downloadCsv(exportFileName(openCamp, new Date().toISOString(), 'csv'), text)
+  }
+
+  const handleImport = (text: string): boolean => {
+    const camp = importCamp(text)
+    // Null means the file was refused; the reason is already in `error` on the list.
+    if (camp === null) return false
+    setView({ screen: 'dashboard', campId: camp.id })
+    return true
   }
 
   if (openCamp === undefined) {
@@ -142,6 +182,7 @@ export function SignedInApp({ session }: Props) {
         error={error}
         onOpen={handleOpen}
         onCreate={handleCreate}
+        onImport={handleImport}
       />
     )
   }
@@ -169,6 +210,20 @@ export function SignedInApp({ session }: Props) {
     )
   }
 
+  if (view.screen === 'settlement') {
+    return (
+      <SettlementSheet
+        camp={openCamp}
+        settlement={settlement}
+        expenses={expenses.expenses}
+        summaries={summaries}
+        onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
+        onExportJson={handleExportJson}
+        onExportCsv={handleExportCsv}
+      />
+    )
+  }
+
   if (view.screen === 'income') {
     return (
       <IncomeSetup
@@ -191,13 +246,14 @@ export function SignedInApp({ session }: Props) {
       error={error ?? income.error ?? expenses.error ?? movements.error}
       hasExpenses={expenses.expenses.length > 0}
       custody={custody}
+      settlement={settlement}
       onBack={handleBackToList}
       onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
       onOpenReceipts={() => setView({ screen: 'receipts', campId: openCamp.id })}
       onOpenMovements={() => setView({ screen: 'movements', campId: openCamp.id })}
+      onOpenSettlement={() => setView({ screen: 'settlement', campId: openCamp.id })}
       onRename={renameCamp}
       onDelete={handleDelete}
-      onExport={handleExport}
     />
   )
 }

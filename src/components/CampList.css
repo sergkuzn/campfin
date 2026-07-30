@@ -62,3 +62,47 @@
   letter-spacing: 0.05em;
   color: var(--muted);
 }
+
+/* Restoring an exported dump. Last on the screen: it is the escape hatch, not the way in. */
+.camp-list__import {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+/* The label *is* the button — the file input inside it is hidden but still focusable, so
+   keyboard and screen-reader users reach the same control. */
+.camp-list__import-button {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.camp-list__import-button:hover {
+  border-color: var(--accent);
+}
+
+.camp-list__import-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.camp-list__import-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.camp-list__import-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--danger);
+}

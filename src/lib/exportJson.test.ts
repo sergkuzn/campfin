@@ -90,6 +90,12 @@ describe('exportFileName', () => {
     )
   })
 
+  it('keeps the stem when the accounting CSV is exported next to it', () => {
+    expect(exportFileName(camp, '2026-07-29T10:00:00.000Z', 'csv')).toBe(
+      'campfin-Moorwerder-Sommercamp-2026-07-29.csv',
+    )
+  })
+
   it('falls back to a usable name when the camp name has no letters', () => {
     expect(exportFileName({ ...camp, name: '!!!' }, '2026-07-29T10:00:00.000Z')).toBe(
       'campfin-camp-2026-07-29.json',

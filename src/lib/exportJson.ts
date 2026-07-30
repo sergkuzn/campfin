@@ -45,9 +45,14 @@ export function buildCampExport(
   }
 }
 
-/** A filename that sorts by date and survives a phone's file picker. */
-export function exportFileName(camp: Camp, exportedAt: string): string {
+/** A filename that sorts by date and survives a phone's file picker. The same stem for
+ *  both exports, so the JSON backup and the CSV for accounting sit next to each other. */
+export function exportFileName(
+  camp: Camp,
+  exportedAt: string,
+  extension: 'json' | 'csv' = 'json',
+): string {
   const day = exportedAt.slice(0, 10) // the date half of an ISO timestamp
   const slug = camp.name.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '') || 'camp'
-  return `campfin-${slug}-${day}.json`
+  return `campfin-${slug}-${day}.${extension}`
 }

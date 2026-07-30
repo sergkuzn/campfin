@@ -1,24 +1,20 @@
 /**
- * The untrusted boundary. A query result is not proof: rows may have been written by an
- * older build, by the other phone running a newer one, or read back from the offline cache.
- * Each mapper validates a row with the guard from `src/lib/`, then picks out exactly the
- * fields the domain type declares — so a nested `members` array from a query never leaks
- * into a `Camp`, and one broken row costs the user that row, not the screen.
+ * The untrusted boundary. Data that claims to be a row is not proof: it may have been
+ * written by an older build, by the other phone running a newer one, read back from the
+ * offline cache, or typed by hand into an exported JSON file. Each mapper validates with
+ * the matching guard, then picks out exactly the fields the domain type declares — so a
+ * nested `members` array from a query never leaks into a `Camp`, and one broken row costs
+ * the user that row, not the screen.
+ *
+ * Pure, and used from both sides: the live queries in `src/hooks/` and the JSON import in
+ * `importJson.ts` face the same problem, so they share one definition of it.
  */
 
-import { isCamp } from '../lib/camps'
-import { isExpense } from '../lib/expenses'
-import { isIncomeSource, isMovement, isPerDiemBlock, isPool } from '../lib/income'
-import { isMembership } from '../lib/members'
-import type {
-  Camp,
-  Expense,
-  IncomeSource,
-  Membership,
-  Movement,
-  PerDiemBlock,
-  Pool,
-} from '../lib/types'
+import { isCamp } from './camps'
+import { isExpense } from './expenses'
+import { isIncomeSource, isMovement, isPerDiemBlock, isPool } from './income'
+import { isMembership } from './members'
+import type { Camp, Expense, IncomeSource, Membership, Movement, PerDiemBlock, Pool } from './types'
 
 /**
  * An optional attribute nobody has set can come back as `null`, while the domain types

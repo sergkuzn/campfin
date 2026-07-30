@@ -14,9 +14,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import * as campsDb from '../db/campsDb'
 import { db } from '../db/instant'
-import { mapRows, toCamp } from '../db/rows'
 import { useT } from '../i18n'
 import { normalizeJoinCode, PREFIX_LENGTH, SUFFIX_LENGTH } from '../lib/joinCode'
+import { mapRows, toCamp } from '../lib/rows'
 import type { Camp } from '../lib/types'
 
 /** `idle` = nothing to look up yet; the rest describe a complete code. */

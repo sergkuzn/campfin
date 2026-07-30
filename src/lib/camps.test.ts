@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { campNameExists, campStatus, isCamp, sortCampsByRecent } from './camps'
+import { campNameExists, campStatus, isCamp, sortCampsByRecent, uniqueCampName } from './camps'
 import type { Camp } from './types'
 
 const camp = (over: Partial<Camp> = {}): Camp => ({
@@ -82,6 +82,24 @@ describe('campNameExists', () => {
   })
   it('still catches a collision with a different camp when renaming', () => {
     expect(campNameExists([moor, wald], 'Waldcamp', 'MOOR-1')).toBe(true)
+  })
+})
+
+describe('uniqueCampName', () => {
+  const moor = camp({ id: 'MOOR-1', name: 'Moorwerder' })
+  const moor2 = camp({ id: 'MOOR-2', name: 'Moorwerder (2)' })
+
+  it('leaves a free name alone', () => {
+    expect(uniqueCampName([moor], 'Waldcamp')).toBe('Waldcamp')
+  })
+  it('suffixes a taken name', () => {
+    expect(uniqueCampName([moor], 'Moorwerder')).toBe('Moorwerder (2)')
+  })
+  it('keeps counting past a suffix that is taken too', () => {
+    expect(uniqueCampName([moor, moor2], 'Moorwerder')).toBe('Moorwerder (3)')
+  })
+  it('has nothing to avoid in an empty list', () => {
+    expect(uniqueCampName([], 'Moorwerder')).toBe('Moorwerder')
   })
 })
 

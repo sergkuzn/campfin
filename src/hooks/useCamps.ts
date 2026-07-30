@@ -11,10 +11,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import * as campsDb from '../db/campsDb'
 import { db } from '../db/instant'
-import { mapRows, toCamp, toMembership } from '../db/rows'
 import { useT } from '../i18n'
-import { campNameExists } from '../lib/camps'
+import { campNameExists, uniqueCampName } from '../lib/camps'
+import { parseCampExport } from '../lib/importJson'
 import { generateJoinCode } from '../lib/joinCode'
+import { mapRows, toCamp, toMembership } from '../lib/rows'
 import type { Camp, Membership } from '../lib/types'
 
 export type UseCamps = {
@@ -26,6 +27,9 @@ export type UseCamps = {
   error: string | null
   /** Returns the created camp so the caller can navigate straight into it, or null if the name is taken. */
   createCamp: (name: string) => Camp | null
+  /** Restores an exported dump as a new camp. Null when the file was not readable — the
+   *  reason lands in `error`. */
+  importCamp: (text: string) => Camp | null
   renameCamp: (campId: string, name: string) => void
   deleteCamp: (campId: string) => void
   /** Dismiss the current error — call it when navigating away from the input that raised it. */
@@ -81,6 +85,34 @@ export function useCamps(userId: string): UseCamps {
     [camps, t, userId],
   )
 
+  const importCamp = useCallback(
+    (text: string): Camp | null => {
+      const result = parseCampExport(text)
+      // The union means the failure branch has an `issue` and no dump, so there is no way
+      // to import a file that was never parsed.
+      if (!result.ok) {
+        setError(t.camps.importFailed[result.issue])
+        return null
+      }
+      setError(null)
+
+      // Restoring a dump next to the camp it came from is the normal case — a suffix beats
+      // refusing the file, and the name is editable afterwards anyway.
+      const name = uniqueCampName(camps, result.dump.camp.name)
+      const { camp, done } = campsDb.importCamp({
+        parsed: result.dump,
+        name,
+        // A fresh code: the old camp, if it still exists, keeps its own.
+        joinCode: generateJoinCode(name),
+        userId,
+        now: Date.now(),
+      })
+      void done.catch(() => setError(t.sync.createFailed))
+      return camp
+    },
+    [camps, t, userId],
+  )
+
   const renameCamp = useCallback(
     (campId: string, name: string): void => {
       const trimmed = name.trim()
@@ -113,6 +145,7 @@ export function useCamps(userId: string): UseCamps {
     // else on screen is trustworthy either.
     error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
     createCamp,
+    importCamp,
     renameCamp,
     deleteCamp,
     clearError,
