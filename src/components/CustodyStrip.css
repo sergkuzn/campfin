@@ -1,0 +1,51 @@
+.custody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.custody__row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.custody__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+}
+
+.custody__name {
+  font-weight: 600;
+}
+
+.custody__amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.custody__line {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Still with a counterparty: not wrong, but the one thing that has to come back before
+   the camp can settle. */
+.custody__line--out {
+  color: var(--warn);
+}
+
+.custody__line--settled {
+  color: var(--ok);
+}
+
+/* More came back than went out, or money the counterparty kept: both need a second look
+   before the settlement total is believed. */
+.custody__line--odd,
+.custody__line--kept {
+  color: var(--danger);
+}

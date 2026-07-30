@@ -266,6 +266,66 @@ export const en = {
     },
   },
 
+  /**
+   * Cash that changes hands without being spent: a Kaution and volunteers' money. The
+   * wording deliberately avoids "spent" and "budget" — this money is held, not consumed.
+   */
+  movements: {
+    title: 'Deposits & cash',
+    back: '← Back to camp',
+    add: '＋ Add movement',
+    empty: 'Nothing handed over or collected yet.',
+    /** Shown instead of the form when neither kind of movement is possible yet. */
+    noDeposits: 'Add a deposit under income first, or record volunteer money below.',
+    kindLabel: 'What happened?',
+    kinds: {
+      deposit_out: 'Deposit handed over',
+      deposit_in: 'Deposit came back',
+      volunteer_in: 'Volunteer money collected',
+    },
+    dateLabel: 'Date',
+    nameLabel: 'Who?',
+    namePlaceholder: 'e.g. Bike shop',
+    amountLabel: 'Amount',
+    amountPlaceholder: '€ e.g. 200,00',
+    poolLabel: 'Which deposit',
+    noteLabel: 'Note (optional)',
+    notePlaceholder: 'e.g. paid in cash',
+    save: 'Save',
+    cancel: 'Cancel',
+    edit: 'Edit',
+    delete: 'Delete',
+    editAction: (name: string) => `Edit ${name}`,
+    deleteAction: (name: string) => `Delete ${name}`,
+    count: (n: number) => `${n} ${n === 1 ? 'movement' : 'movements'}`,
+    unknownPool: 'Unknown deposit',
+    deleteTitle: (name: string) => `Delete "${name}"?`,
+    deleteLine: (kind: string, amount: string) => `${kind}, ${amount}.`,
+    confirmDelete: 'Delete',
+    issues: {
+      name: 'Say who the money went to or came from.',
+      amount: 'Enter an amount in euros, e.g. 200,00.',
+      date: 'Pick the date this happened.',
+      pool: 'Choose which deposit this belongs to.',
+    },
+  },
+
+  /** The dashboard strip: where the custody money currently sits. */
+  custody: {
+    title: 'Deposits & cash',
+    empty: 'No deposits and no volunteer money.',
+    open: 'Deposits & cash →',
+    /** One deposit pool, in the order the money moves: out to a vendor, kept, coming back. */
+    atVendor: (amount: string) => `${amount} at the counterparty`,
+    settled: 'All back with you',
+    /** More came back than went out — a bookkeeping mistake worth naming. */
+    overReturned: (amount: string) => `${amount} more came back than went out`,
+    forfeited: (amount: string) => `${amount} kept for damage`,
+    toReturn: (amount: string) => `${amount} goes back`,
+    volunteers: 'Volunteer money to hand over',
+    volunteerCount: (n: number) => `${n} ${n === 1 ? 'handover' : 'handovers'}`,
+  },
+
   poolSelect: {
     label: 'Pool',
     newOption: '＋ New pool…',

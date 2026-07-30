@@ -3,15 +3,18 @@ import { downloadJson } from '../db/download'
 import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
+import { useMovements } from '../hooks/useMovements'
 import type { Session } from '../hooks/useSession'
 import { computeBurn, emptyBurn } from '../lib/burn'
 import { todayIso } from '../lib/dates'
 import { buildCampExport, exportFileName } from '../lib/exportJson'
 import { isCampAdmin, memberCount } from '../lib/members'
-import { everydayPool, summarisePools } from '../lib/pools'
+import { custodyReading } from '../lib/movements'
+import { depositPools, everydayPool, summarisePools } from '../lib/pools'
 import { CampDashboard } from './CampDashboard'
 import { CampList } from './CampList'
 import { IncomeSetup } from './IncomeSetup'
+import { MovementsScreen } from './MovementsScreen'
 import { ReceiptsScreen } from './ReceiptsScreen'
 
 /**
@@ -25,6 +28,7 @@ type View =
   | { screen: 'dashboard'; campId: string }
   | { screen: 'income'; campId: string }
   | { screen: 'receipts'; campId: string }
+  | { screen: 'movements'; campId: string }
 
 type Props = {
   session: Session
@@ -46,9 +50,10 @@ export function SignedInApp({ session }: Props) {
   const openCamp = view.screen === 'list' ? undefined : camps.find((c) => c.id === view.campId)
   const openCampId = openCamp?.id ?? ''
 
-  // Two queries per open camp: passing '' skips them entirely while the list is showing.
+  // Three queries per open camp: passing '' skips them entirely while the list is showing.
   const income = useIncome(openCampId)
   const expenses = useExpenses(openCampId)
+  const movements = useMovements(openCampId)
 
   const { pools, sources, blocks } = income
   // The one place income and spending meet: every pool total on every screen comes from
@@ -57,6 +62,14 @@ export function SignedInApp({ session }: Props) {
     () => summarisePools(pools, sources, blocks, expenses.expenses),
     [pools, sources, blocks, expenses.expenses],
   )
+
+  // Custody money, computed in one place for the dashboard strip and the movements screen:
+  // two computations of the same deposits could disagree mid-sync.
+  const custody = useMemo(
+    () => custodyReading(summaries, movements.movements),
+    [summaries, movements.movements],
+  )
+  const deposits = useMemo(() => depositPools(summaries), [summaries])
 
   // One clock read per render, shared by the status pill, the burn math and the chart's
   // "today" line. A camp left open across midnight keeps yesterday's date until something
@@ -114,6 +127,7 @@ export function SignedInApp({ session }: Props) {
       openCamp,
       { pools, sources, blocks },
       expenses.expenses,
+      movements.movements,
       exportedAt,
     )
     downloadJson(exportFileName(openCamp, exportedAt), JSON.stringify(dump, null, 2))
@@ -143,6 +157,18 @@ export function SignedInApp({ session }: Props) {
     )
   }
 
+  if (view.screen === 'movements') {
+    return (
+      <MovementsScreen
+        campId={openCamp.id}
+        movements={movements}
+        deposits={deposits}
+        custody={custody}
+        onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
+      />
+    )
+  }
+
   if (view.screen === 'income') {
     return (
       <IncomeSetup
@@ -162,11 +188,13 @@ export function SignedInApp({ session }: Props) {
       memberCount={memberCount(memberships, openCamp.id)}
       isAdmin={isCampAdmin(memberships, openCamp.id, session.userId)}
       isLoading={income.isLoading}
-      error={error ?? income.error ?? expenses.error}
+      error={error ?? income.error ?? expenses.error ?? movements.error}
       hasExpenses={expenses.expenses.length > 0}
+      custody={custody}
       onBack={handleBackToList}
       onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
       onOpenReceipts={() => setView({ screen: 'receipts', campId: openCamp.id })}
+      onOpenMovements={() => setView({ screen: 'movements', campId: openCamp.id })}
       onRename={renameCamp}
       onDelete={handleDelete}
       onExport={handleExport}

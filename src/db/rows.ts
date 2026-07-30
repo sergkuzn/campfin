@@ -8,9 +8,17 @@
 
 import { isCamp } from '../lib/camps'
 import { isExpense } from '../lib/expenses'
-import { isIncomeSource, isPerDiemBlock, isPool } from '../lib/income'
+import { isIncomeSource, isMovement, isPerDiemBlock, isPool } from '../lib/income'
 import { isMembership } from '../lib/members'
-import type { Camp, Expense, IncomeSource, Membership, PerDiemBlock, Pool } from '../lib/types'
+import type {
+  Camp,
+  Expense,
+  IncomeSource,
+  Membership,
+  Movement,
+  PerDiemBlock,
+  Pool,
+} from '../lib/types'
 
 /**
  * An optional attribute nobody has set can come back as `null`, while the domain types
@@ -84,6 +92,18 @@ export function toBlock(row: unknown): PerDiemBlock | null {
     startDate,
     endDate,
   }
+}
+
+export function toMovement(row: unknown): Movement | null {
+  const value = withoutNulls(row)
+  if (!isMovement(value)) return null
+  const { id, campId, name, amountCents, date, note, createdAt } = value
+  const common = { id, campId, name, amountCents, date, note, createdAt }
+  // Narrowing on `kind` is what makes `poolId` visible: copying it unconditionally would
+  // give volunteer money a pool it does not have.
+  return value.kind === 'volunteer_in'
+    ? { ...common, kind: value.kind }
+    : { ...common, kind: value.kind, poolId: value.poolId }
 }
 
 export function toExpense(row: unknown): Expense | null {

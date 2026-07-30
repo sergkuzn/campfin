@@ -104,9 +104,14 @@ export function everydayPool(pools: Pool[], campId: string): Pool | undefined {
 }
 
 /** Pools a receipt may consume from, and the ones that get a spent/left bar. A deposit
- *  is somebody else's money passing through; it gets its own strip in a later stage. */
+ *  is somebody else's money passing through, so it gets the custody strip instead. */
 export function spendablePools(summaries: PoolSummary[]): PoolSummary[] {
   return summaries.filter((s) => s.pool.role !== 'deposit')
+}
+
+/** The other half of that split: one Kaution per pool, each with its own counterparty. */
+export function depositPools(summaries: PoolSummary[]): PoolSummary[] {
+  return summaries.filter((s) => s.pool.role === 'deposit')
 }
 
 /** How full a pool's bar is. `empty` = nothing funded and nothing spent — the bar is a

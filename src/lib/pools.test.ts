@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  depositPools,
   everydayPool,
   poolBar,
   receivedTotalCents,
@@ -274,5 +275,12 @@ describe('spendablePools', () => {
   it('leaves out deposit pools, whose money is not the camp’s to spend', () => {
     const summaries = summarisePools([everyday, bike], [perDiem, kaution], blocks, [])
     expect(spendablePools(summaries).map((s) => s.pool.id)).toEqual(['pool-e'])
+  })
+})
+
+describe('depositPools', () => {
+  it('depositPools returns only deposit-role pools', () => {
+    const summaries = summarisePools([everyday, bike], [perDiem, kaution], blocks, [])
+    expect(depositPools(summaries).map((s) => s.pool.id)).toEqual(['pool-b'])
   })
 })

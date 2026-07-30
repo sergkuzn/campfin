@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { mapRows, toBlock, toCamp, toExpense, toMembership, toPool, toSource } from './rows'
+import {
+  mapRows,
+  toBlock,
+  toCamp,
+  toExpense,
+  toMembership,
+  toMovement,
+  toPool,
+  toSource,
+} from './rows'
 
 const campRow = {
   id: 'c1',
@@ -145,5 +154,40 @@ describe('toExpense', () => {
 
   it('reads an unset note as absent rather than as null', () => {
     expect(toExpense({ ...expenseRow, note: null })?.note).toBeUndefined()
+  })
+})
+
+describe('toMovement', () => {
+  const movementRow = {
+    id: 'mv1',
+    campId: 'c1',
+    poolId: 'p2',
+    kind: 'deposit_out',
+    name: 'Bike shop',
+    amountCents: 20_000,
+    date: '2026-07-02',
+    createdAt: 6,
+    camp: { id: 'c1', name: 'Moorwerder' },
+  }
+
+  it('toMovement rejects a deposit movement with no pool', () => {
+    const { poolId: _dropped, ...rest } = movementRow
+    expect(toMovement(rest)).toBeNull()
+    // The same row as volunteer money is fine — that kind names no pool.
+    expect(toMovement({ ...rest, kind: 'volunteer_in' })?.kind).toBe('volunteer_in')
+  })
+
+  it('toMovement drops a null note and the linked camp', () => {
+    expect(toMovement({ ...movementRow, note: null })).toEqual({
+      id: 'mv1',
+      campId: 'c1',
+      poolId: 'p2',
+      kind: 'deposit_out',
+      name: 'Bike shop',
+      amountCents: 20_000,
+      date: '2026-07-02',
+      note: undefined,
+      createdAt: 6,
+    })
   })
 })

@@ -2,10 +2,12 @@ import './CampDashboard.css'
 import { useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus } from '../lib/camps'
+import type { CustodyReading } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
 import type { Camp } from '../lib/types'
 import { AllowedToday } from './AllowedToday'
 import { BurnChart } from './BurnChart'
+import { CustodyStrip } from './CustodyStrip'
 import { PoolBars } from './PoolBars'
 import { ReceivedTotals } from './ReceivedTotals'
 import { StatusPill } from './StatusPill'
@@ -28,9 +30,12 @@ type Props = {
   /** Whether any receipt exists yet — the bars alone cannot say so, since an
    *  untouched pool and a camp with no receipts look the same. */
   hasExpenses: boolean
+  /** Cash held rather than spent: the deposits and the volunteer money. */
+  custody: CustodyReading
   onBack: () => void
   onOpenIncome: () => void
   onOpenReceipts: () => void
+  onOpenMovements: () => void
   onRename: (campId: string, name: string) => void
   onDelete: (campId: string) => void
   onExport: () => void
@@ -49,9 +54,11 @@ export function CampDashboard({
   isLoading,
   error,
   hasExpenses,
+  custody,
   onBack,
   onOpenIncome,
   onOpenReceipts,
+  onOpenMovements,
   onRename,
   onDelete,
   onExport,
@@ -139,6 +146,20 @@ export function CampDashboard({
         )}
         <button className="dashboard__slot-link" type="button" onClick={onOpenReceipts}>
           {t.dashboard.openReceipts}
+        </button>
+      </section>
+
+      <section
+        className={
+          custody.statuses.length > 0 || custody.volunteerHeldCents > 0
+            ? 'dashboard__slot dashboard__slot--filled'
+            : 'dashboard__slot'
+        }
+      >
+        <p className="dashboard__slot-title">{t.custody.title}</p>
+        <CustodyStrip custody={custody} />
+        <button className="dashboard__slot-link" type="button" onClick={onOpenMovements}>
+          {t.custody.open}
         </button>
       </section>
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildCampExport, exportFileName } from './exportJson'
 import type { IncomeState } from './income'
-import type { Camp, Expense, PerDiemBlock, Pool } from './types'
+import type { Camp, Expense, Movement, PerDiemBlock, Pool } from './types'
 
 const camp: Camp = {
   id: 'c1',
@@ -39,9 +39,20 @@ const expense: Expense = {
   createdAt: 2,
 }
 
+const movement: Movement = {
+  id: 'mv1',
+  campId: 'c1',
+  poolId: 'p2',
+  kind: 'deposit_out',
+  name: 'Bike shop',
+  amountCents: 20_000,
+  date: '2026-07-02',
+  createdAt: 3,
+}
+
 describe('buildCampExport', () => {
   it('includes the camp with its pools, sources, blocks and expenses', () => {
-    const dump = buildCampExport(camp, state, [expense], '2026-07-29T10:00:00.000Z')
+    const dump = buildCampExport(camp, state, [expense], [], '2026-07-29T10:00:00.000Z')
     expect(dump.camp).toEqual(camp)
     expect(dump.pools).toEqual([pool])
     expect(dump.sources.map((s) => s.id)).toEqual(['s1'])
@@ -49,17 +60,19 @@ describe('buildCampExport', () => {
     expect(dump.expenses).toEqual([expense])
   })
 
-  it('stamps format, version and export date', () => {
-    const dump = buildCampExport(camp, state, [], '2026-07-29T10:00:00.000Z')
+  it('the dump is version 5 and carries the camp’s movements', () => {
+    const dump = buildCampExport(camp, state, [], [movement], '2026-07-29T10:00:00.000Z')
     expect(dump.format).toBe('campfin.camp')
-    expect(dump.version).toBe(4)
+    expect(dump.version).toBe(5)
     expect(dump.exportedAt).toBe('2026-07-29T10:00:00.000Z')
+    expect(dump.movements).toEqual([movement])
   })
 
   it('survives a camp with no income at all', () => {
     const dump = buildCampExport(
       camp,
       { pools: [], sources: [], blocks: [] },
+      [],
       [],
       '2026-07-29T10:00:00.000Z',
     )
