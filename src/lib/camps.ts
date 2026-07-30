@@ -1,7 +1,6 @@
 /**
- * Pure camp-list logic: validation, ordering, lifecycle status, and the reducer
- * that owns the camp list. No React, no storage, no `Date.now()` — "today" and
- * new rows are always passed in.
+ * Pure camp-list logic: the row guard, validation, ordering and lifecycle status.
+ * No React, no storage, no `Date.now()` — "today" and new rows are always passed in.
  */
 
 import { isWithin } from './dates'
@@ -21,7 +20,12 @@ export function isCamp(value: unknown): value is Camp {
     return false
   }
   const c = value as Record<string, unknown>
-  if (typeof c.id !== 'string' || typeof c.name !== 'string' || typeof c.createdAt !== 'number') {
+  if (
+    typeof c.id !== 'string' ||
+    typeof c.name !== 'string' ||
+    typeof c.joinCode !== 'string' ||
+    typeof c.createdAt !== 'number'
+  ) {
     return false
   }
   if (c.startDate !== undefined && typeof c.startDate !== 'string') {
@@ -61,33 +65,6 @@ export function campStatus(camp: Camp, todayIso: string): CampStatus {
   return 'finished'
 }
 
-// --- The reducer -----------------------------------------------------------
-// A *reducer* is `(state, action) => newState`: one pure function that owns every
-// legal transition of the camp list. React's `useReducer` calls it for you. The
-// action is a discriminated union on `type`, so `switch (action.type)` narrows to
-// exactly the fields that action carries — the same trick as IncomeSource's `kind`.
-
-export type CampsAction =
-  | { type: 'loaded'; camps: Camp[] }
-  | { type: 'created'; camp: Camp }
-  | { type: 'renamed'; campId: string; name: string }
-  | { type: 'deleted'; campId: string }
-
-export function campsReducer(state: Camp[], action: CampsAction): Camp[] {
-  switch (action.type) {
-    case 'loaded':
-      return action.camps
-    case 'created':
-      return [...state, action.camp]
-    case 'renamed':
-      return state.map((camp) =>
-        camp.id === action.campId ? { ...camp, name: action.name } : camp,
-      )
-    case 'deleted':
-      return state.filter((camp) => camp.id !== action.campId)
-    default: {
-      const _never: never = action
-      return _never
-    }
-  }
-}
+// The camp list itself is no longer local state: InstantDB owns it, a live query reads it
+// and `src/db/campsDb.ts` writes it. What stays here is the pure logic a screen needs
+// before or after such a write — validation, ordering and status.

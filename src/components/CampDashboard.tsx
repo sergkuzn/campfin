@@ -11,11 +11,17 @@ type Props = {
   camp: Camp
   /** This camp's pools only — the parent has already filtered by campId. */
   summaries: PoolSummary[]
+  /** How many leaders share this camp. A count, never names. */
+  memberCount: number
+  /** Only the camp's creator is offered the delete button. */
+  isAdmin: boolean
+  isLoading: boolean
   error: string | null
   onBack: () => void
   onOpenIncome: () => void
   onRename: (campId: string, name: string) => void
   onDelete: (campId: string) => void
+  onExport: () => void
 }
 
 /**
@@ -24,11 +30,15 @@ type Props = {
 export function CampDashboard({
   camp,
   summaries,
+  memberCount,
+  isAdmin,
+  isLoading,
   error,
   onBack,
   onOpenIncome,
   onRename,
   onDelete,
+  onExport,
 }: Props) {
   const t = useT()
 
@@ -55,9 +65,13 @@ export function CampDashboard({
         <StatusPill status={campStatus(camp, todayIso())} />
       </header>
 
-      <p className="dashboard__code">
-        {t.dashboard.joinCode} <code>{camp.id}</code>
-      </p>
+      <section className="dashboard__share">
+        <p className="dashboard__code">
+          {t.dashboard.joinCode} <code>{camp.joinCode}</code>
+        </p>
+        <p className="dashboard__slot-hint">{t.share.hint}</p>
+        <p className="dashboard__members">{t.share.members(memberCount)}</p>
+      </section>
 
       <section
         className={
@@ -67,7 +81,11 @@ export function CampDashboard({
         }
       >
         <p className="dashboard__slot-title">{t.dashboard.receivedTotal}</p>
-        <ReceivedTotals summaries={summaries} />
+        {isLoading && !funded ? (
+          <p className="dashboard__slot-hint">{t.app.loading}</p>
+        ) : (
+          <ReceivedTotals summaries={summaries} />
+        )}
         <button className="dashboard__slot-link" type="button" onClick={onOpenIncome}>
           {t.dashboard.setUpIncome}
         </button>
@@ -88,13 +106,18 @@ export function CampDashboard({
         <button className="dashboard__action" type="button" onClick={handleRename}>
           {t.dashboard.rename}
         </button>
-        <button
-          className="dashboard__action dashboard__action--danger"
-          type="button"
-          onClick={handleDelete}
-        >
-          {t.dashboard.delete}
+        <button className="dashboard__action" type="button" onClick={onExport}>
+          {t.share.export}
         </button>
+        {isAdmin && (
+          <button
+            className="dashboard__action dashboard__action--danger"
+            type="button"
+            onClick={handleDelete}
+          >
+            {t.dashboard.delete}
+          </button>
+        )}
       </div>
     </div>
   )

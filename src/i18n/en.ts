@@ -18,6 +18,53 @@ export const en = {
   app: {
     title: 'campfin',
     subtitle: 'Camp budget tracker',
+    loading: 'Loading…',
+  },
+
+  auth: {
+    title: 'Sign in',
+    intro:
+      "Enter your email and we'll send you a six-digit code. The first sign-in creates your account.",
+    emailLabel: 'Email',
+    emailPlaceholder: 'you@example.com',
+    sendCode: 'Send code',
+    sending: 'Sending…',
+    codeTitle: 'Enter your code',
+    codeIntro: (email: string) => `We sent a code to ${email}. Paste it here.`,
+    codeLabel: 'Verification code',
+    codePlaceholder: '123456',
+    verify: 'Sign in',
+    otherEmail: '← Use a different email',
+    signOut: 'Sign out',
+    sendFailed: 'The code could not be sent. Check the address and try again.',
+    verifyFailed: 'That code was not accepted. Ask for a new one and try again.',
+  },
+
+  join: {
+    title: 'Join a camp',
+    hint: 'Got a join code from the other leader? Type it here.',
+    label: 'Join code',
+    placeholder: 'MOOR-7F3K',
+    searching: 'Looking…',
+    notFound: 'No camp answers that code.',
+    found: (name: string) => `Found "${name}".`,
+    alreadyMember: (name: string) => `You are already in "${name}".`,
+    join: 'Join',
+    failed: 'Joining failed. Check the code and try again.',
+  },
+
+  share: {
+    title: 'Share this camp',
+    hint: 'The other leader types this code into their phone.',
+    members: (count: number) => `${count} ${count === 1 ? 'leader' : 'leaders'} share this camp.`,
+    export: 'Export JSON',
+  },
+
+  /** Anything the database refuses. A write that only queues offline says nothing here. */
+  sync: {
+    loadFailed: (message: string) => `Could not load this camp: ${message}`,
+    writeFailed: 'That change could not be saved. Check your connection and try again.',
+    createFailed: 'The camp could not be created. Try again.',
   },
 
   camps: {

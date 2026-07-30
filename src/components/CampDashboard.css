@@ -33,7 +33,21 @@
   letter-spacing: -0.02em;
 }
 
+/* Join code, what it is for, and who is already in. Grouped because a code with no
+   explanation next to it is just noise on the screen. */
+.dashboard__share {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
 .dashboard__code {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.dashboard__members {
   margin: 0;
   font-size: 0.75rem;
   color: var(--muted);

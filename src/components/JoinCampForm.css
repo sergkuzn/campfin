@@ -1,0 +1,75 @@
+/* Joining by code, under the create form on the camp list. */
+
+.join-camp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.join-camp__hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.join-camp__row {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.join-camp__input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: inherit;
+  font: inherit;
+  /* Codes are read character by character off another phone — a monospace font with wide
+     tracking makes O/0 and I/1 confusions visible even though the alphabet excludes them. */
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.join-camp__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.join-camp__button {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.join-camp__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.join-camp__status {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.join-camp__status--ok {
+  color: var(--ok);
+}
+
+.join-camp__error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--danger);
+}

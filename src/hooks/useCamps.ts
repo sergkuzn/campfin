@@ -1,56 +1,61 @@
 /**
- * The camp list as React state, persisted to localStorage.
+ * The camps this user is a member of, as a live query, plus the writes that change them.
  *
- * A *custom hook* is just a function that calls other hooks; the `use` prefix is
- * what lets React (and the lint rules) treat it as one. Extracting it here keeps
- * `App.tsx` about rendering, and lets the storage backend be swapped out without
- * touching a single component.
+ * Nothing here holds the list in state any more: `db.useQuery` subscribes, and a write on
+ * either phone re-renders both. The query is the *authorisation boundary made visible* —
+ * `where: { 'members.user.id': userId }` traverses the membership link, and the server's
+ * permission rules enforce the same thing, so a camp you were never invited to is not
+ * merely filtered out, it is unreadable.
  */
 
-import { useCallback, useEffect, useReducer, useState } from 'react'
-import { loadCamps, saveCamps } from '../db/storage'
+import { useCallback, useMemo, useState } from 'react'
+import * as campsDb from '../db/campsDb'
+import { db } from '../db/instant'
+import { mapRows, toCamp, toMembership } from '../db/rows'
 import { useT } from '../i18n'
-import { campNameExists, campsReducer } from '../lib/camps'
+import { campNameExists } from '../lib/camps'
 import { generateJoinCode } from '../lib/joinCode'
-import type { Camp } from '../lib/types'
+import type { Camp, Membership } from '../lib/types'
 
 export type UseCamps = {
   camps: Camp[]
-  /** Set when the last createCamp/renameCamp call was rejected; null otherwise. */
+  /** Memberships of every visible camp — enough to count leaders and to know my own role. */
+  memberships: Membership[]
+  isLoading: boolean
+  /** A rejected write, a rejected name, or a failed load; null when all is well. */
   error: string | null
   /** Returns the created camp so the caller can navigate straight into it, or null if the name is taken. */
   createCamp: (name: string) => Camp | null
   renameCamp: (campId: string, name: string) => void
   deleteCamp: (campId: string) => void
-  /** Dismiss the current validation error — call it when navigating away from the input that raised it. */
+  /** Dismiss the current error — call it when navigating away from the input that raised it. */
   clearError: () => void
 }
 
-export function useCamps(): UseCamps {
-  // useReducer(reducer, initialArg, init): React calls `init(initialArg)` once, on the
-  // first render only — "lazy initialisation". Reading localStorage is too expensive to
-  // redo on every render, and `useState(loadCamps())` would do exactly that.
-  const [camps, dispatch] = useReducer(campsReducer, [], loadCamps)
-
-  // Validation failures are a normal UI concern, not a reducer concern — the reducer
-  // stays a pure, total function of (state, action). This is separate state so a
-  // component can render it as a message and it clears itself on the next attempt.
+export function useCamps(userId: string): UseCamps {
+  const t = useT()
+  // Validation failures and rejected writes are a UI concern, not query state.
   const [error, setError] = useState<string | null>(null)
 
-  // A hook may call other hooks: the message is user-facing text, so it comes from the
-  // dictionary rather than a literal, exactly as in a component.
-  const t = useT()
+  // `members: {}` nests each camp's membership rows into the same subscription, so the
+  // leader count and my role cost no second query.
+  const {
+    isLoading,
+    error: queryError,
+    data,
+  } = db.useQuery({
+    camps: { $: { where: { 'members.user.id': userId } }, members: {} },
+  })
 
-  // An effect synchronising with an external system — localStorage is outside React.
-  // It re-runs whenever `camps` changes identity, mirroring the list back to storage.
-  useEffect(() => {
-    saveCamps(camps)
-  }, [camps])
+  const camps = useMemo(() => mapRows(data?.camps, toCamp), [data])
+  const memberships = useMemo(
+    () => (data?.camps ?? []).flatMap((camp) => mapRows(camp.members, toMembership)),
+    [data],
+  )
 
-  // useCallback keeps these function identities stable across renders, so children
-  // that take them as props don't re-render for no reason. `dispatch` is already stable.
-  // `camps` is a dependency here (unlike the other two callbacks) because the name
-  // check reads it directly, rather than going through the reducer.
+  // useCallback keeps these identities stable across renders, so children taking them as
+  // props don't re-render for nothing. `camps` is a dependency because the name check
+  // reads it.
   const createCamp = useCallback(
     (name: string): Camp | null => {
       const trimmed = name.trim()
@@ -59,11 +64,21 @@ export function useCamps(): UseCamps {
         return null
       }
       setError(null)
-      const camp: Camp = { id: generateJoinCode(trimmed), name: trimmed, createdAt: Date.now() }
-      dispatch({ type: 'created', camp })
+
+      // The write lands locally at once, so the camp can be returned and opened before the
+      // server has heard of it. Only a *rejection* — a join-code collision, a permission
+      // rule — needs reporting, and then Instant rolls the optimistic rows back.
+      const { camp, done } = campsDb.createCamp({
+        name: trimmed,
+        joinCode: generateJoinCode(trimmed),
+        userId,
+        now: Date.now(),
+        everydayPoolName: t.pools.everydayDefault,
+      })
+      void done.catch(() => setError(t.sync.createFailed))
       return camp
     },
-    [camps, t.camps],
+    [camps, t, userId],
   )
 
   const renameCamp = useCallback(
@@ -74,18 +89,32 @@ export function useCamps(): UseCamps {
         return
       }
       setError(null)
-      dispatch({ type: 'renamed', campId, name: trimmed })
+      void campsDb.renameCamp(campId, trimmed).catch(() => setError(t.sync.writeFailed))
     },
-    [camps, t.camps],
+    [camps, t],
   )
 
-  const deleteCamp = useCallback((campId: string): void => {
-    dispatch({ type: 'deleted', campId })
-  }, [])
+  const deleteCamp = useCallback(
+    (campId: string): void => {
+      void campsDb.deleteCamp(campId).catch(() => setError(t.sync.writeFailed))
+    },
+    [t],
+  )
 
   const clearError = useCallback((): void => {
     setError(null)
   }, [])
 
-  return { camps, error, createCamp, renameCamp, deleteCamp, clearError }
+  return {
+    camps,
+    memberships,
+    isLoading,
+    // A failed load outranks a stale validation message: if the data isn't there, nothing
+    // else on screen is trustworthy either.
+    error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
+    createCamp,
+    renameCamp,
+    deleteCamp,
+    clearError,
+  }
 }

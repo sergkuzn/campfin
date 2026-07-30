@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
-  campSlice,
-  emptyIncome,
+  blockIdsToDelete,
   hasPerDiemSource,
   type IncomeState,
-  incomeReducer,
   isMovement,
   isPerDiemBlock,
   isPool,
+  orphanPoolIds,
+  poolCascade,
   poolPolicyFor,
-  upgradeBlocks,
-  upgradePools,
+  sourceBlockIds,
 } from './income'
 import type { AmountSource, PerDiemBlock, PerDiemSource, Pool } from './types'
 
@@ -22,6 +21,7 @@ const everyday: Pool = {
   createdAt: 1,
 }
 const bike: Pool = { id: 'pool-b', campId: 'C', name: 'Bike', role: 'deposit', createdAt: 2 }
+const trip: Pool = { id: 'pool-t', campId: 'C', name: 'Trip', role: 'earmarked', createdAt: 3 }
 
 const perDiem: PerDiemSource = {
   id: 'src-pd',
@@ -62,14 +62,11 @@ const block = (id: string, over: Partial<PerDiemBlock> = {}): PerDiemBlock => ({
   ...over,
 })
 
-const load = (state: IncomeState): IncomeState =>
-  incomeReducer(emptyIncome, { type: 'loaded', state })
-
-const start = load({
-  pools: [everyday, bike],
+const state: IncomeState = {
+  pools: [everyday, bike, trip],
   sources: [perDiem, food, kaution],
-  blocks: [block('blk-1'), block('blk-2')],
-})
+  blocks: [block('blk-1'), block('blk-2'), block('blk-a', { variant: 'actual' })],
+}
 
 describe('type guards', () => {
   const validPool = { id: 'p', campId: 'C', name: 'Everyday', role: 'everyday', createdAt: 1 }
@@ -110,42 +107,6 @@ describe('type guards', () => {
   })
 })
 
-describe('upgradePools / upgradeBlocks', () => {
-  const legacy = (id: string) => ({ id, campId: 'C', name: id, createdAt: 1 })
-
-  it('derives everyday from a per-diem source', () => {
-    const [pool] = upgradePools([legacy('pool-e')], [{ ...perDiem, poolId: 'pool-e' }])
-    expect(pool?.role).toBe('everyday')
-  })
-
-  it('derives deposit from a Kaution, and earmarked from anything else', () => {
-    const upgraded = upgradePools(
-      [legacy('pool-b'), legacy('pool-f')],
-      [
-        { ...kaution, poolId: 'pool-b' },
-        { ...food, poolId: 'pool-f' },
-      ],
-    )
-    expect(upgraded.map((p) => p.role)).toEqual(['deposit', 'earmarked'])
-  })
-
-  it('leaves an unfunded pool earmarked', () => {
-    expect(upgradePools([legacy('pool-x')], [])[0]?.role).toBe('earmarked')
-  })
-
-  it('keeps a role that is already set', () => {
-    const already = { ...legacy('pool-e'), role: 'earmarked' as const }
-    // The per-diem source would derive 'everyday'; the stored role wins.
-    expect(upgradePools([already], [{ ...perDiem, poolId: 'pool-e' }])[0]?.role).toBe('earmarked')
-  })
-
-  it('defaults a variant-less block to granted, and keeps an explicit one', () => {
-    const { variant, ...variantless } = block('blk-1')
-    const upgraded = upgradeBlocks([variantless, { ...block('blk-2'), variant: 'actual' }])
-    expect(upgraded.map((b) => b.variant)).toEqual(['granted', 'actual'])
-  })
-})
-
 describe('poolPolicyFor / hasPerDiemSource', () => {
   it('maps each income kind to its pool policy', () => {
     expect(poolPolicyFor('per_diem')).toBe('everyday')
@@ -159,171 +120,88 @@ describe('poolPolicyFor / hasPerDiemSource', () => {
   })
 })
 
-describe('incomeReducer sourceSaved', () => {
-  it('appends a source with a new id', () => {
-    const fresh: AmountSource = { ...food, id: 'src-new', name: 'Bus grant' }
-    const next = incomeReducer(start, { type: 'sourceSaved', source: fresh, blocks: [] })
-    expect(next.sources).toHaveLength(4)
-    expect(next.sources.at(-1)?.id).toBe('src-new')
+describe('orphanPoolIds', () => {
+  it('drops an earmarked pool nothing feeds', () => {
+    expect(orphanPoolIds(state.pools, state.sources)).toEqual(['pool-t'])
   })
 
-  it('replaces a source with an existing id, keeping the list length', () => {
-    const edited: AmountSource = { ...food, name: 'Extra food & drinks', amountCents: 45_000 }
-    const next = incomeReducer(start, { type: 'sourceSaved', source: edited, blocks: [] })
-    expect(next.sources).toHaveLength(3)
-    expect(next.sources.find((s) => s.id === 'src-food')).toMatchObject({
-      name: 'Extra food & drinks',
-      amountCents: 45_000,
-    })
+  it('drops a deposit pool whose Kaution was deleted', () => {
+    const afterDelete = state.sources.filter((s) => s.id !== 'src-dep')
+    expect(orphanPoolIds(state.pools, afterDelete)).toEqual(['pool-b', 'pool-t'])
   })
 
-  it('replaces the whole block set, so a block removed in the form disappears', () => {
-    const next = incomeReducer(start, {
-      type: 'sourceSaved',
-      source: perDiem,
-      blocks: [block('blk-2', { numPersons: 12 })],
-    })
-    expect(next.blocks.map((b) => b.id)).toEqual(['blk-2'])
-    expect(next.blocks[0]?.numPersons).toBe(12)
+  it('keeps the everyday pool with no sources at all', () => {
+    expect(orphanPoolIds([everyday], [])).toEqual([])
   })
 
-  it('adds the new pool exactly once when the card created one', () => {
-    const pool: Pool = {
-      id: 'pool-new',
-      campId: 'C',
-      name: 'Trip',
-      role: 'earmarked',
-      createdAt: 9,
-    }
-    const source: AmountSource = { ...food, id: 'src-trip', poolId: 'pool-new' }
-    const next = incomeReducer(start, { type: 'sourceSaved', source, blocks: [], pool })
-    expect(next.pools.filter((p) => p.id === 'pool-new')).toHaveLength(1)
-  })
-
-  it('drops a pool that an edit moved the last source out of', () => {
-    const moved: AmountSource = { ...kaution, poolId: 'pool-e' }
-    const next = incomeReducer(start, { type: 'sourceSaved', source: moved, blocks: [] })
-    expect(next.pools.map((p) => p.id)).toEqual(['pool-e'])
+  it('keeps a pool that still has a source', () => {
+    expect(orphanPoolIds([bike], [kaution])).toEqual([])
   })
 })
 
-describe('incomeReducer sourceDeleted', () => {
-  it('cascades to the source’s blocks', () => {
-    const next = incomeReducer(start, { type: 'sourceDeleted', sourceId: 'src-pd' })
-    expect(next.sources.map((s) => s.id)).toEqual(['src-food', 'src-dep'])
-    expect(next.blocks).toEqual([]) // orphaned blocks are gone
+describe('sourceBlockIds', () => {
+  it('lists every block of the source, both variants', () => {
+    expect(sourceBlockIds(state.blocks, 'src-pd')).toEqual(['blk-1', 'blk-2', 'blk-a'])
   })
 
-  it('removes the pool when it was the last source in it', () => {
-    const next = incomeReducer(start, { type: 'sourceDeleted', sourceId: 'src-dep' })
-    expect(next.pools.map((p) => p.id)).toEqual(['pool-e'])
-  })
-
-  it('leaves the pool alone while another source still feeds it', () => {
-    const next = incomeReducer(start, { type: 'sourceDeleted', sourceId: 'src-food' })
-    expect(next.pools.map((p) => p.id)).toEqual(['pool-e', 'pool-b'])
+  it('is empty for a source with no blocks', () => {
+    expect(sourceBlockIds(state.blocks, 'src-food')).toEqual([])
   })
 })
 
-describe('incomeReducer poolRenamed / poolDeleted', () => {
-  it('renames only the named pool', () => {
-    const next = incomeReducer(start, { type: 'poolRenamed', poolId: 'pool-b', name: 'Kaution' })
-    expect(next.pools.map((p) => p.name)).toEqual(['Everyday', 'Kaution'])
-  })
-
-  it('deletes the pool with its sources and their blocks, touching nothing else', () => {
-    const next = incomeReducer(start, { type: 'poolDeleted', poolId: 'pool-b' })
-    expect(next.pools.map((p) => p.id)).toEqual(['pool-e'])
-    expect(next.sources.map((s) => s.id)).toEqual(['src-pd', 'src-food'])
-    expect(next.blocks).toHaveLength(2) // the per-diem blocks are untouched
-  })
-
-  it('refuses to delete the everyday pool', () => {
-    const next = incomeReducer(start, { type: 'poolDeleted', poolId: 'pool-e' })
-    expect(next).toBe(start) // same object: nothing changed, so nothing re-renders
-  })
-
-  it('ignores a pool id that does not exist', () => {
-    expect(incomeReducer(start, { type: 'poolDeleted', poolId: 'nope' })).toBe(start)
-  })
-})
-
-describe('the everyday pool survives', () => {
-  const onlyPerDiem = load({ pools: [everyday], sources: [perDiem], blocks: [block('blk-1')] })
-
-  it('is kept when its last source is deleted', () => {
-    const next = incomeReducer(onlyPerDiem, { type: 'sourceDeleted', sourceId: 'src-pd' })
-    expect(next.pools.map((p) => p.id)).toEqual(['pool-e'])
-    expect(next.sources).toEqual([])
-  })
-
-  it('is kept when a fresh camp saves nothing at all', () => {
-    const empty = load({ pools: [everyday], sources: [], blocks: [] })
-    const next = incomeReducer(empty, { type: 'sourceSaved', source: food, blocks: [] })
-    expect(next.pools.map((p) => p.id)).toEqual(['pool-e'])
-  })
-})
-
-describe('incomeReducer everydayPoolsEnsured', () => {
-  const forCamp = (campId: string, id: string): Pool => ({
+describe('blockIdsToDelete', () => {
+  const kept = (id: string | null, variant: PerDiemBlock['variant'] = 'granted') => ({
     id,
-    campId,
-    name: 'Everyday',
-    role: 'everyday',
-    createdAt: 5,
+    variant,
   })
 
-  it('adds an everyday pool for a camp that has none', () => {
-    const next = incomeReducer(start, {
-      type: 'everydayPoolsEnsured',
-      pools: [forCamp('D', 'pool-d')],
-    })
-    expect(next.pools.map((p) => p.id)).toEqual(['pool-e', 'pool-b', 'pool-d'])
+  it('deletes granted rows the user removed', () => {
+    expect(blockIdsToDelete(state.blocks, 'src-pd', [kept('blk-1')])).toEqual(['blk-2'])
   })
 
-  it('skips a camp that already has one', () => {
-    // 'C' already owns pool-e, so this second candidate must be dropped.
-    const next = incomeReducer(start, {
-      type: 'everydayPoolsEnsured',
-      pools: [forCamp('C', 'pool-dup')],
-    })
-    expect(next).toBe(start)
+  it('leaves actual blocks alone when granted ones are saved', () => {
+    const doomed = blockIdsToDelete(state.blocks, 'src-pd', [kept('blk-1'), kept('blk-2')])
+    expect(doomed).toEqual([]) // 'blk-a' is an actual block and was never on this form
   })
 
-  it('adds one pool per camp even when the same camp is listed twice', () => {
-    const next = incomeReducer(start, {
-      type: 'everydayPoolsEnsured',
-      pools: [forCamp('D', 'pool-d1'), forCamp('D', 'pool-d2')],
-    })
-    expect(next.pools.filter((p) => p.campId === 'D').map((p) => p.id)).toEqual(['pool-d1'])
+  it('deletes the actual blocks the actual tab removed, and no granted ones', () => {
+    expect(blockIdsToDelete(state.blocks, 'src-pd', [kept(null, 'actual')])).toEqual(['blk-a'])
   })
 
-  it('returns the same state for an empty list, so no pointless write fires', () => {
-    expect(incomeReducer(start, { type: 'everydayPoolsEnsured', pools: [] })).toBe(start)
+  it('keeps rows still present by id', () => {
+    const doomed = blockIdsToDelete(state.blocks, 'src-pd', [kept('blk-2'), kept(null)])
+    expect(doomed).toEqual(['blk-1'])
+  })
+
+  it('deletes nothing when the save carries no blocks', () => {
+    expect(blockIdsToDelete(state.blocks, 'src-pd', [])).toEqual([])
   })
 })
 
-describe('incomeReducer immutability', () => {
-  it('never mutates the previous state', () => {
-    incomeReducer(start, { type: 'sourceDeleted', sourceId: 'src-pd' })
-    incomeReducer(start, { type: 'poolDeleted', poolId: 'pool-b' })
-    incomeReducer(start, { type: 'sourceSaved', source: perDiem, blocks: [] })
-    expect(start.pools).toHaveLength(2)
-    expect(start.sources).toHaveLength(3)
-    expect(start.blocks).toHaveLength(2)
+describe('poolCascade', () => {
+  it('returns the pool’s sources and their blocks', () => {
+    expect(poolCascade(state, 'pool-b')).toEqual({ sourceIds: ['src-dep'], blockIds: [] })
   })
-})
 
-describe('campSlice', () => {
-  it('keeps only the rows of one camp, across all three namespaces', () => {
-    const mixed = load({
-      pools: [everyday, { ...bike, id: 'other-pool', campId: 'OTHER' }],
-      sources: [perDiem, { ...food, id: 'other-src', campId: 'OTHER' }],
-      blocks: [block('blk-1'), block('blk-x', { campId: 'OTHER' })],
+  it('takes the per-diem blocks with the pool that funded them', () => {
+    // Not reachable from the UI — the everyday pool is undeletable — but a cascade must
+    // never leave blocks behind whichever pool it starts from.
+    const trippy: IncomeState = {
+      ...state,
+      pools: [{ ...trip, id: 'pool-e2' }],
+      sources: [{ ...perDiem, poolId: 'pool-e2' }],
+    }
+    expect(poolCascade(trippy, 'pool-e2')).toEqual({
+      sourceIds: ['src-pd'],
+      blockIds: ['blk-1', 'blk-2', 'blk-a'],
     })
-    const slice = campSlice(mixed, 'C')
-    expect(slice.pools.map((p) => p.id)).toEqual(['pool-e'])
-    expect(slice.sources.map((s) => s.id)).toEqual(['src-pd'])
-    expect(slice.blocks.map((b) => b.id)).toEqual(['blk-1'])
+  })
+
+  it('returns nothing for the everyday pool', () => {
+    expect(poolCascade(state, 'pool-e')).toBeNull()
+  })
+
+  it('returns nothing for an unknown pool', () => {
+    expect(poolCascade(state, 'nope')).toBeNull()
   })
 })

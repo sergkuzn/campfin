@@ -1,9 +1,33 @@
 export type Camp = {
   id: string
   name: string
+  /**
+   * The human-typable code a co-leader enters to join: "MOOR-7F3K". Separate from `id`
+   * because database ids are UUIDs, and unique across all camps so one code answers for
+   * exactly one camp.
+   */
+  joinCode: string
   createdAt: number
   startDate?: string // ISO "YYYY-MM-DD"; if unset, derived from per-diem blocks
   endDate?: string // ISO, inclusive
+}
+
+/**
+ * What a member may do. `admin` is the leader who created the camp — the only difference
+ * today is that deleting the whole camp is offered to them; finer roles are deferred.
+ */
+export type MemberRole = 'admin' | 'editor'
+
+/**
+ * Who may see and edit a camp. No name, no email — a user id and a role, which is all the
+ * permission rules need and all this app is allowed to know about a person.
+ */
+export type Membership = {
+  id: string
+  campId: string
+  userId: string
+  role: MemberRole
+  createdAt: number
 }
 
 /**

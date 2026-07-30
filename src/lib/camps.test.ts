@@ -1,29 +1,33 @@
 import { describe, expect, it } from 'vitest'
-import {
-  type CampsAction,
-  campNameExists,
-  campStatus,
-  campsReducer,
-  isCamp,
-  sortCampsByRecent,
-} from './camps'
+import { campNameExists, campStatus, isCamp, sortCampsByRecent } from './camps'
 import type { Camp } from './types'
 
 const camp = (over: Partial<Camp> = {}): Camp => ({
-  id: 'MOOR-7F3K',
+  id: 'c1',
   name: 'Moorwerder',
+  joinCode: 'MOOR-7F3K',
   createdAt: 1_700_000_000_000,
   ...over,
 })
 
 describe('isCamp', () => {
   it('accepts a minimal camp', () => {
-    expect(isCamp({ id: 'A', name: 'B', createdAt: 1 })).toBe(true)
+    expect(isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: 1 })).toBe(true)
   })
   it('accepts a camp with a window', () => {
     expect(
-      isCamp({ id: 'A', name: 'B', createdAt: 1, startDate: '2026-07-01', endDate: '2026-07-14' }),
+      isCamp({
+        id: 'A',
+        name: 'B',
+        joinCode: 'AAAA-1234',
+        createdAt: 1,
+        startDate: '2026-07-01',
+        endDate: '2026-07-14',
+      }),
     ).toBe(true)
+  })
+  it('rejects a camp without a join code', () => {
+    expect(isCamp({ id: 'A', name: 'B', createdAt: 1 })).toBe(false)
   })
   it('rejects null', () => {
     expect(isCamp(null)).toBe(false)
@@ -37,10 +41,12 @@ describe('isCamp', () => {
     expect(isCamp({ id: 'A', name: 'B' })).toBe(false)
   })
   it('rejects a wrongly-typed field', () => {
-    expect(isCamp({ id: 'A', name: 'B', createdAt: '1' })).toBe(false)
+    expect(isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: '1' })).toBe(false)
   })
   it('rejects a wrongly-typed optional field', () => {
-    expect(isCamp({ id: 'A', name: 'B', createdAt: 1, startDate: 20260701 })).toBe(false)
+    expect(
+      isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: 1, startDate: 20260701 }),
+    ).toBe(false)
   })
 })
 
@@ -102,36 +108,5 @@ describe('campStatus', () => {
   })
   it('is finished the day after', () => {
     expect(campStatus(dated, '2026-07-15')).toBe('finished')
-  })
-})
-
-describe('campsReducer', () => {
-  const a = camp({ id: 'A', name: 'Alpha', createdAt: 1 })
-  const b = camp({ id: 'B', name: 'Bravo', createdAt: 2 })
-
-  const run = (state: Camp[], action: CampsAction): Camp[] => campsReducer(state, action)
-
-  it('loaded replaces the whole list', () => {
-    expect(run([a], { type: 'loaded', camps: [b] })).toEqual([b])
-  })
-  it('created appends', () => {
-    expect(run([a], { type: 'created', camp: b })).toEqual([a, b])
-  })
-  it('renamed changes only the matching camp', () => {
-    const next = run([a, b], { type: 'renamed', campId: 'B', name: 'Bravissimo' })
-    expect(next.map((c) => c.name)).toEqual(['Alpha', 'Bravissimo'])
-  })
-  it('renamed is a no-op for an unknown id', () => {
-    expect(run([a], { type: 'renamed', campId: 'ZZZ', name: 'X' })).toEqual([a])
-  })
-  it('deleted removes the matching camp', () => {
-    expect(run([a, b], { type: 'deleted', campId: 'A' })).toEqual([b])
-  })
-  it('never mutates the previous state', () => {
-    const state = [a, b]
-    run(state, { type: 'deleted', campId: 'A' })
-    run(state, { type: 'renamed', campId: 'A', name: 'Mutated?' })
-    expect(state).toEqual([a, b])
-    expect(a.name).toBe('Alpha')
   })
 })

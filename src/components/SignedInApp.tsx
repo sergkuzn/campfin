@@ -1,0 +1,125 @@
+import { useMemo, useState } from 'react'
+import { downloadJson } from '../db/download'
+import { useCamps } from '../hooks/useCamps'
+import { useIncome } from '../hooks/useIncome'
+import type { Session } from '../hooks/useSession'
+import { buildCampExport, exportFileName } from '../lib/exportJson'
+import { isCampAdmin, memberCount } from '../lib/members'
+import { summarisePools } from '../lib/pools'
+import { CampDashboard } from './CampDashboard'
+import { CampList } from './CampList'
+import { IncomeSetup } from './IncomeSetup'
+
+/**
+ * Three screens, no router. `View` is a discriminated union rather than two independent
+ * pieces of state: `campId` exists only on the screens that have a camp open, so "income
+ * screen with no camp" cannot be represented at all. A real router arrives only if we need
+ * URLs.
+ */
+type View =
+  | { screen: 'list' }
+  | { screen: 'dashboard'; campId: string }
+  | { screen: 'income'; campId: string }
+
+type Props = {
+  session: Session
+}
+
+/**
+ * Everything behind the sign-in gate. Split from `App` so the data hooks below are only
+ * ever called with a real user id — hooks cannot be called conditionally, and a query that
+ * has to cope with "no user yet" would leak that state into every screen.
+ */
+export function SignedInApp({ session }: Props) {
+  const { camps, memberships, isLoading, error, createCamp, renameCamp, deleteCamp, clearError } =
+    useCamps(session.userId)
+  const [view, setView] = useState<View>({ screen: 'list' })
+
+  // `find` returns `Camp | undefined`; if the open camp was just deleted — by us, or by the
+  // other leader mid-sync — we fall back to the list automatically, with no effect and no
+  // stale state to clean up.
+  const openCamp = view.screen === 'list' ? undefined : camps.find((c) => c.id === view.campId)
+  const openCampId = openCamp?.id ?? ''
+
+  // One query per open camp: passing '' skips it entirely while the list is showing.
+  const income = useIncome(openCampId)
+
+  const { pools, sources, blocks } = income
+  // Expenses are [] until stage 08 — received money is independent of spending.
+  const summaries = useMemo(
+    () => summarisePools(pools, sources, blocks, []),
+    [pools, sources, blocks],
+  )
+
+  // createCamp returns null when the name is taken; only navigate on success.
+  // Returning the outcome lets the form keep the typed name so it can be corrected.
+  const handleCreate = (name: string): boolean => {
+    const camp = createCamp(name)
+    if (camp === null) return false
+    setView({ screen: 'dashboard', campId: camp.id }) // jump straight into the new camp
+    return true
+  }
+
+  // Clear any pending error when switching screens, so a rejected create or rename on one
+  // screen doesn't linger on the next.
+  const handleOpen = (campId: string) => {
+    clearError()
+    setView({ screen: 'dashboard', campId })
+  }
+
+  const handleBackToList = () => {
+    clearError()
+    setView({ screen: 'list' })
+  }
+
+  const handleDelete = (campId: string) => {
+    deleteCamp(campId)
+    setView({ screen: 'list' })
+  }
+
+  const handleExport = () => {
+    if (openCamp === undefined) return
+    const exportedAt = new Date().toISOString()
+    const dump = buildCampExport(openCamp, { pools, sources, blocks }, exportedAt)
+    downloadJson(exportFileName(openCamp, exportedAt), JSON.stringify(dump, null, 2))
+  }
+
+  if (openCamp === undefined) {
+    return (
+      <CampList
+        camps={camps}
+        userId={session.userId}
+        isLoading={isLoading}
+        error={error}
+        onOpen={handleOpen}
+        onCreate={handleCreate}
+      />
+    )
+  }
+
+  if (view.screen === 'income') {
+    return (
+      <IncomeSetup
+        campId={openCamp.id}
+        income={income}
+        onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
+      />
+    )
+  }
+
+  return (
+    <CampDashboard
+      camp={openCamp}
+      summaries={summaries}
+      memberCount={memberCount(memberships, openCamp.id)}
+      isAdmin={isCampAdmin(memberships, openCamp.id, session.userId)}
+      isLoading={income.isLoading}
+      error={error ?? income.error}
+      onBack={handleBackToList}
+      onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
+      onRename={renameCamp}
+      onDelete={handleDelete}
+      onExport={handleExport}
+    />
+  )
+}

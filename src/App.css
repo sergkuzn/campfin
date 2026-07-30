@@ -28,3 +28,43 @@
   font-size: 0.875rem;
   color: var(--muted);
 }
+
+/* Which account this phone is on, and the way out of it. */
+.app__session {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.app__email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app__sign-out {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.app__loading {
+  margin: 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.app__error {
+  margin: 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--danger);
+}

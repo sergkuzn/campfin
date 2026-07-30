@@ -3,7 +3,7 @@ import './IncomeSetup.css'
 import type { UseIncome } from '../hooks/useIncome'
 import { type Dict, useFormat, useT } from '../i18n'
 import type { SaveSourceInput } from '../lib/drafts'
-import { campSlice, hasPerDiemSource, INCOME_KINDS } from '../lib/income'
+import { hasPerDiemSource, INCOME_KINDS } from '../lib/income'
 import {
   everydayPool,
   type PoolSummary,
@@ -32,17 +32,15 @@ type Pending = { target: 'source'; sourceId: string } | { target: 'pool'; poolId
 export function IncomeSetup({ campId, income, onBack }: Props) {
   const t = useT()
   const format = useFormat()
+  // `income` is already this camp's rows — the query behind it is scoped by campId, so
+  // there is nothing left to filter here.
   const { pools, sources, blocks } = income
 
-  const slice = useMemo(
-    () => campSlice({ pools, sources, blocks }, campId),
-    [pools, sources, blocks, campId],
-  )
-  // No expenses until milestone 4; an empty array is the honest input, and received
-  // money is independent of spending anyway.
+  // No expenses until stage 08; an empty array is the honest input, and received money is
+  // independent of spending anyway.
   const summaries = useMemo(
-    () => summarisePools(slice.pools, slice.sources, slice.blocks, []),
-    [slice],
+    () => summarisePools(pools, sources, blocks, []),
+    [pools, sources, blocks],
   )
 
   const [editing, setEditing] = useState<Editing | null>(null)
@@ -76,12 +74,12 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
     setPending(null)
   }
 
-  const confirmContent = describePending(pending, summaries, slice.blocks, t, format.euros)
+  const confirmContent = describePending(pending, summaries, blocks, t, format.euros)
 
   // The per-diem grant is the camp's spine and there is exactly one of it, so the menu
   // stops offering it once it exists rather than letting a second one be created.
   const offeredKinds = INCOME_KINDS.filter(
-    (kind) => kind !== 'per_diem' || !hasPerDiemSource(slice.sources),
+    (kind) => kind !== 'per_diem' || !hasPerDiemSource(sources),
   )
 
   return (
@@ -102,6 +100,14 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
         </button>
       </header>
 
+      {/* A write that only failed to *sync* says nothing — Instant queues it. This is for
+          a write the server actually rejected. */}
+      {income.error !== null && (
+        <p className="income__error" role="alert">
+          {income.error}
+        </p>
+      )}
+
       {picking && (
         <div className="type-menu">
           {offeredKinds.map((kind) => (
@@ -118,15 +124,17 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
         </div>
       )}
 
-      {slice.sources.length === 0 && !picking && editing === null && (
-        <p className="income__empty">{t.income.empty}</p>
+      {/* "Nothing here yet" would be a lie for the first second, so the loading line wins
+          while the query is still out. */}
+      {sources.length === 0 && !picking && editing === null && (
+        <p className="income__empty">{income.isLoading ? t.app.loading : t.income.empty}</p>
       )}
 
       {summaries.map((summary) => (
         <PoolSection
           key={summary.pool.id}
           summary={summary}
-          blocks={slice.blocks}
+          blocks={blocks}
           locked={locked}
           editingSourceId={editing?.mode === 'edit' ? editing.sourceId : null}
           onEdit={(sourceId) => setEditing({ mode: 'edit', sourceId })}
@@ -142,10 +150,8 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
               source={source}
               // Granted blocks only — the actual-attendance ones get their own tab in a
               // later stage and must not appear as extra rows in this editor.
-              blocks={slice.blocks.filter(
-                (b) => b.sourceId === source.id && b.variant === 'granted',
-              )}
-              pools={slice.pools}
+              blocks={blocks.filter((b) => b.sourceId === source.id && b.variant === 'granted')}
+              pools={pools}
               defaultPool={summary.pool}
               onSave={handleSave}
               onCancel={() => setEditing(null)}
@@ -162,10 +168,10 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
           kind={editing.kind}
           source={null}
           blocks={[]}
-          pools={slice.pools}
+          pools={pools}
           // Per-diem money always lands in the everyday pool; a fixed grant or a deposit
           // starts its own, so it gets no pre-selection.
-          defaultPool={editing.kind === 'per_diem' ? everydayPool(slice.pools, campId) : undefined}
+          defaultPool={editing.kind === 'per_diem' ? everydayPool(pools, campId) : undefined}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
         />

@@ -1,111 +1,31 @@
-import { useEffect, useMemo, useState } from 'react'
 import './App.css'
-import { CampDashboard } from './components/CampDashboard'
-import { CampList } from './components/CampList'
-import { IncomeSetup } from './components/IncomeSetup'
-import { useCamps } from './hooks/useCamps'
-import { useIncome } from './hooks/useIncome'
+import { SignedInApp } from './components/SignedInApp'
+import { SignIn } from './components/SignIn'
+import { useSession } from './hooks/useSession'
 import { useT } from './i18n'
-import { campSlice } from './lib/income'
-import { summarisePools } from './lib/pools'
 
 /**
- * Three screens, no router. `View` is a discriminated union rather than two
- * independent pieces of state: `campId` exists only on the screens that have a camp
- * open, so "income screen with no camp" cannot be represented at all. A real router
- * arrives only if we need URLs.
+ * The gate. Auth is the only thing this component knows about: while the session is
+ * resolving it says so, without one it shows the sign-in form, and with one it hands the
+ * whole app to `SignedInApp`.
+ *
+ * The session resolves from local storage, so a phone with no signal at camp is still
+ * signed in and still has its camp — being offline is not being signed out.
  */
-type View =
-  | { screen: 'list' }
-  | { screen: 'dashboard'; campId: string }
-  | { screen: 'income'; campId: string }
-
 export default function App() {
   const t = useT()
-  const { camps, error, createCamp, renameCamp, deleteCamp, clearError } = useCamps()
-  // One hook instance for the whole app: a single source of truth in memory and a
-  // single persistence effect. Per-screen instances would drift and fight over the keys.
-  const income = useIncome()
-  const [view, setView] = useState<View>({ screen: 'list' })
+  const { session, isLoading, error, signOut } = useSession()
 
-  // Every camp owns exactly one everyday pool, so the screens below never have to ask
-  // whether it exists. Repairing that here is an effect because it is a *write* derived
-  // from data that may arrive from anywhere — a new camp, or storage written by a build
-  // that predates pool roles. `ensureEverydayPools` no-ops when nothing is missing, so
-  // this settles after one pass instead of looping.
-  const { ensureEverydayPools } = income
-  const everydayName = t.pools.everydayDefault
-  useEffect(() => {
-    ensureEverydayPools(
-      camps.map((camp) => camp.id),
-      everydayName,
-    )
-  }, [camps, ensureEverydayPools, everydayName])
-
-  // `find` returns `Camp | undefined`; if the open camp was just deleted we fall back
-  // to the list automatically, with no effect and no stale state to clean up.
-  const openCamp = view.screen === 'list' ? undefined : camps.find((c) => c.id === view.campId)
-
-  const { pools, sources, blocks } = income
-  const openCampId = openCamp?.id ?? ''
-  // The dashboard renders only its own camp's rows. Destructuring the arrays first
-  // keeps the dependency list honest: they change identity exactly when data changes.
-  // Expenses are [] until milestone 4 — received money is independent of spending.
-  const openCampPools = useMemo(() => {
-    const slice = campSlice({ pools, sources, blocks }, openCampId)
-    return summarisePools(slice.pools, slice.sources, slice.blocks, [])
-  }, [pools, sources, blocks, openCampId])
-
-  // createCamp returns null when the name is taken; only navigate on success.
-  // Returning the outcome lets the form keep the typed name so it can be corrected.
-  const handleCreate = (name: string): boolean => {
-    const camp = createCamp(name)
-    if (camp === null) return false
-    setView({ screen: 'dashboard', campId: camp.id }) // jump straight into the new camp
-    return true
-  }
-
-  // Clear any pending validation error when switching screens, so a rejected
-  // create/rename on one screen doesn't linger on the next.
-  const handleOpen = (campId: string) => {
-    clearError()
-    setView({ screen: 'dashboard', campId })
-  }
-
-  const handleBackToList = () => {
-    clearError()
-    setView({ screen: 'list' })
-  }
-
-  const handleDelete = (campId: string) => {
-    deleteCamp(campId)
-    setView({ screen: 'list' })
-  }
-
-  const renderScreen = () => {
-    if (openCamp === undefined) {
-      return <CampList camps={camps} error={error} onOpen={handleOpen} onCreate={handleCreate} />
-    }
-    if (view.screen === 'income') {
+  const renderBody = () => {
+    if (isLoading) return <p className="app__loading">{t.app.loading}</p>
+    if (error !== null)
       return (
-        <IncomeSetup
-          campId={openCamp.id}
-          income={income}
-          onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
-        />
+        <p className="app__error" role="alert">
+          {error}
+        </p>
       )
-    }
-    return (
-      <CampDashboard
-        camp={openCamp}
-        summaries={openCampPools}
-        error={error}
-        onBack={handleBackToList}
-        onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
-        onRename={renameCamp}
-        onDelete={handleDelete}
-      />
-    )
+    if (session === null) return <SignIn />
+    return <SignedInApp session={session} />
   }
 
   return (
@@ -113,9 +33,17 @@ export default function App() {
       <header className="app__header">
         <h1 className="app__title">{t.app.title}</h1>
         <p className="app__subtitle">{t.app.subtitle}</p>
+        {session !== null && (
+          <p className="app__session">
+            <span className="app__email">{session.email}</span>
+            <button className="app__sign-out" type="button" onClick={signOut}>
+              {t.auth.signOut}
+            </button>
+          </p>
+        )}
       </header>
 
-      {renderScreen()}
+      {renderBody()}
     </main>
   )
 }

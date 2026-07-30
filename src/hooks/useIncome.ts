@@ -1,107 +1,114 @@
 /**
- * All camps' income as React state, persisted to localStorage. Lazy-initialised reducer
- * + one synchronising effect + stable mutators. Ids and timestamps are minted here so
- * the reducer stays pure.
+ * One camp's income — pools, sources and per-diem blocks — as a live query, plus the writes
+ * that change them. Scoped by `campId`, so a screen renders exactly the rows it asked for
+ * and nothing has to be filtered afterwards.
+ *
+ * Rows arrive in no particular order (a database is a set, not a list), so the hook imposes
+ * one. Without it a pool could quietly jump above another between two renders.
  */
 
-import { useCallback, useEffect, useReducer } from 'react'
-import { loadIncome, saveIncome } from '../db/incomeStorage'
+import { useCallback, useMemo, useState } from 'react'
+import * as incomeDb from '../db/incomeDb'
+import { db } from '../db/instant'
+import { mapRows, toBlock, toPool, toSource } from '../db/rows'
+import { useT } from '../i18n'
 import type { SaveSourceInput } from '../lib/drafts'
-import { incomeReducer } from '../lib/income'
-import { everydayPool } from '../lib/pools'
+import type { IncomeState } from '../lib/income'
 import type { IncomeSource, PerDiemBlock, Pool } from '../lib/types'
 
-const newId = () => crypto.randomUUID()
+export type UseIncome = IncomeState & {
+  isLoading: boolean
+  error: string | null
+  saveSource: (input: SaveSourceInput) => void
+  deleteSource: (sourceId: string) => void
+  renamePool: (poolId: string, name: string) => void
+  deletePool: (poolId: string) => void
+}
 
-/** The hook's return shape, inferred rather than restated — one place to change. */
-export type UseIncome = ReturnType<typeof useIncome>
+/** Oldest first, with the id as a tie-break so two rows created in the same millisecond
+ *  on two phones still land in the same order on both. */
+function byCreation<T extends { id: string; createdAt: number }>(rows: T[]): T[] {
+  return rows.toSorted((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id))
+}
 
-export function useIncome() {
-  const [state, dispatch] = useReducer(incomeReducer, undefined, loadIncome)
+/** Blocks have no timestamp; a per-diem card reads best in date order anyway. */
+function byStartDate(blocks: PerDiemBlock[]): PerDiemBlock[] {
+  return blocks.toSorted(
+    (a, b) => a.startDate.localeCompare(b.startDate) || a.id.localeCompare(b.id),
+  )
+}
 
-  // Mirroring state into localStorage is synchronisation with something outside React,
-  // which is what effects are for. Every reducer case that changes data returns a NEW
-  // state object, so this fires exactly when the data changed.
-  useEffect(() => {
-    saveIncome(state)
-  }, [state])
+/** Pass `''` while no camp is open: the query is skipped rather than run for nothing. */
+export function useIncome(campId: string): UseIncome {
+  const t = useT()
+  const [error, setError] = useState<string | null>(null)
 
-  /**
-   * Create-or-update one income source with its blocks, and its pool if it's new —
-   * a single dispatch, so a half-saved card can never exist. The `existing` row is
-   * what carries `id` and `createdAt` across an edit.
-   */
-  const saveSource = useCallback((input: SaveSourceInput): void => {
-    const now = Date.now()
-    const sourceId = input.existing?.id ?? newId()
-    const createdAt = input.existing?.createdAt ?? now
-
-    const pool: Pool | undefined =
-      input.pool.mode === 'new'
-        ? {
-            id: newId(),
-            campId: input.campId,
-            name: input.pool.name,
-            // A pool created by saving a source is never the everyday one — that pool is
-            // born with the camp. A deposit gets its own; anything else is earmarked.
-            role: input.kind === 'deposit' ? 'deposit' : 'earmarked',
-            createdAt: now,
-          }
-        : undefined
-    const poolId = pool?.id ?? (input.pool.mode === 'existing' ? input.pool.poolId : '')
-
-    const base = { id: sourceId, campId: input.campId, poolId, name: input.name, createdAt }
-    const source: IncomeSource =
-      input.kind === 'per_diem'
-        ? { ...base, kind: 'per_diem' }
-        : { ...base, kind: input.kind, amountCents: input.amountCents ?? 0 }
-
-    // Rows the user deleted in the form simply aren't in this array; the reducer
-    // replaces the source's whole block set, so they disappear.
-    const blocks: PerDiemBlock[] = input.blocks.map((b) => ({
-      ...b,
-      id: b.id ?? newId(),
-      campId: input.campId,
-      sourceId,
-    }))
-
-    dispatch({ type: 'sourceSaved', source, blocks, pool })
-  }, [])
-
-  /**
-   * Give every camp in `campIds` an everyday pool if it hasn't got one — new camps, and
-   * camps migrated from before pools had roles. Idempotent: when nothing is missing it
-   * dispatches nothing, so calling it from an effect on every render is safe.
-   */
-  const ensureEverydayPools = useCallback(
-    (campIds: string[], name: string): void => {
-      const missing = campIds.filter((campId) => everydayPool(state.pools, campId) === undefined)
-      if (missing.length === 0) return
-
-      const now = Date.now()
-      const pools: Pool[] = missing.map((campId) => ({
-        id: newId(),
-        campId,
-        name,
-        role: 'everyday',
-        createdAt: now,
-      }))
-      dispatch({ type: 'everydayPoolsEnsured', pools })
-    },
-    [state.pools],
+  const {
+    isLoading,
+    error: queryError,
+    data,
+  } = db.useQuery(
+    campId === ''
+      ? null
+      : {
+          pools: { $: { where: { campId } } },
+          incomeSources: { $: { where: { campId } } },
+          perDiemBlocks: { $: { where: { campId } } },
+        },
   )
 
-  const deleteSource = useCallback((sourceId: string): void => {
-    dispatch({ type: 'sourceDeleted', sourceId })
-  }, [])
+  // One memo for all three arrays: they change together, and every consumer wants the
+  // whole slice. `state` is also exactly what the write helpers need to plan a cascade.
+  const state = useMemo<IncomeState>(
+    () => ({
+      pools: byCreation(mapRows<Pool>(data?.pools, toPool)),
+      sources: byCreation(mapRows<IncomeSource>(data?.incomeSources, toSource)),
+      blocks: byStartDate(mapRows<PerDiemBlock>(data?.perDiemBlocks, toBlock)),
+    }),
+    [data],
+  )
 
-  const renamePool = useCallback((poolId: string, name: string): void => {
-    dispatch({ type: 'poolRenamed', poolId, name })
-  }, [])
+  // Each mutator passes the current rows along, because what a write must *also* delete is
+  // computed from them. That is why `state` is in every dependency list here.
+  const saveSource = useCallback(
+    (input: SaveSourceInput): void => {
+      setError(null)
+      void incomeDb.saveSource(input, state).catch(() => setError(t.sync.writeFailed))
+    },
+    [state, t],
+  )
 
-  const deletePool = useCallback((poolId: string): void => {
-    dispatch({ type: 'poolDeleted', poolId })
-  }, [])
+  const deleteSource = useCallback(
+    (sourceId: string): void => {
+      setError(null)
+      void incomeDb.deleteSource(sourceId, state).catch(() => setError(t.sync.writeFailed))
+    },
+    [state, t],
+  )
 
-  return { ...state, ensureEverydayPools, saveSource, deleteSource, renamePool, deletePool }
+  const renamePool = useCallback(
+    (poolId: string, name: string): void => {
+      setError(null)
+      void incomeDb.renamePool(poolId, name).catch(() => setError(t.sync.writeFailed))
+    },
+    [t],
+  )
+
+  const deletePool = useCallback(
+    (poolId: string): void => {
+      setError(null)
+      void incomeDb.deletePool(poolId, state).catch(() => setError(t.sync.writeFailed))
+    },
+    [state, t],
+  )
+
+  return {
+    ...state,
+    isLoading,
+    error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
+    saveSource,
+    deleteSource,
+    renamePool,
+    deletePool,
+  }
 }
