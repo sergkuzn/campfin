@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mapRows, toBlock, toCamp, toMembership, toPool, toSource } from './rows'
+import { mapRows, toBlock, toCamp, toExpense, toMembership, toPool, toSource } from './rows'
 
 const campRow = {
   id: 'c1',
@@ -108,5 +108,42 @@ describe('mapRows', () => {
 
   it('treats a query that has not answered yet as empty', () => {
     expect(mapRows(undefined, toCamp)).toEqual([])
+  })
+})
+
+describe('toExpense', () => {
+  const expenseRow = {
+    id: 'e1',
+    campId: 'c1',
+    poolId: 'p1',
+    name: 'Bread',
+    amountCents: 1250,
+    date: '2026-07-14',
+    createdAt: 5,
+    // What a query with the camp link returns alongside the row's own fields.
+    camp: { id: 'c1', name: 'Moorwerder' },
+  }
+
+  it('maps an expense row and leaves the linked camp behind', () => {
+    expect(toExpense(expenseRow)).toEqual({
+      id: 'e1',
+      campId: 'c1',
+      poolId: 'p1',
+      name: 'Bread',
+      amountCents: 1250,
+      date: '2026-07-14',
+      note: undefined,
+      enteredBy: undefined,
+      createdAt: 5,
+    })
+  })
+
+  it('drops a row with no amount — a receipt without money is not a receipt', () => {
+    const { amountCents: _dropped, ...rest } = expenseRow
+    expect(toExpense(rest)).toBeNull()
+  })
+
+  it('reads an unset note as absent rather than as null', () => {
+    expect(toExpense({ ...expenseRow, note: null })?.note).toBeUndefined()
   })
 })

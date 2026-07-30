@@ -15,6 +15,12 @@ export const en = {
    */
   numberLocale: 'de-DE',
 
+  /**
+   * How dates are written. This one *does* follow the UI language — a German weekday in an
+   * English sentence reads like a bug, while "12,50" does not. Day-first either way.
+   */
+  dateLocale: 'en-GB',
+
   app: {
     title: 'campfin',
     subtitle: 'Camp budget tracker',
@@ -89,6 +95,7 @@ export const en = {
     setUpIncome: 'Set up income →',
     spending: 'Spending',
     noQuittungs: 'No quittungs yet.',
+    openQuittungs: 'Quittungs →',
     rename: 'Rename',
     renamePrompt: 'Rename camp',
     delete: 'Delete camp',
@@ -173,6 +180,48 @@ export const en = {
     personDaysUnknown: '— person-days',
     days: (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`,
     peopleAtRate: (people: number, rate: string) => `${people} ppl × ${rate}/day`,
+  },
+
+  /** The spent/left bar under each pool. */
+  bars: {
+    spentOfFunded: (spent: string, funded: string) => `${spent} of ${funded} spent`,
+    left: (amount: string) => `${amount} left`,
+    over: (amount: string) => `${amount} over budget`,
+    unfunded: 'Nothing granted to this pool yet.',
+  },
+
+  quittungs: {
+    title: 'Quittungs',
+    back: '← Back to camp',
+    add: '＋ Add quittung',
+    empty: 'No quittungs yet — tap ＋ Add quittung.',
+    dateLabel: 'Date',
+    nameLabel: 'What was it?',
+    namePlaceholder: 'e.g. Bakery',
+    amountLabel: 'Amount',
+    amountPlaceholder: '€ e.g. 12,50',
+    poolLabel: 'Paid from',
+    noteLabel: 'Note (optional)',
+    notePlaceholder: 'e.g. paid in cash',
+    save: 'Save',
+    cancel: 'Cancel',
+    edit: 'Edit',
+    delete: 'Delete',
+    editAction: (name: string) => `Edit ${name}`,
+    deleteAction: (name: string) => `Delete ${name}`,
+    spentTotal: 'Spent total',
+    dayTotal: (amount: string) => `${amount} that day`,
+    count: (n: number) => `${n} ${n === 1 ? 'quittung' : 'quittungs'}`,
+    unknownPool: 'Unknown pool',
+    deleteTitle: (name: string) => `Delete "${name}"?`,
+    deleteLine: (amount: string, pool: string) => `${amount} goes back into ${pool}.`,
+    confirmDelete: 'Delete',
+    issues: {
+      name: 'Say what this quittung was for.',
+      amount: 'Enter an amount in euros, e.g. 12,50.',
+      date: 'Pick the date on the receipt.',
+      pool: 'Choose which pool paid for it.',
+    },
   },
 
   poolSelect: {

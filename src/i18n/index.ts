@@ -6,6 +6,7 @@
 
 import { createContext, useContext, useMemo } from 'react'
 import { formatEuros } from '../lib/budget'
+import { formatDay } from '../lib/dates'
 import { en } from './en'
 
 export type Locale = 'en' | 'de'
@@ -54,7 +55,16 @@ export function useT(): Dict {
  * the returned object's identity stable across renders — a fresh object every render
  * would invalidate any dependency array it lands in.
  */
-export function useFormat(): { euros: (cents: number) => string } {
+export function useFormat(): {
+  euros: (cents: number) => string
+  day: (iso: string) => string
+} {
   const { t } = useI18n()
-  return useMemo(() => ({ euros: (cents: number) => formatEuros(cents, t.numberLocale) }), [t])
+  return useMemo(
+    () => ({
+      euros: (cents: number) => formatEuros(cents, t.numberLocale),
+      day: (iso: string) => formatDay(iso, t.dateLocale),
+    }),
+    [t],
+  )
 }

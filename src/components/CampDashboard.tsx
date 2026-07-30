@@ -4,6 +4,7 @@ import { campStatus } from '../lib/camps'
 import { todayIso } from '../lib/dates'
 import type { PoolSummary } from '../lib/pools'
 import type { Camp } from '../lib/types'
+import { PoolBars } from './PoolBars'
 import { ReceivedTotals } from './ReceivedTotals'
 import { StatusPill } from './StatusPill'
 
@@ -17,8 +18,12 @@ type Props = {
   isAdmin: boolean
   isLoading: boolean
   error: string | null
+  /** Whether any quittung exists yet — the bars alone cannot say so, since an
+   *  untouched pool and a camp with no receipts look the same. */
+  hasExpenses: boolean
   onBack: () => void
   onOpenIncome: () => void
+  onOpenQuittungs: () => void
   onRename: (campId: string, name: string) => void
   onDelete: (campId: string) => void
   onExport: () => void
@@ -34,8 +39,10 @@ export function CampDashboard({
   isAdmin,
   isLoading,
   error,
+  hasExpenses,
   onBack,
   onOpenIncome,
+  onOpenQuittungs,
   onRename,
   onDelete,
   onExport,
@@ -91,9 +98,23 @@ export function CampDashboard({
         </button>
       </section>
 
-      <section className="dashboard__slot">
+      <section
+        className={
+          funded || hasExpenses ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'
+        }
+      >
         <p className="dashboard__slot-title">{t.dashboard.spending}</p>
-        <p className="dashboard__slot-hint">{t.dashboard.noQuittungs}</p>
+        {funded || hasExpenses ? (
+          <>
+            {!hasExpenses && <p className="dashboard__slot-hint">{t.dashboard.noQuittungs}</p>}
+            <PoolBars summaries={summaries} />
+          </>
+        ) : (
+          <p className="dashboard__slot-hint">{t.dashboard.noIncome}</p>
+        )}
+        <button className="dashboard__slot-link" type="button" onClick={onOpenQuittungs}>
+          {t.dashboard.openQuittungs}
+        </button>
       </section>
 
       {error !== null && (

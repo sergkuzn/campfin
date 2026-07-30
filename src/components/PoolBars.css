@@ -1,0 +1,87 @@
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.bars__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.bars__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+}
+
+.bars__name {
+  font-weight: 600;
+}
+
+.bars__balance {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* The colour lives on the balance figure as well as the bar: the number is what a leader
+   reads first, and colour alone must never be the only signal. */
+.bars__balance--ok {
+  color: var(--ok);
+}
+.bars__balance--warn {
+  color: var(--warn);
+}
+.bars__balance--over {
+  color: var(--danger);
+}
+
+/* The track is the funded amount. flex, so the fill and the overspend segment sit side by
+   side and the overspend visibly runs past the end. */
+.bars__track {
+  display: flex;
+  height: 0.625rem;
+  border-radius: 999px;
+  background-color: var(--border);
+  overflow: hidden;
+}
+
+.bars__fill {
+  background-color: var(--ok);
+  transition: width 150ms ease-out;
+}
+
+.bars__track--warn .bars__fill {
+  background-color: var(--warn);
+}
+
+.bars__track--over .bars__fill {
+  background-color: var(--danger);
+}
+
+/* The funded boundary: where the budget ended and the overspend began. */
+.bars__mark {
+  width: 2px;
+  flex: 0 0 2px;
+  background-color: var(--surface);
+}
+
+/* Hatched, so an overspend is distinguishable from a merely full bar without relying on
+   the colour difference alone. */
+.bars__over {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--danger) 0 3px,
+    color-mix(in srgb, var(--danger) 45%, transparent) 3px 6px
+  );
+}
+
+.bars__figures {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}

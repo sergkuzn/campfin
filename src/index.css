@@ -24,6 +24,7 @@
   /* Semantic accents — named for meaning, not hue, so a re-theme is one edit. */
   --accent: #2563eb; /* blue-600  — interactive / upcoming */
   --ok: #16a34a; /* green-600 — running, under budget */
+  --warn: #d97706; /* amber-600 — most of a pool is gone, but nothing is wrong yet */
   --danger: #dc2626; /* red-600   — destructive, over budget */
 
   color-scheme: light dark; /* native controls/scrollbars follow the theme */
@@ -40,6 +41,7 @@
     /* Lighter variants: the 600s are too dark to read on a near-black surface. */
     --accent: #60a5fa; /* blue-400 */
     --ok: #4ade80; /* green-400 */
+    --warn: #fbbf24; /* amber-400 */
     --danger: #f87171; /* red-400 */
   }
 }

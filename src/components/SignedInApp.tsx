@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { downloadJson } from '../db/download'
 import { useCamps } from '../hooks/useCamps'
+import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
 import type { Session } from '../hooks/useSession'
 import { buildCampExport, exportFileName } from '../lib/exportJson'
@@ -9,6 +10,7 @@ import { summarisePools } from '../lib/pools'
 import { CampDashboard } from './CampDashboard'
 import { CampList } from './CampList'
 import { IncomeSetup } from './IncomeSetup'
+import { QuittungsScreen } from './QuittungsScreen'
 
 /**
  * Three screens, no router. `View` is a discriminated union rather than two independent
@@ -20,6 +22,7 @@ type View =
   | { screen: 'list' }
   | { screen: 'dashboard'; campId: string }
   | { screen: 'income'; campId: string }
+  | { screen: 'quittungs'; campId: string }
 
 type Props = {
   session: Session
@@ -41,14 +44,16 @@ export function SignedInApp({ session }: Props) {
   const openCamp = view.screen === 'list' ? undefined : camps.find((c) => c.id === view.campId)
   const openCampId = openCamp?.id ?? ''
 
-  // One query per open camp: passing '' skips it entirely while the list is showing.
+  // Two queries per open camp: passing '' skips them entirely while the list is showing.
   const income = useIncome(openCampId)
+  const expenses = useExpenses(openCampId)
 
   const { pools, sources, blocks } = income
-  // Expenses are [] until stage 08 — received money is independent of spending.
+  // The one place income and spending meet: every pool total on every screen comes from
+  // here, so a quittung shows up in the bars, the totals and the settlement at once.
   const summaries = useMemo(
-    () => summarisePools(pools, sources, blocks, []),
-    [pools, sources, blocks],
+    () => summarisePools(pools, sources, blocks, expenses.expenses),
+    [pools, sources, blocks, expenses.expenses],
   )
 
   // createCamp returns null when the name is taken; only navigate on success.
@@ -80,7 +85,12 @@ export function SignedInApp({ session }: Props) {
   const handleExport = () => {
     if (openCamp === undefined) return
     const exportedAt = new Date().toISOString()
-    const dump = buildCampExport(openCamp, { pools, sources, blocks }, exportedAt)
+    const dump = buildCampExport(
+      openCamp,
+      { pools, sources, blocks },
+      expenses.expenses,
+      exportedAt,
+    )
     downloadJson(exportFileName(openCamp, exportedAt), JSON.stringify(dump, null, 2))
   }
 
@@ -93,6 +103,17 @@ export function SignedInApp({ session }: Props) {
         error={error}
         onOpen={handleOpen}
         onCreate={handleCreate}
+      />
+    )
+  }
+
+  if (view.screen === 'quittungs') {
+    return (
+      <QuittungsScreen
+        campId={openCamp.id}
+        expenses={expenses}
+        summaries={summaries}
+        onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
       />
     )
   }
@@ -114,9 +135,11 @@ export function SignedInApp({ session }: Props) {
       memberCount={memberCount(memberships, openCamp.id)}
       isAdmin={isCampAdmin(memberships, openCamp.id, session.userId)}
       isLoading={income.isLoading}
-      error={error ?? income.error}
+      error={error ?? income.error ?? expenses.error}
+      hasExpenses={expenses.expenses.length > 0}
       onBack={handleBackToList}
       onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
+      onOpenQuittungs={() => setView({ screen: 'quittungs', campId: openCamp.id })}
       onRename={renameCamp}
       onDelete={handleDelete}
       onExport={handleExport}

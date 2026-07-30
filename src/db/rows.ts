@@ -7,9 +7,10 @@
  */
 
 import { isCamp } from '../lib/camps'
+import { isExpense } from '../lib/expenses'
 import { isIncomeSource, isPerDiemBlock, isPool } from '../lib/income'
 import { isMembership } from '../lib/members'
-import type { Camp, IncomeSource, Membership, PerDiemBlock, Pool } from '../lib/types'
+import type { Camp, Expense, IncomeSource, Membership, PerDiemBlock, Pool } from '../lib/types'
 
 /**
  * An optional attribute nobody has set can come back as `null`, while the domain types
@@ -83,4 +84,11 @@ export function toBlock(row: unknown): PerDiemBlock | null {
     startDate,
     endDate,
   }
+}
+
+export function toExpense(row: unknown): Expense | null {
+  const value = withoutNulls(row)
+  if (!isExpense(value)) return null
+  const { id, campId, poolId, name, amountCents, date, note, enteredBy, createdAt } = value
+  return { id, campId, poolId, name, amountCents, date, note, enteredBy, createdAt }
 }

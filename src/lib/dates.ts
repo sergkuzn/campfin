@@ -36,6 +36,21 @@ export function todayIso(): string {
   return toIsoDate(new Date())
 }
 
+/**
+ * An ISO day as a heading a human reads: "Tue 14 Jul". The locale is a parameter, not a
+ * constant, because `lib/` must not decide how the UI reads.
+ *
+ * The `T00:00:00` matters: `new Date('2026-07-14')` is parsed as UTC midnight, which is
+ * still the 13th in any negative offset, so the heading would name the wrong day.
+ */
+export function formatDay(iso: string, locale = 'en-GB'): string {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(locale, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
 /** Every ISO day from start to end inclusive, ascending: ["2026-07-01", …]. */
 export function eachDay(startIso: string, endIso: string): string[] {
   const isoDates: string[] = []

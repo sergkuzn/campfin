@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   everydayPool,
+  poolBar,
   receivedTotalCents,
   sourceAmountCents,
+  spendablePools,
   summarisePools,
   toReturnCents,
 } from './pools'
@@ -175,5 +177,46 @@ describe('receivedTotalCents / toReturnCents', () => {
   it('is 0 for no pools', () => {
     expect(receivedTotalCents([])).toBe(0)
     expect(toReturnCents([])).toBe(0)
+  })
+})
+
+describe('poolBar', () => {
+  it('is empty for an untouched, unfunded pool', () => {
+    expect(poolBar(0, 0)).toEqual({ state: 'empty', fillPercent: 0, overPercent: 0 })
+  })
+
+  it('reads a half-spent pool as ok', () => {
+    expect(poolBar(20_000, 10_000)).toEqual({ state: 'ok', fillPercent: 50, overPercent: 0 })
+  })
+
+  it('turns amber once four fifths are gone', () => {
+    expect(poolBar(20_000, 16_000)).toEqual({ state: 'warn', fillPercent: 80, overPercent: 0 })
+  })
+
+  it('is a full amber bar when spending exactly matches the funding', () => {
+    expect(poolBar(20_000, 20_000)).toEqual({ state: 'warn', fillPercent: 100, overPercent: 0 })
+  })
+
+  it('draws an overspend past the end of a full bar', () => {
+    expect(poolBar(20_000, 25_000)).toEqual({ state: 'over', fillPercent: 100, overPercent: 25 })
+  })
+
+  it('caps the overspend segment so one runaway receipt cannot stretch the row', () => {
+    expect(poolBar(20_000, 200_000)).toEqual({ state: 'over', fillPercent: 100, overPercent: 100 })
+  })
+
+  it('is over — never a reassuring 0 % — when an unfunded pool is spent from', () => {
+    expect(poolBar(0, 500)).toEqual({ state: 'over', fillPercent: 0, overPercent: 100 })
+  })
+
+  it('treats a fully funded but untouched pool as ok, not empty', () => {
+    expect(poolBar(20_000, 0)).toEqual({ state: 'ok', fillPercent: 0, overPercent: 0 })
+  })
+})
+
+describe('spendablePools', () => {
+  it('leaves out deposit pools, whose money is not the camp’s to spend', () => {
+    const summaries = summarisePools([everyday, bike], [perDiem, kaution], blocks, [])
+    expect(spendablePools(summaries).map((s) => s.pool.id)).toEqual(['pool-e'])
   })
 })

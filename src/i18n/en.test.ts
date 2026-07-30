@@ -31,6 +31,8 @@ describe('the English dictionary', () => {
     expect(en.blocks.personDays(0)).toBe('0 person-days')
     expect(en.pools.deleteSources(1, '€1')).toContain('1 income source ')
     expect(en.pools.deleteSources(2, '€1')).toContain('2 income sources ')
+    expect(en.quittungs.count(1)).toBe('1 quittung')
+    expect(en.quittungs.count(3)).toBe('3 quittungs')
   })
 
   it('interpolates its arguments rather than dropping them', () => {
@@ -38,5 +40,9 @@ describe('the English dictionary', () => {
     expect(en.dashboard.deleteConfirm('Moorwerder')).toContain('Moorwerder')
     expect(en.pools.sourceDeleteLine('€20,00', 'Everyday')).toContain('€20,00')
     expect(en.pools.sourceDeleteLine('€20,00', 'Everyday')).toContain('Everyday')
+    expect(en.quittungs.dayTotal('€32,50')).toContain('€32,50')
+    expect(en.bars.spentOfFunded('€10,00', '€40,00')).toContain('€10,00')
+    expect(en.bars.spentOfFunded('€10,00', '€40,00')).toContain('€40,00')
+    expect(en.bars.over('€5,00')).toContain('€5,00')
   })
 })

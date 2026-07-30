@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildCampExport, exportFileName } from './exportJson'
 import type { IncomeState } from './income'
-import type { Camp, PerDiemBlock, Pool } from './types'
+import type { Camp, Expense, PerDiemBlock, Pool } from './types'
 
 const camp: Camp = {
   id: 'c1',
@@ -29,19 +29,30 @@ const state: IncomeState = {
   blocks: [block],
 }
 
+const expense: Expense = {
+  id: 'e1',
+  campId: 'c1',
+  poolId: 'p1',
+  name: 'Bread',
+  amountCents: 1250,
+  date: '2026-07-14',
+  createdAt: 2,
+}
+
 describe('buildCampExport', () => {
-  it('includes the camp with its pools, sources and blocks', () => {
-    const dump = buildCampExport(camp, state, '2026-07-29T10:00:00.000Z')
+  it('includes the camp with its pools, sources, blocks and expenses', () => {
+    const dump = buildCampExport(camp, state, [expense], '2026-07-29T10:00:00.000Z')
     expect(dump.camp).toEqual(camp)
     expect(dump.pools).toEqual([pool])
     expect(dump.sources.map((s) => s.id)).toEqual(['s1'])
     expect(dump.blocks).toEqual([block])
+    expect(dump.expenses).toEqual([expense])
   })
 
   it('stamps format, version and export date', () => {
-    const dump = buildCampExport(camp, state, '2026-07-29T10:00:00.000Z')
+    const dump = buildCampExport(camp, state, [], '2026-07-29T10:00:00.000Z')
     expect(dump.format).toBe('campfin.camp')
-    expect(dump.version).toBe(3)
+    expect(dump.version).toBe(4)
     expect(dump.exportedAt).toBe('2026-07-29T10:00:00.000Z')
   })
 
@@ -49,9 +60,11 @@ describe('buildCampExport', () => {
     const dump = buildCampExport(
       camp,
       { pools: [], sources: [], blocks: [] },
+      [],
       '2026-07-29T10:00:00.000Z',
     )
     expect(dump.pools).toEqual([])
+    expect(dump.expenses).toEqual([])
     // Round-tripping through JSON is the point of the file, so it must be serialisable.
     expect(JSON.parse(JSON.stringify(dump)).camp.joinCode).toBe('MOOR-7F3K')
   })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayCount, eachDay, isWithin, todayIso, toIsoDate } from './dates'
+import { dayCount, eachDay, formatDay, isWithin, todayIso, toIsoDate } from './dates'
 
 describe('toIsoDate', () => {
   // `new Date(y, m, d, h, min)` builds a *local* time, so these hold in any timezone —
@@ -63,5 +63,16 @@ describe('eachDay', () => {
   })
   it('an inverted range yields nothing', () => {
     expect(eachDay('2026-07-03', '2026-07-01')).toEqual([])
+  })
+})
+
+describe('formatDay', () => {
+  it('names the weekday and the day in the given locale', () => {
+    expect(formatDay('2026-07-14', 'en-GB')).toBe('Tue 14 Jul')
+  })
+
+  it('names the day the ISO string says, not the UTC-midnight one', () => {
+    // A naive `new Date('2026-07-14')` is UTC midnight — the 13th west of Greenwich.
+    expect(formatDay('2026-07-14', 'en-GB')).toContain('14')
   })
 })
