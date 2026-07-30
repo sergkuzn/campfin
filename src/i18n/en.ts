@@ -183,12 +183,32 @@ export const en = {
     peopleAtRate: (people: number, rate: string) => `${people} ppl × ${rate}/day`,
   },
 
+  /** Granted vs actual attendance, inside the per-person-per-day card. */
+  attendance: {
+    granted: 'Granted',
+    actual: 'Who came',
+    /** Shown on the actual tab while no actual block exists — actual *is* granted then. */
+    sameAsGranted: 'Nobody dropped out yet, so this matches what was granted.',
+    copyFromGranted: '⧉ Copy from granted',
+    edit: 'Edit who came',
+    reset: '↺ Everybody came',
+    save: 'Save',
+    cancel: 'Cancel',
+    hint: 'Drop the people who never came, or shorten a stay. What is left is what you may spend.',
+    comparison: (granted: string, actual: string) => `Granted ${granted} · Actual ${actual}`,
+    goesBack: (amount: string) => `${amount} goes back`,
+    overAttended: (amount: string) =>
+      `${amount} more was used than granted — more people came than were funded.`,
+  },
+
   /** The spent/left bar under each pool. */
   bars: {
     spentOfFunded: (spent: string, funded: string) => `${spent} of ${funded} spent`,
     left: (amount: string) => `${amount} left`,
     over: (amount: string) => `${amount} over budget`,
     unfunded: 'Nothing granted to this pool yet.',
+    /** The bar measures what may be spent, so money for absentees needs saying out loud. */
+    unusable: (amount: string) => `${amount} of it was never ours to spend.`,
   },
 
   receipts: {

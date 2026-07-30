@@ -15,7 +15,7 @@ function draft(fields: Partial<ExpenseDraft> = {}): ExpenseDraft {
   return {
     date: '2026-07-14',
     name: 'Bread',
-    amount: '8,00',
+    amount: '12,50',
     poolId: 'pool-1',
     note: '',
     ...fields,
@@ -73,7 +73,7 @@ describe('expenseDraftToInput', () => {
   })
 
   it('parses euros as typed into integer cents', () => {
-    expect(expenseDraftToInput(draft({ amount: '8,00' }), 'c1', null)?.amountCents).toBe(1250)
+    expect(expenseDraftToInput(draft({ amount: '12,50' }), 'c1', null)?.amountCents).toBe(1250)
     expect(expenseDraftToInput(draft({ amount: '19.99' }), 'c1', null)?.amountCents).toBe(1999)
   })
 

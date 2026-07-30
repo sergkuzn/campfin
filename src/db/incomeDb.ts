@@ -13,7 +13,7 @@
  */
 
 import { id } from '@instantdb/react'
-import type { SaveSourceInput } from '../lib/drafts'
+import type { BlockInput, SaveBlocksInput, SaveSourceInput } from '../lib/drafts'
 import {
   blockIdsToDelete,
   type IncomeState,
@@ -23,6 +23,24 @@ import {
 } from '../lib/income'
 import type { IncomeSource } from '../lib/types'
 import { chunk, db } from './instant'
+
+/** Upsert one block row. A row without an id is new, so it gets one minted here. */
+function blockChunk(campId: string, sourceId: string, block: BlockInput) {
+  return chunk(db.tx.perDiemBlocks[block.id ?? id()])
+    .update({
+      campId,
+      sourceId,
+      variant: block.variant,
+      // null clears the attribute: a label the user emptied must actually go away,
+      // otherwise the old one survives the save.
+      label: block.label ?? null,
+      numPersons: block.numPersons,
+      ratePerPersonDayCents: block.ratePerPersonDayCents,
+      startDate: block.startDate,
+      endDate: block.endDate,
+    })
+    .link({ camp: campId })
+}
 
 /**
  * Create-or-update one income source with its blocks, and its pool if it's new. One
@@ -83,28 +101,36 @@ export function saveSource(input: SaveSourceInput, current: IncomeState): Promis
   return db.transact([
     ...newPool,
     sourceChunk,
-    ...input.blocks.map((block) =>
-      chunk(db.tx.perDiemBlocks[block.id ?? id()])
-        .update({
-          campId,
-          sourceId,
-          variant: block.variant,
-          // null clears the attribute: a label the user emptied must actually go away,
-          // otherwise the old one survives the save.
-          label: block.label ?? null,
-          numPersons: block.numPersons,
-          ratePerPersonDayCents: block.ratePerPersonDayCents,
-          startDate: block.startDate,
-          endDate: block.endDate,
-        })
-        .link({ camp: campId }),
-    ),
-    // Rows the user deleted in the form simply aren't in `input.blocks`.
-    ...blockIdsToDelete(current.blocks, sourceId, input.blocks).map((blockId) =>
-      chunk(db.tx.perDiemBlocks[blockId]).delete(),
-    ),
+    ...input.blocks.map((block) => blockChunk(campId, sourceId, block)),
+    // Rows the user deleted in the form simply aren't in `input.blocks`. This form only ever
+    // shows granted blocks, so the actual-attendance ones are out of its reach.
+    ...blockIdsToDelete(
+      current.blocks,
+      sourceId,
+      input.kind === 'per_diem' ? ['granted'] : [],
+      input.blocks,
+    ).map((blockId) => chunk(db.tx.perDiemBlocks[blockId]).delete()),
     ...orphanPoolIds(current.pools, sourcesAfter).map((orphanId) =>
       chunk(db.tx.pools[orphanId]).delete(),
+    ),
+  ])
+}
+
+/**
+ * Replace one variant's block rows for a source — the actual-attendance editor. Nothing
+ * else about the source is touched, so the grant the attendance is compared against cannot
+ * be rewritten by editing who came.
+ *
+ * An empty `input.blocks` is a real save, not a no-op: it deletes every block of that
+ * variant, which is how "everybody came after all" is expressed.
+ */
+export function saveBlocks(input: SaveBlocksInput, current: IncomeState): Promise<unknown> {
+  const { campId, sourceId, variant } = input
+
+  return db.transact([
+    ...input.blocks.map((block) => blockChunk(campId, sourceId, block)),
+    ...blockIdsToDelete(current.blocks, sourceId, [variant], input.blocks).map((blockId) =>
+      chunk(db.tx.perDiemBlocks[blockId]).delete(),
     ),
   ])
 }

@@ -160,6 +160,62 @@ describe('summarisePools', () => {
   })
 })
 
+describe('entitled and unusable money', () => {
+  // Two of the four funded people never came: 2 × 3 days × 1000 = 6000 entitled,
+  // so 6000 of the 12000 granted has to go back.
+  const withActual: PerDiemBlock[] = [
+    ...blocks,
+    { ...blocks[0], id: 'b1-actual', variant: 'actual', numPersons: 2 } as PerDiemBlock,
+  ]
+
+  it('entitles the everyday pool to the actual attendance plus its fixed grants', () => {
+    const summaries = summarisePools([everyday], [perDiem, extraFood], withActual, [])
+    // The €300 food grant does not shrink with the headcount — only per-diem money does.
+    expect(summaries[0]).toMatchObject({
+      fundedCents: 42_000,
+      entitledCents: 36_000,
+      unusableCents: 6000,
+    })
+  })
+
+  it('leaves a deposit pool’s entitled amount equal to its funded amount', () => {
+    const summaries = summarisePools([bike], [kaution], withActual, [])
+    expect(summaries[0]).toMatchObject({ entitledCents: 20_000, unusableCents: 0 })
+  })
+
+  it('measures remaining against entitled, not granted', () => {
+    const summaries = summarisePools([everyday], [perDiem, extraFood], withActual, [
+      exp({ amountCents: 10_000 }),
+    ])
+    expect(summaries[0]?.remainingCents).toBe(26_000) // 36000 − 10000, not 42000 − 10000
+  })
+
+  it('adds unusable money to the amount that goes back', () => {
+    const summaries = summarisePools([everyday], [perDiem, extraFood], withActual, [
+      exp({ amountCents: 10_000 }),
+    ])
+    // 26000 still unspent + 6000 that was never ours = the whole 32000 leftover.
+    expect(toReturnCents(summaries)).toBe(32_000)
+  })
+
+  it('returns unusable money even from a pool that is overspent', () => {
+    const summaries = summarisePools([everyday], [perDiem], withActual, [
+      exp({ amountCents: 9000 }), // 3000 past the 6000 entitlement
+    ])
+    expect(summaries[0]?.remainingCents).toBe(-3000)
+    expect(toReturnCents(summaries)).toBe(6000)
+  })
+
+  it('caps entitled at the money that arrived when more people came than were funded', () => {
+    const over: PerDiemBlock[] = [
+      ...blocks,
+      { ...blocks[0], id: 'b1-actual', variant: 'actual', numPersons: 9 } as PerDiemBlock,
+    ]
+    const summaries = summarisePools([everyday], [perDiem], over, [])
+    expect(summaries[0]).toMatchObject({ unusableCents: 0, entitledCents: 12_000 })
+  })
+})
+
 describe('receivedTotalCents / toReturnCents', () => {
   const summaries = summarisePools([everyday, bike], [perDiem, extraFood, kaution], blocks, [
     exp({ id: 'e1', poolId: 'pool-b', amountCents: 25_000 }), // overspends the bike pool

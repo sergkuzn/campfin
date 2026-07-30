@@ -3,16 +3,29 @@
  * Pure — no React, no storage. All amounts are integer cents.
  */
 
-import { perDiemBudgetCents } from './budget'
+import { blocksOf, perDiemBudgetCents, perDiemTotals } from './budget'
 import type { Expense, IncomeSource, PerDiemBlock, Pool } from './types'
 
-/** One pool with its sources and its three totals — what a screen renders. */
+/** One pool with its sources and its totals — what a screen renders. */
 export type PoolSummary = {
   pool: Pool
   sources: IncomeSource[]
+  /** The money that arrived: per-diem *as granted* plus every fixed/deposit amount. */
   fundedCents: number
+  /**
+   * funded − unusable: what may actually be spent from this pool. Capped at `fundedCents`,
+   * because when more people came than were funded you still only have the money that
+   * arrived — the overshoot is reported on the per-diem card, not as extra budget.
+   */
+  entitledCents: number
+  /** Per-diem money for people who never came. It arrived, but spending it is not allowed. */
+  unusableCents: number
   spentCents: number
-  /** funded − spent. Negative when the pool is overspent; callers floor it. */
+  /**
+   * entitled − spent. Measured against entitled rather than funded, because money for
+   * people who didn't come was never available to spend. Negative when the pool is
+   * overspent; callers floor it.
+   */
   remainingCents: number
 }
 
@@ -24,10 +37,8 @@ export function sourceAmountCents(source: IncomeSource, allBlocks: PerDiemBlock[
   switch (source.kind) {
     case 'per_diem':
       // Granted blocks only: that is the money that actually arrived. Actual-attendance
-      // blocks describe what may be *spent*, which is a different number (stage 09).
-      return perDiemBudgetCents(
-        allBlocks.filter((b) => b.sourceId === source.id && b.variant === 'granted'),
-      )
+      // blocks describe what may be *spent* — see `poolUnusableCents`.
+      return perDiemBudgetCents(blocksOf(allBlocks, source.id, 'granted'))
     case 'fixed':
     case 'deposit':
       // Only after narrowing does TypeScript know `amountCents` exists at all.
@@ -39,6 +50,18 @@ export function sourceAmountCents(source: IncomeSource, allBlocks: PerDiemBlock[
       return _never
     }
   }
+}
+
+/**
+ * Money in this pool that arrived but must go back unspent. Only per-diem money shrinks
+ * when people leave: a €50 food top-up parked in the same pool is €50 at any headcount,
+ * so a fixed grant contributes nothing here.
+ */
+export function poolUnusableCents(sources: IncomeSource[], allBlocks: PerDiemBlock[]): number {
+  return sources.reduce(
+    (sum, s) => (s.kind === 'per_diem' ? sum + perDiemTotals(allBlocks, s.id).unusableCents : sum),
+    0,
+  )
 }
 
 /** Every pool of one camp, in creation order, with its sources and totals. */
@@ -54,6 +77,8 @@ export function summarisePools(
     const spentCents = expenses
       .filter((e) => e.poolId === pool.id)
       .reduce((sum, e) => sum + e.amountCents, 0)
+    const unusableCents = poolUnusableCents(poolSources, blocks)
+    const entitledCents = fundedCents - unusableCents
 
     // Not floored: the dashboard wants to show an overspend in red, and settlement
     // does its own flooring where a return amount is actually needed.
@@ -61,8 +86,10 @@ export function summarisePools(
       pool,
       sources: poolSources,
       fundedCents,
+      entitledCents,
+      unusableCents,
       spentCents,
-      remainingCents: fundedCents - spentCents,
+      remainingCents: entitledCents - spentCents,
     }
   })
 }
@@ -133,9 +160,14 @@ export function receivedTotalCents(summaries: PoolSummary[]): number {
   return summaries.reduce((sum, s) => sum + s.fundedCents, 0)
 }
 
-/** Σ what actually goes back: each pool's leftover, floored at 0 (overspend returns nothing). */
+/**
+ * Σ what actually goes back: each pool's unspent leftover plus the money that was never
+ * ours to spend. Two ways to end up returning money, and both belong in the total — the
+ * settlement screen splits them into separate rows.
+ */
 export function toReturnCents(summaries: PoolSummary[]): number {
   // Flooring per pool, not on the sum: overspending the bike pool must not eat the
-  // leftover in the everyday pool.
-  return summaries.reduce((sum, s) => sum + Math.max(0, s.remainingCents), 0)
+  // leftover in the everyday pool. `unusableCents` is added outside the floor, since an
+  // overspent pool still has to send back what it was never allowed to touch.
+  return summaries.reduce((sum, s) => sum + Math.max(0, s.remainingCents) + s.unusableCents, 0)
 }

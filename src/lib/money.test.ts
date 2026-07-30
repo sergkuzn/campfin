@@ -6,7 +6,7 @@ describe('parseEurosToCents', () => {
     expect(parseEurosToCents('12')).toBe(1200)
     expect(parseEurosToCents('0')).toBe(0)
     expect(parseEurosToCents('12.5')).toBe(1250)
-    expect(parseEurosToCents('8,00')).toBe(1250)
+    expect(parseEurosToCents('12,50')).toBe(1250)
   })
   it('rounds without float drift', () => {
     expect(parseEurosToCents('19.99')).toBe(1999)

@@ -150,31 +150,36 @@ describe('sourceBlockIds', () => {
 })
 
 describe('blockIdsToDelete', () => {
-  const kept = (id: string | null, variant: PerDiemBlock['variant'] = 'granted') => ({
-    id,
-    variant,
-  })
+  const kept = (id: string | null) => ({ id })
+  const granted = ['granted'] as const
+  const actual = ['actual'] as const
 
   it('deletes granted rows the user removed', () => {
-    expect(blockIdsToDelete(state.blocks, 'src-pd', [kept('blk-1')])).toEqual(['blk-2'])
+    expect(blockIdsToDelete(state.blocks, 'src-pd', granted, [kept('blk-1')])).toEqual(['blk-2'])
   })
 
-  it('leaves actual blocks alone when granted ones are saved', () => {
-    const doomed = blockIdsToDelete(state.blocks, 'src-pd', [kept('blk-1'), kept('blk-2')])
+  it('leaves actual blocks alone when saving granted ones', () => {
+    const doomed = blockIdsToDelete(state.blocks, 'src-pd', granted, [kept('blk-1'), kept('blk-2')])
     expect(doomed).toEqual([]) // 'blk-a' is an actual block and was never on this form
   })
 
-  it('deletes the actual blocks the actual tab removed, and no granted ones', () => {
-    expect(blockIdsToDelete(state.blocks, 'src-pd', [kept(null, 'actual')])).toEqual(['blk-a'])
+  it('leaves granted blocks alone when saving actual ones', () => {
+    expect(blockIdsToDelete(state.blocks, 'src-pd', actual, [kept(null)])).toEqual(['blk-a'])
+  })
+
+  it('deletes every actual block when the editor is saved empty', () => {
+    // Clearing the actual tab is how a leader says "everybody came after all".
+    expect(blockIdsToDelete(state.blocks, 'src-pd', actual, [])).toEqual(['blk-a'])
   })
 
   it('keeps rows still present by id', () => {
-    const doomed = blockIdsToDelete(state.blocks, 'src-pd', [kept('blk-2'), kept(null)])
+    const doomed = blockIdsToDelete(state.blocks, 'src-pd', granted, [kept('blk-2'), kept(null)])
     expect(doomed).toEqual(['blk-1'])
   })
 
-  it('deletes nothing when the save carries no blocks', () => {
-    expect(blockIdsToDelete(state.blocks, 'src-pd', [])).toEqual([])
+  it('deletes nothing when no variant was on the form at all', () => {
+    // A fixed grant has no blocks; saving one must not touch the per-diem source's rows.
+    expect(blockIdsToDelete(state.blocks, 'src-pd', [], [])).toEqual([])
   })
 })
 

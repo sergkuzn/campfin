@@ -43,6 +43,18 @@ export type BlockInput = {
   endDate: string
 }
 
+/**
+ * What the hook needs to replace one variant's block rows — the actual-attendance editor,
+ * which touches no name, amount or pool. Separate from `SaveSourceInput` so saving "who
+ * really came" cannot accidentally rewrite the grant it is compared against.
+ */
+export type SaveBlocksInput = {
+  campId: string
+  sourceId: string
+  variant: PerDiemVariant
+  blocks: BlockInput[]
+}
+
 export type SaveSourceInput = {
   /** The row being edited, or null when creating. Carries id + createdAt forward. */
   existing: IncomeSource | null
@@ -64,6 +76,28 @@ export function centsToEuroInput(cents: number): string {
   // Deliberately not formatEuros: its "2.125,00 €" has a thousands separator and a
   // currency sign, both of which the parser rejects on re-save.
   return (cents / 100).toFixed(2).replace('.', ',')
+}
+
+/** Persisted blocks as editable rows: each keeps its id, so saving updates it in place. */
+export function draftsFromBlocks(blocks: PerDiemBlock[]): BlockDraft[] {
+  return blocks.map((b) => ({
+    id: b.id,
+    key: b.id, // a persisted row's database id doubles as its render key
+    label: b.label ?? '',
+    persons: String(b.numPersons),
+    startDate: b.startDate,
+    endDate: b.endDate,
+    rate: centsToEuroInput(b.ratePerPersonDayCents),
+  }))
+}
+
+/**
+ * "Copy from granted": the same rows, but as *new* ones — `id: null`, so saving creates
+ * actual blocks beside the granted ones instead of moving them. `newKey` is injected
+ * because `lib/` may not reach for `crypto.randomUUID`.
+ */
+export function copyDraftsFromBlocks(blocks: PerDiemBlock[], newKey: () => string): BlockDraft[] {
+  return draftsFromBlocks(blocks).map((draft) => ({ ...draft, id: null, key: newKey() }))
 }
 
 /** Seed the editor: an existing source becomes strings, a new one starts blank. */
@@ -91,15 +125,7 @@ export function draftFromSource(
     amount: source.kind === 'per_diem' ? '' : centsToEuroInput(source.amountCents),
     poolChoice: source.poolId,
     newPoolName: '',
-    blocks: blocks.map((b) => ({
-      id: b.id,
-      key: b.id, // a persisted row's database id doubles as its render key
-      label: b.label ?? '',
-      persons: String(b.numPersons),
-      startDate: b.startDate,
-      endDate: b.endDate,
-      rate: centsToEuroInput(b.ratePerPersonDayCents),
-    })),
+    blocks: draftsFromBlocks(blocks),
   }
 }
 
@@ -186,6 +212,32 @@ export function draftIssues(draft: SourceDraft): DraftIssue[] {
   }
 
   return issues
+}
+
+/**
+ * What is wrong with a bare list of block rows — the actual-attendance editor. An *empty*
+ * list is deliberately fine: no actual blocks means actual is granted, so clearing the
+ * editor is how you say "everybody came after all".
+ */
+export function blockDraftsIssues(drafts: BlockDraft[]): DraftIssue[] {
+  return drafts.some((d) => blockDraftToInput(d) === null) ? ['invalidBlock'] : []
+}
+
+/** A block list as a save payload, or null while any row is half typed. */
+export function blockDraftsToInput(
+  drafts: BlockDraft[],
+  campId: string,
+  sourceId: string,
+  variant: PerDiemVariant,
+): SaveBlocksInput | null {
+  if (blockDraftsIssues(drafts).length > 0) return null
+
+  const blocks: BlockInput[] = []
+  for (const draft of drafts) {
+    const input = blockDraftToInput(draft, variant)
+    if (input !== null) blocks.push(input)
+  }
+  return { campId, sourceId, variant, blocks }
 }
 
 /** The draft as a save payload, or null when `draftIssues` isn't empty. */

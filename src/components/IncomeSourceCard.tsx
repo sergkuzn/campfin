@@ -1,14 +1,28 @@
 import { useFormat, useT } from '../i18n'
-import { blockCents, blockPersonDays } from '../lib/budget'
-import { dayCount } from '../lib/dates'
+import type { PerDiemTotals } from '../lib/budget'
 import type { IncomeSource, PerDiemBlock } from '../lib/types'
+import { BlockList } from './BlockList'
+import { PerDiemAttendance } from './PerDiemAttendance'
+
+/** The granted/actual half of a per-diem card. One optional prop group rather than six
+ *  loose optional props, so "either a card has attendance or it doesn't" stays checkable. */
+type Attendance = {
+  actualBlocks: PerDiemBlock[]
+  totals: PerDiemTotals
+  editing: boolean
+  onEdit: (seedFromGranted: boolean) => void
+  renderForm: () => React.ReactNode
+}
 
 type Props = {
   source: IncomeSource
-  blocks: PerDiemBlock[] // already filtered to this source
+  /** Granted blocks of this source; `[]` for a fixed grant or a deposit. */
+  blocks: PerDiemBlock[]
   amountCents: number // from sourceAmountCents — do not recompute here
   /** Another card is open for editing, so this one's buttons are inert. */
   disabled: boolean
+  /** Present only for the per-diem source, which is the only kind that has attendance. */
+  attendance?: Attendance
   onEdit: () => void
   onDelete: () => void
 }
@@ -19,6 +33,7 @@ export function IncomeSourceCard({
   blocks,
   amountCents,
   disabled,
+  attendance,
   onEdit,
   onDelete,
 }: Props) {
@@ -36,39 +51,19 @@ export function IncomeSourceCard({
         <span className="card__amount">{format.euros(amountCents)}</span>
       </header>
 
-      {blocks.map((block) => {
-        const days = dayCount(block.startDate, block.endDate)
-        const personDays = blockPersonDays(block.numPersons, block.startDate, block.endDate)
-        return (
-          <div key={block.id} className="card__block">
-            <p className="card__block-row card__block-row--head">
-              <span>{block.label ?? t.blocks.fallbackLabel}</span>
-              <strong>
-                {format.euros(
-                  blockCents(
-                    block.numPersons,
-                    block.ratePerPersonDayCents,
-                    block.startDate,
-                    block.endDate,
-                  ),
-                )}
-              </strong>
-            </p>
-            <p className="card__block-row">
-              <span>
-                {t.blocks.peopleAtRate(block.numPersons, format.euros(block.ratePerPersonDayCents))}
-              </span>
-              <span>{t.blocks.personDays(personDays)}</span>
-            </p>
-            <p className="card__block-row">
-              <span>
-                {block.startDate} – {block.endDate}
-              </span>
-              <span>{t.blocks.days(days)}</span>
-            </p>
-          </div>
-        )
-      })}
+      {attendance === undefined ? (
+        <BlockList blocks={blocks} />
+      ) : (
+        <PerDiemAttendance
+          grantedBlocks={blocks}
+          actualBlocks={attendance.actualBlocks}
+          totals={attendance.totals}
+          editing={attendance.editing}
+          disabled={disabled}
+          onEdit={attendance.onEdit}
+          renderForm={attendance.renderForm}
+        />
+      )}
 
       <div className="card__actions">
         <button className="card__button" type="button" onClick={onEdit} disabled={disabled}>

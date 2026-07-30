@@ -12,7 +12,7 @@ import * as incomeDb from '../db/incomeDb'
 import { db } from '../db/instant'
 import { mapRows, toBlock, toPool, toSource } from '../db/rows'
 import { useT } from '../i18n'
-import type { SaveSourceInput } from '../lib/drafts'
+import type { SaveBlocksInput, SaveSourceInput } from '../lib/drafts'
 import type { IncomeState } from '../lib/income'
 import type { IncomeSource, PerDiemBlock, Pool } from '../lib/types'
 
@@ -20,6 +20,8 @@ export type UseIncome = IncomeState & {
   isLoading: boolean
   error: string | null
   saveSource: (input: SaveSourceInput) => void
+  /** Replace one variant's block rows — the actual-attendance editor. */
+  saveBlocks: (input: SaveBlocksInput) => void
   deleteSource: (sourceId: string) => void
   renamePool: (poolId: string, name: string) => void
   deletePool: (poolId: string) => void
@@ -78,6 +80,14 @@ export function useIncome(campId: string): UseIncome {
     [state, t],
   )
 
+  const saveBlocks = useCallback(
+    (input: SaveBlocksInput): void => {
+      setError(null)
+      void incomeDb.saveBlocks(input, state).catch(() => setError(t.sync.writeFailed))
+    },
+    [state, t],
+  )
+
   const deleteSource = useCallback(
     (sourceId: string): void => {
       setError(null)
@@ -107,6 +117,7 @@ export function useIncome(campId: string): UseIncome {
     isLoading,
     error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
     saveSource,
+    saveBlocks,
     deleteSource,
     renamePool,
     deletePool,

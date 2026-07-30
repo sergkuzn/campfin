@@ -36,7 +36,9 @@ function segmentWidth(units: number, overPercent: number): string {
 function PoolBarRow({ summary }: { summary: PoolSummary }) {
   const t = useT()
   const format = useFormat()
-  const bar = poolBar(summary.fundedCents, summary.spentCents)
+  // Measured against what may be spent, not against what arrived: money for people who
+  // never came would otherwise show as room left in the pool.
+  const bar = poolBar(summary.entitledCents, summary.spentCents)
 
   // Same number, two readings: what is left, or by how much the pool is already over.
   const balance =
@@ -77,9 +79,15 @@ function PoolBarRow({ summary }: { summary: PoolSummary }) {
           ? t.bars.unfunded
           : t.bars.spentOfFunded(
               format.euros(summary.spentCents),
-              format.euros(summary.fundedCents),
+              format.euros(summary.entitledCents),
             )}
       </p>
+
+      {/* The bar's budget is smaller than the money that arrived — say why, or the
+          difference from the received total looks like a bug. */}
+      {summary.unusableCents > 0 && (
+        <p className="bars__note">{t.bars.unusable(format.euros(summary.unusableCents))}</p>
+      )}
     </div>
   )
 }

@@ -167,22 +167,25 @@ export function sourceBlockIds(blocks: PerDiemBlock[], sourceId: string): string
 }
 
 /**
- * Saving a card replaces the block rows it edited: whatever the user removed in the form
- * simply isn't in `kept`, so it has to be deleted.
+ * Saving a block editor replaces the rows it showed: whatever the user removed simply isn't
+ * in `kept`, so it has to be deleted.
  *
- * Scoped to the *variants being saved*, which matters from stage 09 on: the granted editor
- * must not delete the actual-attendance blocks it never showed. Rows whose `id` is null are
- * new and delete nothing.
+ * `variants` says which rows were on the form, and it is a separate argument rather than
+ * something read off `kept`: clearing the actual-attendance editor saves *nothing*, and
+ * "no rows kept" must still delete the rows that were there. Deriving the scope from the
+ * kept rows would make an empty save a silent no-op. Rows whose `id` is null are new and
+ * delete nothing.
  */
 export function blockIdsToDelete(
   blocks: PerDiemBlock[],
   sourceId: string,
-  kept: readonly { id: string | null; variant: PerDiemVariant }[],
+  variants: readonly PerDiemVariant[],
+  kept: readonly { id: string | null }[],
 ): string[] {
-  const savedVariants = new Set(kept.map((k) => k.variant))
+  const scope = new Set(variants)
   const keptIds = new Set(kept.map((k) => k.id).filter((id): id is string => id !== null))
   return blocks
-    .filter((b) => b.sourceId === sourceId && savedVariants.has(b.variant) && !keptIds.has(b.id))
+    .filter((b) => b.sourceId === sourceId && scope.has(b.variant) && !keptIds.has(b.id))
     .map((b) => b.id)
 }
 

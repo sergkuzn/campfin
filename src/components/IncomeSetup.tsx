@@ -2,7 +2,8 @@ import { useMemo, useRef, useState } from 'react'
 import './IncomeSetup.css'
 import type { UseIncome } from '../hooks/useIncome'
 import { type Dict, useFormat, useT } from '../i18n'
-import type { SaveSourceInput } from '../lib/drafts'
+import { blocksOf, perDiemTotals } from '../lib/budget'
+import type { SaveBlocksInput, SaveSourceInput } from '../lib/drafts'
 import { hasPerDiemSource, INCOME_KINDS } from '../lib/income'
 import {
   everydayPool,
@@ -12,6 +13,7 @@ import {
   summarisePools,
 } from '../lib/pools'
 import type { IncomeKind, IncomeSource, PerDiemBlock } from '../lib/types'
+import { ActualBlocksForm } from './ActualBlocksForm'
 import { ConfirmDialog } from './ConfirmDialog'
 import { IncomeSourceCard } from './IncomeSourceCard'
 import { IncomeSourceForm } from './IncomeSourceForm'
@@ -22,8 +24,15 @@ type Props = {
   onBack: () => void
 }
 
-/** Which card is unlocked. Only one at a time — that is the whole lock model. */
-type Editing = { mode: 'new'; kind: IncomeKind } | { mode: 'edit'; sourceId: string }
+/**
+ * Which card is unlocked. Only one at a time — that is the whole lock model. `actual` opens
+ * the attendance editor rather than the source form; `seedFromGranted` remembers whether the
+ * user got there via "Copy from granted".
+ */
+type Editing =
+  | { mode: 'new'; kind: IncomeKind }
+  | { mode: 'edit'; sourceId: string }
+  | { mode: 'actual'; sourceId: string; seedFromGranted: boolean }
 
 /** What the confirm dialog is about. Ids only: the numbers get derived at render time,
  *  so the question can never quote a stale amount. */
@@ -56,6 +65,11 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
     setEditing(null)
   }
 
+  const handleSaveBlocks = (input: SaveBlocksInput) => {
+    income.saveBlocks(input)
+    setEditing(null)
+  }
+
   const handleAdd = (kind: IncomeKind) => {
     setPicking(false)
     setEditing({ mode: 'new', kind })
@@ -75,6 +89,74 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   }
 
   const confirmContent = describePending(pending, summaries, blocks, t, format.euros)
+
+  /**
+   * One saved source: the locked card, the source form, or — for the per-diem source — the
+   * card with its attendance tabs. Written here rather than inside `PoolSection` because
+   * everything it needs (which card is unlocked, the save handlers) lives in this component.
+   */
+  const renderSource = (source: IncomeSource, summary: PoolSummary): React.ReactNode => {
+    // Granted blocks only. The actual-attendance rows have their own tab and must never
+    // appear as extra rows in the grant's editor.
+    const grantedBlocks = blocksOf(blocks, source.id, 'granted')
+
+    if (editing?.mode === 'edit' && editing.sourceId === source.id) {
+      return (
+        <IncomeSourceForm
+          // Re-seed the draft when the user switches to a different card.
+          key={source.id}
+          campId={campId}
+          kind={source.kind}
+          source={source}
+          blocks={grantedBlocks}
+          pools={pools}
+          defaultPool={summary.pool}
+          onSave={handleSave}
+          onCancel={() => setEditing(null)}
+        />
+      )
+    }
+
+    // Narrowed once and reused: inside the `renderForm` closure below, `editing` is no
+    // longer narrowed by TypeScript, since it could have changed by the time it runs.
+    const editingActual =
+      editing?.mode === 'actual' && editing.sourceId === source.id ? editing : null
+
+    return (
+      <IncomeSourceCard
+        key={source.id}
+        source={source}
+        blocks={grantedBlocks}
+        amountCents={sourceAmountCents(source, blocks)}
+        disabled={locked}
+        attendance={
+          source.kind !== 'per_diem'
+            ? undefined
+            : {
+                actualBlocks: blocksOf(blocks, source.id, 'actual'),
+                totals: perDiemTotals(blocks, source.id),
+                editing: editingActual !== null,
+                onEdit: (seedFromGranted) =>
+                  setEditing({ mode: 'actual', sourceId: source.id, seedFromGranted }),
+                renderForm: () => (
+                  <ActualBlocksForm
+                    key={source.id}
+                    campId={campId}
+                    sourceId={source.id}
+                    grantedBlocks={grantedBlocks}
+                    actualBlocks={blocksOf(blocks, source.id, 'actual')}
+                    seedFromGranted={editingActual?.seedFromGranted ?? false}
+                    onSave={handleSaveBlocks}
+                    onCancel={() => setEditing(null)}
+                  />
+                ),
+              }
+        }
+        onEdit={() => setEditing({ mode: 'edit', sourceId: source.id })}
+        onDelete={() => setPending({ target: 'source', sourceId: source.id })}
+      />
+    )
+  }
 
   // The per-diem grant is the camp's spine and there is exactly one of it, so the menu
   // stops offering it once it exists rather than letting a second one be created.
@@ -134,29 +216,10 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
         <PoolSection
           key={summary.pool.id}
           summary={summary}
-          blocks={blocks}
           locked={locked}
-          editingSourceId={editing?.mode === 'edit' ? editing.sourceId : null}
-          onEdit={(sourceId) => setEditing({ mode: 'edit', sourceId })}
-          onDeleteSource={(sourceId) => setPending({ target: 'source', sourceId })}
           onRenamePool={() => handleRenamePool(summary.pool.id, summary.pool.name)}
           onDeletePool={() => setPending({ target: 'pool', poolId: summary.pool.id })}
-          renderForm={(source) => (
-            <IncomeSourceForm
-              // Re-seed the draft when the user switches to a different card.
-              key={source.id}
-              campId={campId}
-              kind={source.kind}
-              source={source}
-              // Granted blocks only — the actual-attendance ones get their own tab in a
-              // later stage and must not appear as extra rows in this editor.
-              blocks={blocks.filter((b) => b.sourceId === source.id && b.variant === 'granted')}
-              pools={pools}
-              defaultPool={summary.pool}
-              onSave={handleSave}
-              onCancel={() => setEditing(null)}
-            />
-          )}
+          renderSource={(source) => renderSource(source, summary)}
         />
       ))}
 
@@ -237,28 +300,20 @@ function describePending(
 
 type PoolSectionProps = {
   summary: PoolSummary
-  blocks: PerDiemBlock[]
   locked: boolean
-  editingSourceId: string | null
-  onEdit: (sourceId: string) => void
-  onDeleteSource: (sourceId: string) => void
   onRenamePool: () => void
   onDeletePool: () => void
-  /** A render prop: the parent owns `editing` and the form's props, this section owns
-   *  the layout, so it stays ignorant of drafts and saving. */
-  renderForm: (source: IncomeSource) => React.ReactNode
+  /** A render prop: the parent owns `editing` and every card's props, this section owns the
+   *  pool header and layout, so it stays ignorant of drafts, blocks and saving. */
+  renderSource: (source: IncomeSource) => React.ReactNode
 }
 
 function PoolSection({
   summary,
-  blocks,
   locked,
-  editingSourceId,
-  onEdit,
-  onDeleteSource,
   onRenamePool,
   onDeletePool,
-  renderForm,
+  renderSource,
 }: PoolSectionProps) {
   const t = useT()
   const format = useFormat()
@@ -308,21 +363,7 @@ function PoolSection({
         </details>
       </header>
 
-      {summary.sources.map((source) =>
-        source.id === editingSourceId ? (
-          renderForm(source)
-        ) : (
-          <IncomeSourceCard
-            key={source.id}
-            source={source}
-            blocks={blocks.filter((b) => b.sourceId === source.id)}
-            amountCents={sourceAmountCents(source, blocks)}
-            disabled={locked}
-            onEdit={() => onEdit(source.id)}
-            onDelete={() => onDeleteSource(source.id)}
-          />
-        ),
-      )}
+      {summary.sources.map((source) => renderSource(source))}
     </section>
   )
 }

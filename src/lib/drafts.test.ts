@@ -4,11 +4,15 @@ import {
   blankBlockDraft,
   blockDraftCents,
   blockDraftPersonDays,
+  blockDraftsIssues,
+  blockDraftsToInput,
   blockDraftToInput,
   centsToEuroInput,
+  copyDraftsFromBlocks,
   draftFromSource,
   draftIssues,
   draftPersonDays,
+  draftsFromBlocks,
   draftToInput,
   NEW_POOL,
   type SourceDraft,
@@ -75,7 +79,7 @@ const goodDraft = (over: Partial<SourceDraft> = {}): SourceDraft => ({
 
 describe('centsToEuroInput', () => {
   it('renders cents as a plain comma-decimal string', () => {
-    expect(centsToEuroInput(1250)).toBe('8,00')
+    expect(centsToEuroInput(1250)).toBe('12,50')
     expect(centsToEuroInput(0)).toBe('0,00')
     expect(centsToEuroInput(212_500)).toBe('2125,00') // no thousands separator
   })
@@ -120,9 +124,61 @@ describe('draftFromSource', () => {
         persons: '18',
         startDate: '2026-08-12',
         endDate: '2026-08-19',
-        rate: '8,00',
+        rate: '12,50',
       },
     ])
+  })
+})
+
+describe('the actual-attendance editor', () => {
+  let counter = 0
+  const newKey = () => `new-${++counter}`
+
+  it('copies granted blocks as new rows with fresh keys and no ids', () => {
+    counter = 0
+    const copies = copyDraftsFromBlocks([persistedBlock], newKey)
+    expect(copies).toEqual([
+      {
+        id: null, // a copy is a new row, not a move of the granted one
+        key: 'new-1',
+        label: 'Participants',
+        persons: '18',
+        startDate: '2026-08-12',
+        endDate: '2026-08-19',
+        rate: '12,50',
+      },
+    ])
+  })
+
+  it('keeps ids when seeding from existing actual blocks', () => {
+    const stored: PerDiemBlock = { ...persistedBlock, id: 'blk-a', variant: 'actual' }
+    expect(draftsFromBlocks([stored])[0]).toMatchObject({ id: 'blk-a', key: 'blk-a' })
+  })
+
+  it('accepts an empty list — no actual blocks means actual is granted', () => {
+    expect(blockDraftsIssues([])).toEqual([])
+    expect(blockDraftsToInput([], 'C', 'src-pd', 'actual')).toEqual({
+      campId: 'C',
+      sourceId: 'src-pd',
+      variant: 'actual',
+      blocks: [],
+    })
+  })
+
+  it('rejects the save while a row is half typed', () => {
+    const rows = [goodBlock(), goodBlock({ key: 'k2', persons: '' })]
+    expect(blockDraftsIssues(rows)).toEqual(['invalidBlock'])
+    expect(blockDraftsToInput(rows, 'C', 'src-pd', 'actual')).toBeNull()
+  })
+
+  it('stamps the actual variant onto every row', () => {
+    const input = blockDraftsToInput(
+      [goodBlock(), goodBlock({ key: 'k2' })],
+      'C',
+      'src-pd',
+      'actual',
+    )
+    expect(input?.blocks.map((b) => b.variant)).toEqual(['actual', 'actual'])
   })
 })
 
