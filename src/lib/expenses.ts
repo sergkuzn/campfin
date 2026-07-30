@@ -1,5 +1,5 @@
 /**
- * Quittungs (receipts) as pure data: the row guard, the form boundary, and the grouping
+ * Receipts (receipts) as pure data: the row guard, the form boundary, and the grouping
  * the list screen renders. No React, no database, no clock — "today" arrives as an
  * argument.
  *
@@ -38,7 +38,7 @@ export type SaveExpenseInput = {
  */
 export type ExpenseIssue = 'name' | 'amount' | 'date' | 'pool'
 
-/** One day of quittungs, newest first inside it, with the day's total. */
+/** One day of receipts, newest first inside it, with the day's total. */
 export type ExpenseDay = {
   date: string
   expenses: Expense[]
@@ -75,7 +75,7 @@ export function draftFromExpense(expense: Expense): ExpenseDraft {
   return {
     date: expense.date,
     name: expense.name,
-    // Not formatEuros: its "12,50 €" has a currency sign the parser rejects on re-save.
+    // Not formatEuros: its "8,00 €" has a currency sign the parser rejects on re-save.
     amount: (expense.amountCents / 100).toFixed(2).replace('.', ','),
     poolId: expense.poolId,
     note: expense.note ?? '',

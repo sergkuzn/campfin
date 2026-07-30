@@ -147,7 +147,7 @@ export type Movement = DepositMovement | VolunteerMovement
 
 export type MovementKind = Movement['kind']
 
-/** A quittung (receipt), spent from a pool. */
+/** A receipt (receipt), spent from a pool. */
 export type Expense = {
   id: string
   campId: string

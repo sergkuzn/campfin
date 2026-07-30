@@ -2,7 +2,7 @@
 const EURO_PATTERN = /^\d+([.,]\d{1,2})?$/
 
 /**
- * Parse a euro string ("12", "12,50", "12.5") into integer cents, or null if it
+ * Parse a euro string ("12", "8,00", "12.5") into integer cents, or null if it
  * isn't a valid non-negative amount with at most two decimal places.
  */
 export function parseEurosToCents(input: string): number | null {

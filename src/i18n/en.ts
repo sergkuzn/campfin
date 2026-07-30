@@ -10,14 +10,14 @@
 export const en = {
   /**
    * How amounts are written. Deliberately not tied to the UI language: euros are typed
-   * and read German-style at camp ("12,50"), so an English UI still formats de-DE. One
+   * and read German-style at camp ("8,00"), so an English UI still formats de-DE. One
    * field per locale to change that.
    */
   numberLocale: 'de-DE',
 
   /**
    * How dates are written. This one *does* follow the UI language — a German weekday in an
-   * English sentence reads like a bug, while "12,50" does not. Day-first either way.
+   * English sentence reads like a bug, while "8,00" does not. Day-first either way.
    */
   dateLocale: 'en-GB',
 
@@ -94,8 +94,8 @@ export const en = {
     noIncome: 'No income sources yet.',
     setUpIncome: 'Set up income →',
     spending: 'Spending',
-    noQuittungs: 'No quittungs yet.',
-    openQuittungs: 'Quittungs →',
+    noReceipts: 'No receipts yet.',
+    openReceipts: 'Receipts →',
     rename: 'Rename',
     renamePrompt: 'Rename camp',
     delete: 'Delete camp',
@@ -109,7 +109,7 @@ export const en = {
     empty: 'No income yet — tap ＋ Add income.',
     receivedTotal: 'Received total',
     nameLabel: 'Income name',
-    namePlaceholder: 'Name, e.g. Verpflegungspauschale',
+    namePlaceholder: 'Name, e.g. Group money',
     amountLabel: 'Amount',
     amountPlaceholder: '€ e.g. 300,00',
     personDaysTotal: 'Total person-days',
@@ -121,7 +121,7 @@ export const en = {
     kinds: {
       per_diem: {
         label: 'Per person, per day',
-        hint: 'Verpflegungspauschale — people × days × rate',
+        hint: 'Group money — people × days × rate',
       },
       fixed: {
         label: 'Fixed amount',
@@ -143,8 +143,9 @@ export const en = {
 
   pools: {
     /** Seeded into the camp's everyday pool at creation, then owned by the user —
-     *  switching language later must never rename their pools. */
-    everydayDefault: 'Everyday',
+     *  switching language later must never rename their pools. Deliberately the same
+     *  wording as the per-person-per-day income that feeds it: one name, one pot. */
+    everydayDefault: 'Group money',
     actions: (name: string) => `Actions for ${name}`,
     rename: 'Rename pool',
     renamePrompt: 'Rename pool',
@@ -170,9 +171,9 @@ export const en = {
     nameLabel: 'Block name',
     namePlaceholder: 'e.g. Participants',
     peopleLabel: 'Number of people',
-    peoplePlaceholder: 'e.g. 24',
+    peoplePlaceholder: 'e.g. 12',
     rateLabel: 'Rate per person / day',
-    ratePlaceholder: '€ e.g. 12,50',
+    ratePlaceholder: '€ e.g. 8,00',
     startLabel: 'Start date',
     endLabel: 'End date',
     add: '＋ Add block',
@@ -190,16 +191,16 @@ export const en = {
     unfunded: 'Nothing granted to this pool yet.',
   },
 
-  quittungs: {
-    title: 'Quittungs',
+  receipts: {
+    title: 'Receipts',
     back: '← Back to camp',
-    add: '＋ Add quittung',
-    empty: 'No quittungs yet — tap ＋ Add quittung.',
+    add: '＋ Add receipt',
+    empty: 'No receipts yet — tap ＋ Add receipt.',
     dateLabel: 'Date',
     nameLabel: 'What was it?',
     namePlaceholder: 'e.g. Bakery',
     amountLabel: 'Amount',
-    amountPlaceholder: '€ e.g. 12,50',
+    amountPlaceholder: '€ e.g. 8,00',
     poolLabel: 'Paid from',
     noteLabel: 'Note (optional)',
     notePlaceholder: 'e.g. paid in cash',
@@ -211,14 +212,14 @@ export const en = {
     deleteAction: (name: string) => `Delete ${name}`,
     spentTotal: 'Spent total',
     dayTotal: (amount: string) => `${amount} that day`,
-    count: (n: number) => `${n} ${n === 1 ? 'quittung' : 'quittungs'}`,
+    count: (n: number) => `${n} ${n === 1 ? 'receipt' : 'receipts'}`,
     unknownPool: 'Unknown pool',
     deleteTitle: (name: string) => `Delete "${name}"?`,
     deleteLine: (amount: string, pool: string) => `${amount} goes back into ${pool}.`,
     confirmDelete: 'Delete',
     issues: {
-      name: 'Say what this quittung was for.',
-      amount: 'Enter an amount in euros, e.g. 12,50.',
+      name: 'Say what this receipt was for.',
+      amount: 'Enter an amount in euros, e.g. 8,00.',
       date: 'Pick the date on the receipt.',
       pool: 'Choose which pool paid for it.',
     },
@@ -228,7 +229,7 @@ export const en = {
     label: 'Pool',
     newOption: '＋ New pool…',
     newNameLabel: 'New pool name',
-    newNamePlaceholder: 'e.g. Everyday',
+    newNamePlaceholder: 'e.g. Bike deposit',
     copyName: '⧉ Same as income name',
   },
 }

@@ -18,12 +18,12 @@ type Props = {
   isAdmin: boolean
   isLoading: boolean
   error: string | null
-  /** Whether any quittung exists yet — the bars alone cannot say so, since an
+  /** Whether any receipt exists yet — the bars alone cannot say so, since an
    *  untouched pool and a camp with no receipts look the same. */
   hasExpenses: boolean
   onBack: () => void
   onOpenIncome: () => void
-  onOpenQuittungs: () => void
+  onOpenReceipts: () => void
   onRename: (campId: string, name: string) => void
   onDelete: (campId: string) => void
   onExport: () => void
@@ -42,7 +42,7 @@ export function CampDashboard({
   hasExpenses,
   onBack,
   onOpenIncome,
-  onOpenQuittungs,
+  onOpenReceipts,
   onRename,
   onDelete,
   onExport,
@@ -106,14 +106,14 @@ export function CampDashboard({
         <p className="dashboard__slot-title">{t.dashboard.spending}</p>
         {funded || hasExpenses ? (
           <>
-            {!hasExpenses && <p className="dashboard__slot-hint">{t.dashboard.noQuittungs}</p>}
+            {!hasExpenses && <p className="dashboard__slot-hint">{t.dashboard.noReceipts}</p>}
             <PoolBars summaries={summaries} />
           </>
         ) : (
           <p className="dashboard__slot-hint">{t.dashboard.noIncome}</p>
         )}
-        <button className="dashboard__slot-link" type="button" onClick={onOpenQuittungs}>
-          {t.dashboard.openQuittungs}
+        <button className="dashboard__slot-link" type="button" onClick={onOpenReceipts}>
+          {t.dashboard.openReceipts}
         </button>
       </section>
 

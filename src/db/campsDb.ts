@@ -51,7 +51,7 @@ export function renameCamp(campId: string, name: string): Promise<unknown> {
 
 /**
  * Deletes the camp and, through `onDelete: 'cascade'` on every row's `camp` link, its
- * pools, income, blocks, quittungs, movements and memberships — server-side, in one step,
+ * pools, income, blocks, receipts, movements and memberships — server-side, in one step,
  * rather than the client walking six namespaces and hoping it finishes.
  */
 export function deleteCamp(campId: string): Promise<unknown> {

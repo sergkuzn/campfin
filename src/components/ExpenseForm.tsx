@@ -13,7 +13,7 @@ import type { Expense } from '../lib/types'
 
 type Props = {
   campId: string
-  /** The row being edited, or null when adding a new quittung. */
+  /** The row being edited, or null when adding a new receipt. */
   expense: Expense | null
   /** Pools a receipt can be tagged to — including deposit pools, since a forfeited
    *  Kaution is an ordinary expense against its own pool. */
@@ -24,7 +24,7 @@ type Props = {
   onCancel: () => void
 }
 
-/** One quittung being typed. Same shape as the income card: one draft, Save commits it. */
+/** One receipt being typed. Same shape as the income card: one draft, Save commits it. */
 export function ExpenseForm({ campId, expense, pools, todayIso, onSave, onCancel }: Props) {
   const t = useT()
 
@@ -54,7 +54,7 @@ export function ExpenseForm({ campId, expense, pools, todayIso, onSave, onCancel
   return (
     <form className="card card--editing" onSubmit={handleSubmit}>
       <label className="field">
-        <span className="field__label">{t.quittungs.dateLabel}</span>
+        <span className="field__label">{t.receipts.dateLabel}</span>
         <input
           className="income-form__input"
           type="date"
@@ -66,11 +66,11 @@ export function ExpenseForm({ campId, expense, pools, todayIso, onSave, onCancel
       </label>
 
       <label className="field">
-        <span className="field__label">{t.quittungs.nameLabel}</span>
+        <span className="field__label">{t.receipts.nameLabel}</span>
         <input
           className="income-form__input"
           value={draft.name}
-          placeholder={t.quittungs.namePlaceholder}
+          placeholder={t.receipts.namePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             patch({ name: event.target.value })
           }
@@ -78,14 +78,14 @@ export function ExpenseForm({ campId, expense, pools, todayIso, onSave, onCancel
       </label>
 
       <label className="field">
-        <span className="field__label">{t.quittungs.amountLabel}</span>
+        <span className="field__label">{t.receipts.amountLabel}</span>
         <input
           className="income-form__input income-form__input--amount"
           // inputMode="decimal" so a phone shows a numeric keypad. The value stays a
           // string here; cents happen in `lib/expenses.ts`.
           inputMode="decimal"
           value={draft.amount}
-          placeholder={t.quittungs.amountPlaceholder}
+          placeholder={t.receipts.amountPlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             patch({ amount: event.target.value })
           }
@@ -93,7 +93,7 @@ export function ExpenseForm({ campId, expense, pools, todayIso, onSave, onCancel
       </label>
 
       <label className="field">
-        <span className="field__label">{t.quittungs.poolLabel}</span>
+        <span className="field__label">{t.receipts.poolLabel}</span>
         <select
           className="income-form__input"
           value={draft.poolId}
@@ -110,11 +110,11 @@ export function ExpenseForm({ campId, expense, pools, todayIso, onSave, onCancel
       </label>
 
       <label className="field">
-        <span className="field__label">{t.quittungs.noteLabel}</span>
+        <span className="field__label">{t.receipts.noteLabel}</span>
         <input
           className="income-form__input"
           value={draft.note}
-          placeholder={t.quittungs.notePlaceholder}
+          placeholder={t.receipts.notePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             patch({ note: event.target.value })
           }
@@ -124,17 +124,17 @@ export function ExpenseForm({ campId, expense, pools, todayIso, onSave, onCancel
       {issues.length > 0 && (
         <ul className="card__issues">
           {issues.map((issue) => (
-            <li key={issue}>{t.quittungs.issues[issue]}</li>
+            <li key={issue}>{t.receipts.issues[issue]}</li>
           ))}
         </ul>
       )}
 
       <div className="card__actions">
         <button className="card__button" type="button" onClick={onCancel}>
-          {t.quittungs.cancel}
+          {t.receipts.cancel}
         </button>
         <button className="income-form__button" type="submit" disabled={issues.length > 0}>
-          {t.quittungs.save}
+          {t.receipts.save}
         </button>
       </div>
     </form>

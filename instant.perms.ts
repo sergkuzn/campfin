@@ -12,7 +12,7 @@
  * 2. **Membership is the one authority.** Every camp-scoped row reaches its camp through
  *    its `camp` link, and the camp reaches its members through `members`. So
  *    `auth.id in data.ref('camp.members.user.id')` is the single question asked of a pool,
- *    a source, a block, a quittung and a movement alike.
+ *    a source, a block, a receipt and a movement alike.
  *
  * The exception is joining: a co-leader who has been given a join code is not a member yet,
  * so `camps.view` also accepts a caller who can *name* the code via `ruleParams`. That is

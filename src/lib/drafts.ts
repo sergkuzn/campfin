@@ -59,7 +59,7 @@ export function blankBlockDraft(key: string): BlockDraft {
   return { id: null, key, label: '', persons: '', startDate: '', endDate: '', rate: '' }
 }
 
-/** 1250 → "12,50" — the inverse of parseEurosToCents, for pre-filling an input. */
+/** 1250 → "8,00" — the inverse of parseEurosToCents, for pre-filling an input. */
 export function centsToEuroInput(cents: number): string {
   // Deliberately not formatEuros: its "2.125,00 €" has a thousands separator and a
   // currency sign, both of which the parser rejects on re-save.

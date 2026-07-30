@@ -10,7 +10,7 @@ import { summarisePools } from '../lib/pools'
 import { CampDashboard } from './CampDashboard'
 import { CampList } from './CampList'
 import { IncomeSetup } from './IncomeSetup'
-import { QuittungsScreen } from './QuittungsScreen'
+import { ReceiptsScreen } from './ReceiptsScreen'
 
 /**
  * Three screens, no router. `View` is a discriminated union rather than two independent
@@ -22,7 +22,7 @@ type View =
   | { screen: 'list' }
   | { screen: 'dashboard'; campId: string }
   | { screen: 'income'; campId: string }
-  | { screen: 'quittungs'; campId: string }
+  | { screen: 'receipts'; campId: string }
 
 type Props = {
   session: Session
@@ -50,7 +50,7 @@ export function SignedInApp({ session }: Props) {
 
   const { pools, sources, blocks } = income
   // The one place income and spending meet: every pool total on every screen comes from
-  // here, so a quittung shows up in the bars, the totals and the settlement at once.
+  // here, so a receipt shows up in the bars, the totals and the settlement at once.
   const summaries = useMemo(
     () => summarisePools(pools, sources, blocks, expenses.expenses),
     [pools, sources, blocks, expenses.expenses],
@@ -107,9 +107,9 @@ export function SignedInApp({ session }: Props) {
     )
   }
 
-  if (view.screen === 'quittungs') {
+  if (view.screen === 'receipts') {
     return (
-      <QuittungsScreen
+      <ReceiptsScreen
         campId={openCamp.id}
         expenses={expenses}
         summaries={summaries}
@@ -139,7 +139,7 @@ export function SignedInApp({ session }: Props) {
       hasExpenses={expenses.expenses.length > 0}
       onBack={handleBackToList}
       onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
-      onOpenQuittungs={() => setView({ screen: 'quittungs', campId: openCamp.id })}
+      onOpenReceipts={() => setView({ screen: 'receipts', campId: openCamp.id })}
       onRename={renameCamp}
       onDelete={handleDelete}
       onExport={handleExport}

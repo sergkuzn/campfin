@@ -75,7 +75,7 @@ const goodDraft = (over: Partial<SourceDraft> = {}): SourceDraft => ({
 
 describe('centsToEuroInput', () => {
   it('renders cents as a plain comma-decimal string', () => {
-    expect(centsToEuroInput(1250)).toBe('12,50')
+    expect(centsToEuroInput(1250)).toBe('8,00')
     expect(centsToEuroInput(0)).toBe('0,00')
     expect(centsToEuroInput(212_500)).toBe('2125,00') // no thousands separator
   })
@@ -120,7 +120,7 @@ describe('draftFromSource', () => {
         persons: '18',
         startDate: '2026-08-12',
         endDate: '2026-08-19',
-        rate: '12,50',
+        rate: '8,00',
       },
     ])
   })

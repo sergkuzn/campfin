@@ -1,5 +1,5 @@
 /**
- * Writes for one camp's quittungs. Reads live in `src/hooks/useExpenses.ts`.
+ * Writes for one camp's receipts. Reads live in `src/hooks/useExpenses.ts`.
  *
  * Simpler than `incomeDb.ts` on purpose: an expense owns nothing, so no other row has to
  * die with it and there is no cascade to plan. Ids and timestamps are minted here, which
@@ -11,7 +11,7 @@ import type { SaveExpenseInput } from '../lib/expenses'
 import { chunk, db } from './instant'
 
 /**
- * Create or update one quittung. `update` on an existing id is a merge, so editing a row
+ * Create or update one receipt. `update` on an existing id is a merge, so editing a row
  * keeps its `createdAt` — the list's within-a-day order stays stable across an edit.
  */
 export function saveExpense(input: SaveExpenseInput): Promise<unknown> {

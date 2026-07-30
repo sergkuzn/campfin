@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import './QuittungsScreen.css'
+import './ReceiptsScreen.css'
 import type { UseExpenses } from '../hooks/useExpenses'
 import { useFormat, useT } from '../i18n'
 import { spentTotalCents } from '../lib/budget'
@@ -18,10 +18,10 @@ type Props = {
   onBack: () => void
 }
 
-/** Which quittung is unlocked. One at a time — the same lock model as the income screen. */
+/** Which receipt is unlocked. One at a time — the same lock model as the income screen. */
 type Editing = { mode: 'new' } | { mode: 'edit'; expenseId: string }
 
-export function QuittungsScreen({ campId, expenses, summaries, onBack }: Props) {
+export function ReceiptsScreen({ campId, expenses, summaries, onBack }: Props) {
   const t = useT()
   const format = useFormat()
 
@@ -48,23 +48,23 @@ export function QuittungsScreen({ campId, expenses, summaries, onBack }: Props) 
   }
 
   const pendingPoolName =
-    summaries.find((s) => s.pool.id === pending?.poolId)?.pool.name ?? t.quittungs.unknownPool
+    summaries.find((s) => s.pool.id === pending?.poolId)?.pool.name ?? t.receipts.unknownPool
 
   return (
-    <div className="quittungs">
+    <div className="receipts">
       <button className="dashboard__back" type="button" onClick={onBack}>
-        {t.quittungs.back}
+        {t.receipts.back}
       </button>
 
-      <header className="quittungs__header">
-        <h2 className="quittungs__title">{t.quittungs.title}</h2>
+      <header className="receipts__header">
+        <h2 className="receipts__title">{t.receipts.title}</h2>
         <button
           className="income-form__button"
           type="button"
           disabled={editing !== null || summaries.length === 0}
           onClick={() => setEditing({ mode: 'new' })}
         >
-          {t.quittungs.add}
+          {t.receipts.add}
         </button>
       </header>
 
@@ -104,7 +104,7 @@ export function QuittungsScreen({ campId, expenses, summaries, onBack }: Props) 
       {/* "Nothing here yet" would be a lie for the first second, so the loading line wins
           while the query is still out. */}
       {rows.length === 0 && editing === null && (
-        <p className="income__empty">{expenses.isLoading ? t.app.loading : t.quittungs.empty}</p>
+        <p className="income__empty">{expenses.isLoading ? t.app.loading : t.receipts.empty}</p>
       )}
 
       <ExpenseDayList
@@ -117,23 +117,23 @@ export function QuittungsScreen({ campId, expenses, summaries, onBack }: Props) 
 
       <footer className="income__totals">
         <p className="income__total-row">
-          <span>{t.quittungs.spentTotal}</span>
+          <span>{t.receipts.spentTotal}</span>
           <strong>{format.euros(spentTotalCents(rows))}</strong>
         </p>
         <p className="income__total-row">
-          <span>{t.quittungs.count(rows.length)}</span>
+          <span>{t.receipts.count(rows.length)}</span>
         </p>
       </footer>
 
       <ConfirmDialog
         open={pending !== undefined}
-        title={pending === undefined ? '' : t.quittungs.deleteTitle(pending.name)}
+        title={pending === undefined ? '' : t.receipts.deleteTitle(pending.name)}
         lines={
           pending === undefined
             ? []
-            : [t.quittungs.deleteLine(format.euros(pending.amountCents), pendingPoolName)]
+            : [t.receipts.deleteLine(format.euros(pending.amountCents), pendingPoolName)]
         }
-        confirmLabel={t.quittungs.confirmDelete}
+        confirmLabel={t.receipts.confirmDelete}
         onConfirm={handleConfirmDelete}
         onCancel={() => setPendingId(null)}
       />

@@ -13,7 +13,7 @@ type Props = {
   onDelete: (expenseId: string) => void
 }
 
-/** The quittung list, grouped by day with a per-day total, newest day first. */
+/** The receipt list, grouped by day with a per-day total, newest day first. */
 export function ExpenseDayList({ expenses, pools, locked, onEdit, onDelete }: Props) {
   const t = useT()
   const format = useFormat()
@@ -23,47 +23,47 @@ export function ExpenseDayList({ expenses, pools, locked, onEdit, onDelete }: Pr
   const days = groupExpensesByDay(expenses)
 
   return (
-    <div className="quittungs__days">
+    <div className="receipts__days">
       {days.map((day) => (
         <section className="day" key={day.date}>
           <header className="day__header">
             <h3 className="day__date">{format.day(day.date)}</h3>
-            <span className="day__total">{t.quittungs.dayTotal(format.euros(day.totalCents))}</span>
+            <span className="day__total">{t.receipts.dayTotal(format.euros(day.totalCents))}</span>
           </header>
 
           <ul className="day__rows">
             {day.expenses.map((expense) => (
-              <li className="quittung" key={expense.id}>
-                <div className="quittung__main">
-                  <span className="quittung__name">{expense.name}</span>
-                  <span className="quittung__pool">
-                    {poolNames.get(expense.poolId) ?? t.quittungs.unknownPool}
+              <li className="receipt" key={expense.id}>
+                <div className="receipt__main">
+                  <span className="receipt__name">{expense.name}</span>
+                  <span className="receipt__pool">
+                    {poolNames.get(expense.poolId) ?? t.receipts.unknownPool}
                   </span>
                   {expense.note !== undefined && (
-                    <span className="quittung__note">{expense.note}</span>
+                    <span className="receipt__note">{expense.note}</span>
                   )}
                 </div>
 
-                <span className="quittung__amount">{format.euros(expense.amountCents)}</span>
+                <span className="receipt__amount">{format.euros(expense.amountCents)}</span>
 
-                <div className="quittung__actions">
+                <div className="receipt__actions">
                   <button
-                    className="quittung__action"
+                    className="receipt__action"
                     type="button"
                     disabled={locked}
-                    aria-label={t.quittungs.editAction(expense.name)}
+                    aria-label={t.receipts.editAction(expense.name)}
                     onClick={() => onEdit(expense.id)}
                   >
-                    {t.quittungs.edit}
+                    {t.receipts.edit}
                   </button>
                   <button
-                    className="quittung__action quittung__action--danger"
+                    className="receipt__action receipt__action--danger"
                     type="button"
                     disabled={locked}
-                    aria-label={t.quittungs.deleteAction(expense.name)}
+                    aria-label={t.receipts.deleteAction(expense.name)}
                     onClick={() => onDelete(expense.id)}
                   >
-                    {t.quittungs.delete}
+                    {t.receipts.delete}
                   </button>
                 </div>
               </li>

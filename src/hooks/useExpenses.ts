@@ -1,5 +1,5 @@
 /**
- * One camp's quittungs as a live query, plus the two writes that change them. Scoped by
+ * One camp's receipts as a live query, plus the two writes that change them. Scoped by
  * `campId`, so a screen renders exactly the rows it asked for.
  *
  * Rows arrive in no particular order (a database is a set, not a list). The ordering here

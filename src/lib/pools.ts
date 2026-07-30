@@ -76,7 +76,7 @@ export function everydayPool(pools: Pool[], campId: string): Pool | undefined {
   return pools.find((p) => p.campId === campId && p.role === 'everyday')
 }
 
-/** Pools a quittung may consume from, and the ones that get a spent/left bar. A deposit
+/** Pools a receipt may consume from, and the ones that get a spent/left bar. A deposit
  *  is somebody else's money passing through; it gets its own strip in a later stage. */
 export function spendablePools(summaries: PoolSummary[]): PoolSummary[] {
   return summaries.filter((s) => s.pool.role !== 'deposit')
