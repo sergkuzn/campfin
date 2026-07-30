@@ -1,9 +1,11 @@
 import './CampDashboard.css'
 import { useT } from '../i18n'
+import type { Burn } from '../lib/burn'
 import { campStatus } from '../lib/camps'
-import { todayIso } from '../lib/dates'
 import type { PoolSummary } from '../lib/pools'
 import type { Camp } from '../lib/types'
+import { AllowedToday } from './AllowedToday'
+import { BurnChart } from './BurnChart'
 import { PoolBars } from './PoolBars'
 import { ReceivedTotals } from './ReceivedTotals'
 import { StatusPill } from './StatusPill'
@@ -12,6 +14,11 @@ type Props = {
   camp: Camp
   /** This camp's pools only — the parent has already filtered by campId. */
   summaries: PoolSummary[]
+  /** The day-by-day reading. `hasCurve` false means the camp has no daily grant yet. */
+  burn: Burn
+  /** One clock read for the whole screen, passed in so the status pill, the burn math
+   *  and the chart's "today" line can never disagree mid-render. */
+  todayIso: string
   /** How many leaders share this camp. A count, never names. */
   memberCount: number
   /** Only the camp's creator is offered the delete button. */
@@ -35,6 +42,8 @@ type Props = {
 export function CampDashboard({
   camp,
   summaries,
+  burn,
+  todayIso,
   memberCount,
   isAdmin,
   isLoading,
@@ -69,7 +78,7 @@ export function CampDashboard({
 
       <header className="dashboard__header">
         <h2 className="dashboard__name">{camp.name}</h2>
-        <StatusPill status={campStatus(camp, todayIso())} />
+        <StatusPill status={campStatus(camp, todayIso)} />
       </header>
 
       <section className="dashboard__share">
@@ -96,6 +105,22 @@ export function CampDashboard({
         <button className="dashboard__slot-link" type="button" onClick={onOpenIncome}>
           {t.dashboard.setUpIncome}
         </button>
+      </section>
+
+      <section
+        className={burn.hasCurve ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'}
+      >
+        <p className="dashboard__slot-title">{t.burn.title}</p>
+        {burn.hasCurve ? (
+          <>
+            <AllowedToday burn={burn} />
+            <BurnChart burn={burn} todayIso={todayIso} />
+          </>
+        ) : (
+          // Without the daily grant nothing per-day can be computed, so the camp is in an
+          // unfinished-setup state rather than an empty one — say what is missing.
+          <p className="dashboard__callout">{t.dashboard.setupCallout}</p>
+        )}
       </section>
 
       <section

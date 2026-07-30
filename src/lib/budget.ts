@@ -40,6 +40,16 @@ export function blocksOf(
 }
 
 /**
+ * The blocks that describe reality for one source: its `actual` blocks when it has any,
+ * its `granted` ones otherwise. The fallback is the model's "no actual blocks means
+ * actual *is* granted" rule in one place, so no caller has to remember it.
+ */
+export function effectiveBlocks(blocks: PerDiemBlock[], sourceId: string): PerDiemBlock[] {
+  const actual = blocksOf(blocks, sourceId, 'actual')
+  return actual.length > 0 ? actual : blocksOf(blocks, sourceId, 'granted')
+}
+
+/**
  * The three numbers behind "who actually came", for one per-diem source.
  *
  * `granted` is the money the organisation transferred; `entitled` is what may really be
@@ -91,5 +101,19 @@ export function formatEuros(cents: number, locale = 'de-DE'): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'EUR',
+  }).format(cents / 100)
+}
+
+/**
+ * The same amount without the cents: 212549 → "2.125 €". For chart axis ticks, where two
+ * decimals on every label is noise on a phone. Both fraction-digit bounds have to be set
+ * — a currency format defaults to the currency's own two digits.
+ */
+export function formatEurosRounded(cents: number, locale = 'de-DE'): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(cents / 100)
 }

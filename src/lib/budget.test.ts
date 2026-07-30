@@ -3,7 +3,9 @@ import {
   blockCents,
   blockPersonDays,
   blocksOf,
+  effectiveBlocks,
   formatEuros,
+  formatEurosRounded,
   perDiemBudgetCents,
   perDiemTotals,
   spentTotalCents,
@@ -165,6 +167,25 @@ describe('perDiemTotals', () => {
   })
 })
 
+describe('effectiveBlocks', () => {
+  it('returns granted blocks while no actual block exists', () => {
+    const granted = block({ id: 'g', variant: 'granted' })
+    expect(effectiveBlocks([granted], 'pd')).toEqual([granted])
+  })
+
+  it('returns actual blocks once one exists', () => {
+    const granted = block({ id: 'g', variant: 'granted' })
+    const actual = block({ id: 'a', variant: 'actual', numPersons: 3 })
+    expect(effectiveBlocks([granted, actual], 'pd')).toEqual([actual])
+  })
+
+  it('never mixes two sources', () => {
+    const mine = block({ id: 'g', variant: 'granted' })
+    const other = block({ id: 'x', sourceId: 'pd2', variant: 'actual' })
+    expect(effectiveBlocks([mine, other], 'pd')).toEqual([mine])
+  })
+})
+
 describe('spentTotalCents', () => {
   it('sums every expense', () => {
     expect(spentTotalCents([expense({ amountCents: 200 }), expense({ amountCents: 800 })])).toBe(
@@ -188,5 +209,13 @@ describe('formatEuros', () => {
     const s = formatEuros(212_500, 'en-GB')
     expect(s).toContain('2,125')
     expect(s).toContain('€') // the currency is EUR whatever the language
+  })
+})
+
+describe('formatEurosRounded', () => {
+  it('drops the cents for an axis tick', () => {
+    const s = formatEurosRounded(212_549)
+    expect(s).toContain('2.125')
+    expect(s).not.toContain('49')
   })
 })

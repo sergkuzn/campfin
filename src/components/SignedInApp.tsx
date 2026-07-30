@@ -4,9 +4,11 @@ import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
 import type { Session } from '../hooks/useSession'
+import { computeBurn, emptyBurn } from '../lib/burn'
+import { todayIso } from '../lib/dates'
 import { buildCampExport, exportFileName } from '../lib/exportJson'
 import { isCampAdmin, memberCount } from '../lib/members'
-import { summarisePools } from '../lib/pools'
+import { everydayPool, summarisePools } from '../lib/pools'
 import { CampDashboard } from './CampDashboard'
 import { CampList } from './CampList'
 import { IncomeSetup } from './IncomeSetup'
@@ -54,6 +56,29 @@ export function SignedInApp({ session }: Props) {
   const summaries = useMemo(
     () => summarisePools(pools, sources, blocks, expenses.expenses),
     [pools, sources, blocks, expenses.expenses],
+  )
+
+  // One clock read per render, shared by the status pill, the burn math and the chart's
+  // "today" line. A camp left open across midnight keeps yesterday's date until something
+  // re-renders — acceptable for a tool used at camp, and cheaper than a timer.
+  const today = todayIso()
+
+  // `computeBurn` walks every camp day and every receipt, so it is memoised on exactly the
+  // rows it reads: without this, typing in an unrelated field would rebuild the chart data
+  // and Recharts would re-animate on every keystroke.
+  const burn = useMemo(
+    () =>
+      openCamp === undefined
+        ? emptyBurn
+        : computeBurn({
+            camp: openCamp,
+            everydayPoolId: everydayPool(pools, openCamp.id)?.id ?? '',
+            sources,
+            blocks,
+            expenses: expenses.expenses,
+            todayIso: today,
+          }),
+    [openCamp, pools, sources, blocks, expenses.expenses, today],
   )
 
   // createCamp returns null when the name is taken; only navigate on success.
@@ -132,6 +157,8 @@ export function SignedInApp({ session }: Props) {
     <CampDashboard
       camp={openCamp}
       summaries={summaries}
+      burn={burn}
+      todayIso={today}
       memberCount={memberCount(memberships, openCamp.id)}
       isAdmin={isCampAdmin(memberships, openCamp.id, session.userId)}
       isLoading={income.isLoading}

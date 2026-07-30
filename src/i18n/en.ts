@@ -96,6 +96,9 @@ export const en = {
     spending: 'Spending',
     noReceipts: 'No receipts yet.',
     openReceipts: 'Receipts →',
+    /** Shown until the camp has its daily grant — nothing per-day can be computed
+     *  without it, so the chart and "allowed today" stay hidden. */
+    setupCallout: 'Add the daily grant to start tracking.',
     rename: 'Rename',
     renamePrompt: 'Rename camp',
     delete: 'Delete camp',
@@ -209,6 +212,24 @@ export const en = {
     unfunded: 'Nothing granted to this pool yet.',
     /** The bar measures what may be spent, so money for absentees needs saying out loud. */
     unusable: (amount: string) => `${amount} of it was never ours to spend.`,
+  },
+
+  /** The day-by-day allowance: the headline number and the chart under it. */
+  burn: {
+    title: 'Daily burn',
+    allowedToday: 'Allowed today',
+    /** The headline goes red rather than negative-with-a-minus: "you are €40 over" is
+     *  what a leader needs to read, not "−40 allowed". */
+    overspentBy: (amount: string) => `${amount} over`,
+    spentToday: (amount: string) => `${amount} spent today`,
+    normalDay: (amount: string) => `A normal day here costs ${amount}`,
+    chartTitle: 'Allowance vs spending',
+    theoretical: 'Allowed',
+    actual: 'Spent',
+    today: 'Today',
+    /** Screen-reader replacement for the chart: the curve is decorative for anyone who
+     *  cannot see it, and the numbers above already say where the camp stands. */
+    chartAlt: (days: number) => `Cumulative allowance and spending over ${days} camp days.`,
   },
 
   receipts: {

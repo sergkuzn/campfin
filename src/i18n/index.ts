@@ -5,7 +5,7 @@
  */
 
 import { createContext, useContext, useMemo } from 'react'
-import { formatEuros } from '../lib/budget'
+import { formatEuros, formatEurosRounded } from '../lib/budget'
 import { formatDay } from '../lib/dates'
 import { en } from './en'
 
@@ -57,12 +57,15 @@ export function useT(): Dict {
  */
 export function useFormat(): {
   euros: (cents: number) => string
+  /** Whole euros, no cents — chart axis ticks, where two decimals are noise. */
+  eurosRounded: (cents: number) => string
   day: (iso: string) => string
 } {
   const { t } = useI18n()
   return useMemo(
     () => ({
       euros: (cents: number) => formatEuros(cents, t.numberLocale),
+      eurosRounded: (cents: number) => formatEurosRounded(cents, t.numberLocale),
       day: (iso: string) => formatDay(iso, t.dateLocale),
     }),
     [t],
