@@ -1,0 +1,130 @@
+.receipts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.receipts__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.receipts__title {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.receipts__days {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Sticky day heading: scrolling a long list keeps the day you are looking at named. */
+.day__header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  background-color: var(--bg);
+}
+
+.day__date {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.day__total {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.day__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Name and note grow, the amount stays put: a phone-width row that wraps its actions
+   under the amount rather than squeezing the name to nothing. */
+.receipt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+
+.receipt__main {
+  flex: 1 1 8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0; /* lets a long name wrap instead of pushing the amount off the row */
+}
+
+.receipt__name {
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.receipt__pool,
+.receipt__note {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.receipt__amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.receipt__action {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.receipt__action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.receipt__action--danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+}

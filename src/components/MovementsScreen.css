@@ -1,0 +1,86 @@
+.movements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.movements__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.movements__title {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.movements__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Same row shape as a receipt: name and note grow, the amount stays put, actions wrap
+   under it on a phone-width screen. */
+.movement {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  /* The direction of the money, as a stripe down the leading edge — colour is never the
+     only signal, since the row also names its kind in words. */
+  border-inline-start: 3px solid var(--border);
+}
+
+.movement--deposit_out {
+  border-inline-start-color: var(--warn);
+}
+
+.movement--deposit_in {
+  border-inline-start-color: var(--ok);
+}
+
+.movement--volunteer_in {
+  border-inline-start-color: var(--accent);
+}
+
+.movement__main {
+  flex: 1 1 8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0; /* lets a long name wrap instead of pushing the amount off the row */
+}
+
+.movement__name {
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.movement__kind,
+.movement__meta,
+.movement__note {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.movement__amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.movement__actions {
+  display: flex;
+  gap: var(--space-2);
+}

@@ -1,0 +1,108 @@
+.camp-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.camp-list__empty {
+  margin: var(--space-4) 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.camp-list__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* The whole card is the button: bigger tap target, and it stays keyboard-focusable. */
+.camp-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.camp-card:hover {
+  border-color: var(--accent);
+}
+
+.camp-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.camp-card__name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.camp-card__code {
+  font-size: 0.75rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+/* Restoring an exported dump. Last on the screen: it is the escape hatch, not the way in. */
+.camp-list__import {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+/* The label *is* the button — the file input inside it is hidden but still focusable, so
+   keyboard and screen-reader users reach the same control. */
+.camp-list__import-button {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.camp-list__import-button:hover {
+  border-color: var(--accent);
+}
+
+.camp-list__import-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.camp-list__import-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.camp-list__import-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--danger);
+}
