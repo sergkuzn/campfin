@@ -144,10 +144,12 @@ describe('CampDashboard', () => {
     expect(onOpenSettings).toHaveBeenCalledOnce()
   })
 
-  it('says the camp has no dates yet when nothing dates it', () => {
+  it('shows no status pill while nothing dates the camp', () => {
     // The status pill reads the burn window, which is derived from the per-diem blocks.
     renderDashboard()
-    expect(screen.getByText(en.camps.status.draft)).toBeInTheDocument()
+    expect(screen.queryByText(en.camps.status.running)).not.toBeInTheDocument()
+    expect(screen.queryByText(en.camps.status.upcoming)).not.toBeInTheDocument()
+    expect(screen.queryByText(en.camps.status.finished)).not.toBeInTheDocument()
   })
 
   it('says the camp is running when today falls inside the block window', () => {

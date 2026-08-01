@@ -98,8 +98,8 @@ export const en = {
       format: 'That file is not a campfin export.',
       version: 'That file was written by a newer version of campfin. Update this app first.',
     },
+    /** Only the dated statuses: an undated camp shows no pill at all. */
     status: {
-      draft: 'No dates yet',
       upcoming: 'Upcoming',
       running: 'Running',
       finished: 'Finished',

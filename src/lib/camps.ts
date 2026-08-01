@@ -7,7 +7,7 @@ import { effectiveBlocks } from './budget'
 import { isWithin } from './dates'
 import type { Camp, PerDiemBlock } from './types'
 
-/** Where a camp sits in time. `draft` = no dates entered yet (income setup not done). */
+/** Where a camp sits in time. `draft` = nothing dates it yet — no per-diem blocks. */
 export type CampStatus = 'draft' | 'upcoming' | 'running' | 'finished'
 
 /** The days a camp spans, inclusive at both ends. */
