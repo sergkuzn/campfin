@@ -21,6 +21,11 @@ export const en = {
    */
   dateLocale: 'en-GB',
 
+  /** Shared by every modal, so the same word is not spelled out per screen. */
+  confirm: {
+    cancel: 'Cancel',
+  },
+
   app: {
     title: 'campfin',
     subtitle: 'Camp budget tracker',
@@ -63,6 +68,12 @@ export const en = {
     title: 'Share this camp',
     hint: 'The other leader types this code into their phone.',
     members: (count: number) => `${count} ${count === 1 ? 'leader' : 'leaders'} share this camp.`,
+    /** On the join-code button itself, under the code — it has to say what the tap does. */
+    copy: '⧉ Tap to copy join code',
+    copied: '✓ Copied',
+    /** The clipboard API is missing outside a secure context; reading the code aloud
+     *  still works, so say that rather than showing a dead end. */
+    copyFailed: 'Copying is not available here — read the code out instead.',
   },
 
   /** Anything the database refuses. A write that only queues offline says nothing here. */
@@ -96,7 +107,6 @@ export const en = {
 
   dashboard: {
     back: '← All camps',
-    joinCode: 'Join code',
     receivedTotal: 'Received total',
     noIncome: 'No income sources yet.',
     setUpIncome: 'Set up income →',
@@ -106,10 +116,19 @@ export const en = {
     /** Shown until the camp has its daily grant — nothing per-day can be computed
      *  without it, so the chart and "allowed today" stay hidden. */
     setupCallout: 'Add the daily grant to start tracking.',
-    rename: 'Rename',
-    renamePrompt: 'Rename camp',
-    delete: 'Delete camp',
-    deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
+    /** Everything that changes the camp itself rather than its money, behind the ⚙. */
+    settings: {
+      open: 'Camp settings',
+      rename: 'Rename camp',
+      delete: 'Delete camp',
+      renameTitle: 'Rename camp',
+      renameLabel: 'Camp name',
+      save: 'Save',
+      deleteTitle: 'Delete camp',
+      deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
+      deleteLine: 'Its income, receipts and movements go with it.',
+      deleteConfirmLabel: 'Delete',
+    },
   },
 
   income: {

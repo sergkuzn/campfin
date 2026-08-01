@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import './ConfirmDialog.css'
+import { useT } from '../i18n'
 
 type Props = {
   open: boolean
@@ -18,6 +19,7 @@ type Props = {
  * and is suppressed outright in some installed-PWA contexts.
  */
 export function ConfirmDialog({ open, title, lines, confirmLabel, onConfirm, onCancel }: Props) {
+  const t = useT()
   // useRef holds a mutable box that survives re-renders without causing one. Passing it
   // as ref={} makes React put the real DOM node in .current after mount.
   const ref = useRef<HTMLDialogElement>(null)
@@ -44,7 +46,7 @@ export function ConfirmDialog({ open, title, lines, confirmLabel, onConfirm, onC
       ))}
       <div className="confirm__actions">
         <button className="confirm__button" type="button" onClick={onCancel}>
-          Cancel
+          {t.confirm.cancel}
         </button>
         <button
           className="confirm__button confirm__button--danger"

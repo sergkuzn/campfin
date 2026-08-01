@@ -1,0 +1,53 @@
+.join-code {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.join-code__button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.join-code__button:hover {
+  border-color: var(--accent);
+}
+
+/* The code is the point of the button: big, monospaced and widely spaced, because it
+   gets read out loud as often as it gets copied. */
+.join-code__code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  /* The trailing letter-space would otherwise push the code off centre. */
+  text-indent: 0.15em;
+}
+
+.join-code__action {
+  font-size: 0.875rem;
+  color: var(--accent);
+}
+
+.join-code__hint,
+.join-code__members {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.join-code__error {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--danger);
+}

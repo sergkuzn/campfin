@@ -8,8 +8,10 @@ import type { Settlement } from '../lib/settlement'
 import type { Camp } from '../lib/types'
 import { AllowedToday } from './AllowedToday'
 import { BurnChart } from './BurnChart'
+import { CampSettingsMenu } from './CampSettingsMenu'
 import { CashStrip } from './CashStrip'
 import { DepositsStrip } from './DepositsStrip'
+import { JoinCodeCard } from './JoinCodeCard'
 import { PoolBars } from './PoolBars'
 import { ReceivedTotals } from './ReceivedTotals'
 import { StatusPill } from './StatusPill'
@@ -72,16 +74,6 @@ export function CampDashboard({
   const t = useT()
   const format = useFormat()
 
-  const handleRename = () => {
-    const next = window.prompt(t.dashboard.renamePrompt, camp.name)
-    // `prompt` returns null on cancel — an empty string means "cleared it", also a no-op.
-    if (next !== null && next.trim() !== '') onRename(camp.id, next)
-  }
-
-  const handleDelete = () => {
-    if (window.confirm(t.dashboard.deleteConfirm(camp.name))) onDelete(camp.id)
-  }
-
   const funded = summaries.some((summary) => summary.sources.length > 0)
 
   return (
@@ -93,15 +85,15 @@ export function CampDashboard({
       <header className="dashboard__header">
         <h2 className="dashboard__name">{camp.name}</h2>
         <StatusPill status={campStatus(camp, todayIso)} />
+        <CampSettingsMenu
+          campName={camp.name}
+          canDelete={isAdmin}
+          onRename={(name) => onRename(camp.id, name)}
+          onDelete={() => onDelete(camp.id)}
+        />
       </header>
 
-      <section className="dashboard__share">
-        <p className="dashboard__code">
-          {t.dashboard.joinCode} <code>{camp.joinCode}</code>
-        </p>
-        <p className="dashboard__slot-hint">{t.share.hint}</p>
-        <p className="dashboard__members">{t.share.members(memberCount)}</p>
-      </section>
+      <JoinCodeCard joinCode={camp.joinCode} memberCount={memberCount} />
 
       <section
         className={
@@ -211,21 +203,6 @@ export function CampDashboard({
           {error}
         </p>
       )}
-
-      <div className="dashboard__actions">
-        <button className="dashboard__action" type="button" onClick={handleRename}>
-          {t.dashboard.rename}
-        </button>
-        {isAdmin && (
-          <button
-            className="dashboard__action dashboard__action--danger"
-            type="button"
-            onClick={handleDelete}
-          >
-            {t.dashboard.delete}
-          </button>
-        )}
-      </div>
     </div>
   )
 }

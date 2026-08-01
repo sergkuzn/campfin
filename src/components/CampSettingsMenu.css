@@ -1,0 +1,131 @@
+/* The ⚙ and its popover. `relative` so the menu can hang off the button's corner
+   without the header having to reserve space for it. */
+.camp-settings {
+  position: relative;
+}
+
+.camp-settings__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 2.5rem square: a comfortable thumb target for a glyph that is only ~1rem wide. */
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--muted);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.camp-settings__toggle:hover,
+.camp-settings__toggle[aria-expanded="true"] {
+  color: var(--fg);
+}
+
+.camp-settings__menu {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0; /* grows leftwards, so it cannot push past the screen edge */
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 11rem;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+}
+
+.camp-settings__item {
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--space-2);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.camp-settings__item:hover {
+  background-color: var(--bg);
+}
+
+.camp-settings__item--danger {
+  color: var(--danger);
+}
+
+/* Rename modal */
+
+.rename {
+  max-width: 22rem;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--fg);
+}
+
+.rename::backdrop {
+  background-color: rgb(0 0 0 / 0.4);
+}
+
+.rename__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.rename__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.rename__label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.rename__input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background-color: var(--bg);
+  color: inherit;
+  font: inherit;
+}
+
+.rename__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.rename__button {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background-color: var(--bg);
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.rename__button--primary {
+  border-color: transparent;
+  background-color: var(--accent);
+  color: var(--surface);
+}
+
+.rename__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
