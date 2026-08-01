@@ -37,8 +37,6 @@ describe('toCamp', () => {
       name: 'Moorwerder',
       joinCode: 'MOOR-7F3K',
       createdAt: 1,
-      startDate: undefined,
-      endDate: undefined,
     })
   })
 
@@ -46,10 +44,9 @@ describe('toCamp', () => {
     expect(toCamp({ id: 'c1', name: 'Moorwerder', createdAt: 1 })).toBeNull()
   })
 
-  it('keeps a camp window when it is set', () => {
-    expect(toCamp({ ...campRow, startDate: '2026-07-01', endDate: '2026-07-14' })?.endDate).toBe(
-      '2026-07-14',
-    )
+  it('drops the dates an older row still carries — the window comes from the blocks now', () => {
+    const mapped = toCamp({ ...campRow, startDate: '2026-07-01', endDate: '2026-07-14' })
+    expect(mapped).toEqual({ id: 'c1', name: 'Moorwerder', joinCode: 'MOOR-7F3K', createdAt: 1 })
   })
 })
 
@@ -58,7 +55,6 @@ describe('optional attributes', () => {
     // An unset optional attribute can come back as null; the domain type spells absence
     // `undefined`, and a guard that saw null would have rejected the whole row.
     expect(toBlock({ ...blockRow, label: null })?.label).toBeUndefined()
-    expect(toCamp({ ...campRow, startDate: null })?.startDate).toBeUndefined()
   })
 
   it('keeps a label that is set', () => {

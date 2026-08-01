@@ -21,10 +21,17 @@ export const en = {
    */
   dateLocale: 'en-GB',
 
+  /** Shared by every modal, so the same word is not spelled out per screen. */
+  confirm: {
+    cancel: 'Cancel',
+  },
+
   app: {
     title: 'campfin',
     subtitle: 'Camp budget tracker',
     loading: 'Loading…',
+    /** Names the version line for screen readers — the string itself is not prose. */
+    versionLabel: 'App version',
   },
 
   auth: {
@@ -60,9 +67,14 @@ export const en = {
   },
 
   share: {
-    title: 'Share this camp',
     hint: 'The other leader types this code into their phone.',
     members: (count: number) => `${count} ${count === 1 ? 'leader' : 'leaders'} share this camp.`,
+    /** On the join-code button itself, under the code — it has to say what the tap does. */
+    copy: '⧉ Tap to copy join code',
+    copied: '✓ Copied',
+    /** The clipboard API is missing outside a secure context; reading the code aloud
+     *  still works, so say that rather than showing a dead end. */
+    copyFailed: 'Copying is not available here — read the code out instead.',
   },
 
   /** Anything the database refuses. A write that only queues offline says nothing here. */
@@ -86,8 +98,8 @@ export const en = {
       format: 'That file is not a campfin export.',
       version: 'That file was written by a newer version of campfin. Update this app first.',
     },
+    /** Only the dated statuses: an undated camp shows no pill at all. */
     status: {
-      draft: 'No dates yet',
       upcoming: 'Upcoming',
       running: 'Running',
       finished: 'Finished',
@@ -96,20 +108,39 @@ export const en = {
 
   dashboard: {
     back: '← All camps',
-    joinCode: 'Join code',
     receivedTotal: 'Received total',
     noIncome: 'No income sources yet.',
     setUpIncome: 'Set up income →',
+    /** The whole dashboard while the camp has no money in it yet: one thing to do, said
+     *  large, instead of five empty blocks. */
+    firstStepTitle: 'Start here',
+    firstStep: 'Set up income',
+    firstStepHint: 'Enter the money your camp was granted. Everything else follows from it.',
     spending: 'Spending',
     noReceipts: 'No receipts yet.',
     openReceipts: 'Receipts →',
     /** Shown until the camp has its daily grant — nothing per-day can be computed
      *  without it, so the chart and "allowed today" stay hidden. */
     setupCallout: 'Add the daily grant to start tracking.',
-    rename: 'Rename',
-    renamePrompt: 'Rename camp',
+    openSettings: 'Camp settings',
+  },
+
+  /** The camp's own screen: what it is called, who can reach it, and how to be rid of it —
+   *  everything that changes the camp rather than its money. */
+  campSettings: {
+    title: 'Camp settings',
+    back: '← Back to camp',
+    nameSection: 'Name',
+    nameLabel: 'Camp name',
+    save: 'Save',
+    shareSection: 'Join code',
+    incomeSection: 'Income',
+    dangerSection: 'Danger zone',
     delete: 'Delete camp',
+    deleteTitle: 'Delete camp',
     deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
+    deleteLine: 'Its income, receipts and movements go with it.',
+    deleteConfirmLabel: 'Delete',
   },
 
   income: {
@@ -278,12 +309,20 @@ export const en = {
    * wording deliberately avoids "spent" and "budget" — this money is held, not consumed.
    */
   movements: {
-    title: 'Deposits & cash',
     back: '← Back to camp',
-    add: '＋ Add movement',
-    empty: 'Nothing handed over or collected yet.',
-    /** Shown instead of the form when neither kind of movement is possible yet. */
-    noDeposits: 'Add a deposit under income first, or record volunteer money below.',
+    /** One screen, opened on one half of the custody money — the labels follow the half. */
+    deposits: {
+      title: 'Deposits',
+      add: '＋ Record a deposit move',
+      empty: 'No deposit handed over or returned yet.',
+      /** Shown instead of the form: without a deposit source there is no Kaution to move. */
+      noDeposits: 'Add a deposit under income first — then you can hand it over here.',
+    },
+    cash: {
+      title: 'Volunteer cash',
+      add: '＋ Record cash collected',
+      empty: 'No volunteer money collected yet.',
+    },
     kindLabel: 'What happened?',
     kinds: {
       deposit_out: 'Deposit handed over',
@@ -317,20 +356,31 @@ export const en = {
     },
   },
 
-  /** The dashboard strip: where the custody money currently sits. */
+  /**
+   * The two custody blocks: money passing through your hands, split by where it goes next.
+   * A deposit travels to a counterparty and comes back; volunteers' cash only goes onward
+   * to the organisation.
+   */
   custody: {
-    title: 'Deposits & cash',
-    empty: 'No deposits and no volunteer money.',
-    open: 'Deposits & cash →',
-    /** One deposit pool, in the order the money moves: out to a vendor, kept, coming back. */
-    atVendor: (amount: string) => `${amount} at the counterparty`,
-    settled: 'All back with you',
-    /** More came back than went out — a bookkeeping mistake worth naming. */
-    overReturned: (amount: string) => `${amount} more came back than went out`,
-    forfeited: (amount: string) => `${amount} kept for damage`,
-    toReturn: (amount: string) => `${amount} goes back`,
-    volunteers: 'Volunteer money to hand over',
-    volunteerCount: (n: number) => `${n} ${n === 1 ? 'handover' : 'handovers'}`,
+    deposits: {
+      title: 'Deposits',
+      empty: 'No deposit set up yet.',
+      open: 'Deposits →',
+      /** One deposit pool, in the order the money moves: out to a vendor, kept, coming back. */
+      atVendor: (amount: string) => `${amount} at the counterparty`,
+      settled: 'All back with you',
+      /** More came back than went out — a bookkeeping mistake worth naming. */
+      overReturned: (amount: string) => `${amount} more came back than went out`,
+      forfeited: (amount: string) => `${amount} kept for damage`,
+      toReturn: (amount: string) => `${amount} goes back`,
+    },
+    cash: {
+      title: 'Volunteer cash',
+      empty: 'No volunteer money collected.',
+      open: 'Volunteer cash →',
+      held: 'To hand over to the organisation',
+      count: (n: number) => `${n} ${n === 1 ? 'handover' : 'handovers'}`,
+    },
   },
 
   /**

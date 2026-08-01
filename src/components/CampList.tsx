@@ -1,21 +1,24 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import './CampList.css'
 import { useT } from '../i18n'
-import { campStatus, sortCampsByRecent } from '../lib/camps'
+import { type CampWindow, campStatus, campWindow, sortCampsByRecent } from '../lib/camps'
 import { todayIso } from '../lib/dates'
-import type { Camp } from '../lib/types'
+import type { Camp, PerDiemBlock } from '../lib/types'
 import { CreateCampForm } from './CreateCampForm'
 import { JoinCampForm } from './JoinCampForm'
 import { StatusPill } from './StatusPill'
 
 type CampCardProps = {
   camp: Camp
+  /** This camp's date window, already derived by the list — null when nothing dates it
+   *  yet. Not called `window`: inside the component that name is the browser global. */
+  dateWindow: CampWindow | null
   todayIso: string
   onOpen: (campId: string) => void
 }
 
 /** One row in the list. Presentational: it takes data and callbacks, owns no state. */
-export function CampCard({ camp, todayIso, onOpen }: CampCardProps) {
+export function CampCard({ camp, dateWindow, todayIso, onOpen }: CampCardProps) {
   return (
     <li className="camp-list__item">
       <button className="camp-card" type="button" onClick={() => onOpen(camp.id)}>
@@ -23,7 +26,7 @@ export function CampCard({ camp, todayIso, onOpen }: CampCardProps) {
           <span className="camp-card__name">{camp.name}</span>
           <span className="camp-card__code">{camp.joinCode}</span>
         </span>
-        <StatusPill status={campStatus(camp, todayIso)} />
+        <StatusPill status={campStatus(dateWindow, todayIso)} />
       </button>
     </li>
   )
@@ -31,6 +34,8 @@ export function CampCard({ camp, todayIso, onOpen }: CampCardProps) {
 
 type Props = {
   camps: Camp[]
+  /** Per-diem blocks of every listed camp, mixed together — what dates each of them. */
+  blocks: PerDiemBlock[]
   /** Needed by the join form: a membership is always created for the user joining. */
   userId: string
   isLoading: boolean
@@ -42,12 +47,34 @@ type Props = {
   onImport: (text: string) => boolean
 }
 
-export function CampList({ camps, userId, isLoading, error, onOpen, onCreate, onImport }: Props) {
+export function CampList({
+  camps,
+  blocks,
+  userId,
+  isLoading,
+  error,
+  onOpen,
+  onCreate,
+  onImport,
+}: Props) {
   const t = useT()
   const [importFailed, setImportFailed] = useState(false)
   // Reading the clock at the edge, then passing it down: `campStatus` stays pure.
   const today = todayIso()
   const ordered = sortCampsByRecent(camps)
+
+  // One pass over the blocks instead of one filter per card, memoised so re-rendering the
+  // list (typing a camp name, say) does not redo it. A Map because that is what a lookup
+  // by id wants — plain objects would work, but this says "index", not "record".
+  const windows = useMemo(() => {
+    const byCamp = new Map<string, PerDiemBlock[]>()
+    for (const block of blocks) {
+      const existing = byCamp.get(block.campId)
+      if (existing === undefined) byCamp.set(block.campId, [block])
+      else existing.push(block)
+    }
+    return new Map(camps.map((camp) => [camp.id, campWindow(byCamp.get(camp.id) ?? [])]))
+  }, [camps, blocks])
 
   const renderCamps = () => {
     // "No camps yet" and "we haven't heard back yet" are different sentences: the first
@@ -61,7 +88,13 @@ export function CampList({ camps, userId, isLoading, error, onOpen, onCreate, on
     return (
       <ul className="camp-list__items">
         {ordered.map((camp) => (
-          <CampCard key={camp.id} camp={camp} todayIso={today} onOpen={onOpen} />
+          <CampCard
+            key={camp.id}
+            camp={camp}
+            dateWindow={windows.get(camp.id) ?? null}
+            todayIso={today}
+            onOpen={onOpen}
+          />
         ))}
       </ul>
     )

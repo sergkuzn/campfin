@@ -23,7 +23,6 @@
 .dashboard__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-3);
 }
 
@@ -33,23 +32,59 @@
   letter-spacing: -0.02em;
 }
 
-/* Join code, what it is for, and who is already in. Grouped because a code with no
-   explanation next to it is just noise on the screen. */
-.dashboard__share {
+/* The name and its status pill stay together on the left; settings is pushed to the far
+   right corner, away from anything tapped in daily use. */
+.dashboard__settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 2.5rem square: a comfortable thumb target for a glyph that is only ~1rem wide. */
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--muted);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dashboard__settings:hover {
+  color: var(--fg);
+}
+
+/* A camp with no money in it yet: one thing to do, said at a size you cannot miss. */
+.dashboard__first-step {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  text-align: center;
 }
 
-.dashboard__code {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--muted);
+.dashboard__first-step-button {
+  width: 100%;
+  padding: var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background-color: var(--accent);
+  color: var(--surface);
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.dashboard__members {
+.dashboard__first-step-hint {
   margin: 0;
-  font-size: 0.75rem;
+  max-width: 24rem;
+  font-size: 0.875rem;
   color: var(--muted);
 }
 
@@ -57,12 +92,6 @@
   margin: 0;
   color: var(--danger);
   font-size: 0.875rem;
-}
-
-.dashboard__code code {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  letter-spacing: 0.08em;
-  color: var(--fg);
 }
 
 .dashboard__slot {
@@ -103,10 +132,6 @@
   font-size: 0.875rem;
 }
 
-.dashboard__slot .received {
-  margin-top: var(--space-2);
-}
-
 .dashboard__slot-link {
   margin-top: var(--space-3);
   padding: 0;
@@ -116,28 +141,6 @@
   font: inherit;
   font-size: 0.875rem;
   cursor: pointer;
-}
-
-.dashboard__actions {
-  display: flex;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
-
-.dashboard__action {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background-color: var(--surface);
-  color: inherit;
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.dashboard__action--danger {
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
 }
 
 /* The number the whole camp ends on. Big, because it is the one figure that gets typed

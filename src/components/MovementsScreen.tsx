@@ -3,15 +3,23 @@ import './MovementsScreen.css'
 import type { UseMovements } from '../hooks/useMovements'
 import { useFormat, useT } from '../i18n'
 import { todayIso } from '../lib/dates'
-import type { CustodyReading, SaveMovementInput } from '../lib/movements'
+import {
+  type CustodyFocus,
+  type CustodyReading,
+  movementsInFocus,
+  type SaveMovementInput,
+} from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
+import { CashStrip } from './CashStrip'
 import { ConfirmDialog } from './ConfirmDialog'
-import { CustodyStrip } from './CustodyStrip'
+import { DepositsStrip } from './DepositsStrip'
 import { MovementForm } from './MovementForm'
 import { MovementList } from './MovementList'
 
 type Props = {
   campId: string
+  /** Which half of the custody money this screen is showing. */
+  focus: CustodyFocus
   movements: UseMovements
   /** Deposit pools only — everything on this screen is custody money. */
   deposits: PoolSummary[]
@@ -23,7 +31,7 @@ type Props = {
 /** Which movement is unlocked. One at a time — the same lock model as the other screens. */
 type Editing = { mode: 'new' } | { mode: 'edit'; movementId: string }
 
-export function MovementsScreen({ campId, movements, deposits, custody, onBack }: Props) {
+export function MovementsScreen({ campId, focus, movements, deposits, custody, onBack }: Props) {
   const t = useT()
   const format = useFormat()
 
@@ -32,7 +40,12 @@ export function MovementsScreen({ campId, movements, deposits, custody, onBack }
   // quote a stale amount.
   const [pendingId, setPendingId] = useState<string | null>(null)
 
-  const rows = movements.movements
+  const labels = t.movements[focus]
+  // Nothing can be recorded here yet: the deposit kinds have no pool to point at.
+  const missingDeposits = focus === 'deposits' && deposits.length === 0
+  // Only this half's rows: a screen headed "Deposits" listing volunteer cash would undo
+  // the split the dashboard makes. The form below is limited to the same half.
+  const rows = movementsInFocus(movements.movements, focus)
   const editingRow =
     editing?.mode === 'edit' ? (rows.find((m) => m.id === editing.movementId) ?? null) : null
   // `find` gives undefined once the row is gone — deleted here or by the other leader
@@ -56,14 +69,14 @@ export function MovementsScreen({ campId, movements, deposits, custody, onBack }
       </button>
 
       <header className="movements__header">
-        <h2 className="movements__title">{t.movements.title}</h2>
+        <h2 className="movements__title">{labels.title}</h2>
         <button
           className="income-form__button"
           type="button"
-          disabled={editing !== null}
+          disabled={editing !== null || missingDeposits}
           onClick={() => setEditing({ mode: 'new' })}
         >
-          {t.movements.add}
+          {labels.add}
         </button>
       </header>
 
@@ -75,15 +88,20 @@ export function MovementsScreen({ campId, movements, deposits, custody, onBack }
         </p>
       )}
 
-      <CustodyStrip custody={custody} />
+      {focus === 'deposits' ? (
+        <DepositsStrip statuses={custody.statuses} />
+      ) : (
+        <CashStrip heldCents={custody.volunteerHeldCents} count={custody.volunteerCount} />
+      )}
 
-      {/* Volunteer money is always recordable, so the hint explains the *missing* half:
-          without a deposit source there is no Kaution to hand over. */}
-      {deposits.length === 0 && <p className="dashboard__slot-hint">{t.movements.noDeposits}</p>}
+      {/* Without a deposit source there is no Kaution to hand over, so say what is missing
+          rather than offering a form whose pool picker would be empty. */}
+      {missingDeposits && <p className="dashboard__slot-hint">{t.movements.deposits.noDeposits}</p>}
 
       {editing?.mode === 'new' && (
         <MovementForm
           campId={campId}
+          focus={focus}
           movement={null}
           deposits={deposits}
           // Read at the edge and passed down, so nothing below here touches the clock.
@@ -98,6 +116,7 @@ export function MovementsScreen({ campId, movements, deposits, custody, onBack }
           // Re-seed the draft when the user switches to a different row.
           key={editingRow.id}
           campId={campId}
+          focus={focus}
           movement={editingRow}
           deposits={deposits}
           todayIso={todayIso()}
@@ -107,9 +126,10 @@ export function MovementsScreen({ campId, movements, deposits, custody, onBack }
       )}
 
       {/* "Nothing here yet" would be a lie for the first second, so the loading line wins
-          while the query is still out. */}
-      {rows.length === 0 && editing === null && (
-        <p className="income__empty">{movements.isLoading ? t.app.loading : t.movements.empty}</p>
+          while the query is still out — and the hint above already explains an empty
+          deposits screen, so this would only repeat it. */}
+      {rows.length === 0 && editing === null && !missingDeposits && (
+        <p className="income__empty">{movements.isLoading ? t.app.loading : labels.empty}</p>
       )}
 
       <MovementList

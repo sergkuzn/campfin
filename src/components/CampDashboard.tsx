@@ -2,15 +2,15 @@ import './CampDashboard.css'
 import { useFormat, useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus } from '../lib/camps'
-import type { CustodyReading } from '../lib/movements'
+import type { CustodyFocus, CustodyReading } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
 import type { Settlement } from '../lib/settlement'
 import type { Camp } from '../lib/types'
 import { AllowedToday } from './AllowedToday'
 import { BurnChart } from './BurnChart'
-import { CustodyStrip } from './CustodyStrip'
+import { CashStrip } from './CashStrip'
+import { DepositsStrip } from './DepositsStrip'
 import { PoolBars } from './PoolBars'
-import { ReceivedTotals } from './ReceivedTotals'
 import { StatusPill } from './StatusPill'
 
 type Props = {
@@ -22,10 +22,6 @@ type Props = {
   /** One clock read for the whole screen, passed in so the status pill, the burn math
    *  and the chart's "today" line can never disagree mid-render. */
   todayIso: string
-  /** How many leaders share this camp. A count, never names. */
-  memberCount: number
-  /** Only the camp's creator is offered the delete button. */
-  isAdmin: boolean
   isLoading: boolean
   error: string | null
   /** Whether any receipt exists yet — the bars alone cannot say so, since an
@@ -38,10 +34,10 @@ type Props = {
   onBack: () => void
   onOpenIncome: () => void
   onOpenReceipts: () => void
-  onOpenMovements: () => void
+  /** Opens the movements screen on one half of the custody money. */
+  onOpenMovements: (focus: CustodyFocus) => void
   onOpenSettlement: () => void
-  onRename: (campId: string, name: string) => void
-  onDelete: (campId: string) => void
+  onOpenSettings: () => void
 }
 
 /**
@@ -52,8 +48,6 @@ export function CampDashboard({
   summaries,
   burn,
   todayIso,
-  memberCount,
-  isAdmin,
   isLoading,
   error,
   hasExpenses,
@@ -64,60 +58,75 @@ export function CampDashboard({
   onOpenReceipts,
   onOpenMovements,
   onOpenSettlement,
-  onRename,
-  onDelete,
+  onOpenSettings,
 }: Props) {
   const t = useT()
   const format = useFormat()
 
-  const handleRename = () => {
-    const next = window.prompt(t.dashboard.renamePrompt, camp.name)
-    // `prompt` returns null on cancel — an empty string means "cleared it", also a no-op.
-    if (next !== null && next.trim() !== '') onRename(camp.id, next)
-  }
-
-  const handleDelete = () => {
-    if (window.confirm(t.dashboard.deleteConfirm(camp.name))) onDelete(camp.id)
-  }
-
+  // Every camp has an everyday pool, so "nothing here yet" means no *income*, not no pools.
   const funded = summaries.some((summary) => summary.sources.length > 0)
+  // A camp with neither money nor receipts has nothing to show on any of the blocks below,
+  // and five empty boxes hide the one thing that needs doing. Receipts count too: entering
+  // one before the income is unusual, but it must not blank the screen it belongs on.
+  const untouched = !funded && !hasExpenses
 
-  return (
-    <div className="dashboard">
+  const header = (
+    <>
       <button className="dashboard__back" type="button" onClick={onBack}>
         {t.dashboard.back}
       </button>
 
       <header className="dashboard__header">
         <h2 className="dashboard__name">{camp.name}</h2>
-        <StatusPill status={campStatus(camp, todayIso)} />
+        <StatusPill status={campStatus(burn.window, todayIso)} />
+        <button
+          className="dashboard__settings"
+          type="button"
+          aria-label={t.dashboard.openSettings}
+          onClick={onOpenSettings}
+        >
+          {/* The glyph carries no meaning a screen reader could use — the label does. */}
+          <span aria-hidden="true">⚙</span>
+        </button>
       </header>
 
-      <section className="dashboard__share">
-        <p className="dashboard__code">
-          {t.dashboard.joinCode} <code>{camp.joinCode}</code>
+      {error !== null && (
+        <p className="dashboard__error" role="alert">
+          {error}
         </p>
-        <p className="dashboard__slot-hint">{t.share.hint}</p>
-        <p className="dashboard__members">{t.share.members(memberCount)}</p>
-      </section>
+      )}
+    </>
+  )
 
-      <section
-        className={
-          // Every camp has an everyday pool, so "nothing here yet" means no *income*,
-          // not no pools.
-          funded ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'
-        }
-      >
-        <p className="dashboard__slot-title">{t.dashboard.receivedTotal}</p>
-        {isLoading && !funded ? (
-          <p className="dashboard__slot-hint">{t.app.loading}</p>
-        ) : (
-          <ReceivedTotals summaries={summaries} />
-        )}
-        <button className="dashboard__slot-link" type="button" onClick={onOpenIncome}>
-          {t.dashboard.setUpIncome}
-        </button>
-      </section>
+  // "Nothing here yet" would be a lie for the first second, and so would the first-step
+  // screen — a funded camp still loading looks exactly like an empty one.
+  if (untouched && isLoading) {
+    return (
+      <div className="dashboard">
+        {header}
+        <p className="dashboard__slot-hint">{t.app.loading}</p>
+      </div>
+    )
+  }
+
+  if (untouched) {
+    return (
+      <div className="dashboard">
+        {header}
+        <section className="dashboard__first-step">
+          <p className="dashboard__slot-title">{t.dashboard.firstStepTitle}</p>
+          <button className="dashboard__first-step-button" type="button" onClick={onOpenIncome}>
+            {t.dashboard.firstStep}
+          </button>
+          <p className="dashboard__first-step-hint">{t.dashboard.firstStepHint}</p>
+        </section>
+      </div>
+    )
+  }
+
+  return (
+    <div className="dashboard">
+      {header}
 
       <section
         className={burn.hasCurve ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'}
@@ -156,15 +165,37 @@ export function CampDashboard({
 
       <section
         className={
-          custody.statuses.length > 0 || custody.volunteerHeldCents > 0
+          custody.statuses.length > 0
             ? 'dashboard__slot dashboard__slot--filled'
             : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">{t.custody.title}</p>
-        <CustodyStrip custody={custody} />
-        <button className="dashboard__slot-link" type="button" onClick={onOpenMovements}>
-          {t.custody.open}
+        <p className="dashboard__slot-title">{t.custody.deposits.title}</p>
+        <DepositsStrip statuses={custody.statuses} />
+        <button
+          className="dashboard__slot-link"
+          type="button"
+          onClick={() => onOpenMovements('deposits')}
+        >
+          {t.custody.deposits.open}
+        </button>
+      </section>
+
+      <section
+        className={
+          custody.volunteerHeldCents > 0
+            ? 'dashboard__slot dashboard__slot--filled'
+            : 'dashboard__slot'
+        }
+      >
+        <p className="dashboard__slot-title">{t.custody.cash.title}</p>
+        <CashStrip heldCents={custody.volunteerHeldCents} count={custody.volunteerCount} />
+        <button
+          className="dashboard__slot-link"
+          type="button"
+          onClick={() => onOpenMovements('cash')}
+        >
+          {t.custody.cash.open}
         </button>
       </section>
 
@@ -181,27 +212,6 @@ export function CampDashboard({
           {t.settlement.open}
         </button>
       </section>
-
-      {error !== null && (
-        <p className="dashboard__error" role="alert">
-          {error}
-        </p>
-      )}
-
-      <div className="dashboard__actions">
-        <button className="dashboard__action" type="button" onClick={handleRename}>
-          {t.dashboard.rename}
-        </button>
-        {isAdmin && (
-          <button
-            className="dashboard__action dashboard__action--danger"
-            type="button"
-            onClick={handleDelete}
-          >
-            {t.dashboard.delete}
-          </button>
-        )}
-      </div>
     </div>
   )
 }

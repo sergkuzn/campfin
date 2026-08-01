@@ -68,3 +68,12 @@
   font-size: 0.875rem;
   color: var(--danger);
 }
+
+/* `margin-top: auto` in the column flex layout pins this to the bottom of the viewport
+   on short screens, while still following the content on long ones. */
+.app__version {
+  margin-top: auto;
+  text-align: center;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}

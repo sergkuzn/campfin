@@ -58,8 +58,10 @@ export function parseCampExport(text: string): ImportResult {
   if (dump.format !== 'campfin.camp') return { ok: false, issue: 'format' }
   if (typeof dump.version !== 'number') return { ok: false, issue: 'format' }
   // Older dumps are readable — v3 has no expenses, v4 no movements, and a missing array
-  // simply reads as none. A *newer* one is not: its rows may carry meaning this build
-  // would silently drop.
+  // simply reads as none. Camp `startDate`/`endDate` from an older dump are dropped by
+  // `toCamp`: the window comes from the blocks now, and those travel in the dump too, so
+  // nothing is lost. A *newer* dump is not readable: its rows may carry meaning this
+  // build would silently drop.
   if (dump.version > CURRENT_VERSION) return { ok: false, issue: 'version' }
 
   const camp = toCamp(dump.camp)

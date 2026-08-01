@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { campNameExists, campStatus, isCamp, sortCampsByRecent, uniqueCampName } from './camps'
-import type { Camp } from './types'
+import {
+  type CampWindow,
+  campNameExists,
+  campStatus,
+  campWindow,
+  isCamp,
+  sortCampsByRecent,
+  uniqueCampName,
+} from './camps'
+import type { Camp, PerDiemBlock } from './types'
 
 const camp = (over: Partial<Camp> = {}): Camp => ({
   id: 'c1',
@@ -13,18 +21,6 @@ const camp = (over: Partial<Camp> = {}): Camp => ({
 describe('isCamp', () => {
   it('accepts a minimal camp', () => {
     expect(isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: 1 })).toBe(true)
-  })
-  it('accepts a camp with a window', () => {
-    expect(
-      isCamp({
-        id: 'A',
-        name: 'B',
-        joinCode: 'AAAA-1234',
-        createdAt: 1,
-        startDate: '2026-07-01',
-        endDate: '2026-07-14',
-      }),
-    ).toBe(true)
   })
   it('rejects a camp without a join code', () => {
     expect(isCamp({ id: 'A', name: 'B', createdAt: 1 })).toBe(false)
@@ -43,10 +39,17 @@ describe('isCamp', () => {
   it('rejects a wrongly-typed field', () => {
     expect(isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: '1' })).toBe(false)
   })
-  it('rejects a wrongly-typed optional field', () => {
+  it('ignores fields it does not know, so an older export still reads', () => {
     expect(
-      isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: 1, startDate: 20260701 }),
-    ).toBe(false)
+      isCamp({
+        id: 'A',
+        name: 'B',
+        joinCode: 'AAAA-1234',
+        createdAt: 1,
+        startDate: '2026-07-01',
+        endDate: '2026-07-14',
+      }),
+    ).toBe(true)
   })
 })
 
@@ -103,14 +106,64 @@ describe('uniqueCampName', () => {
   })
 })
 
-describe('campStatus', () => {
-  const dated = camp({ startDate: '2026-07-01', endDate: '2026-07-14' })
-
-  it('is draft with no dates at all', () => {
-    expect(campStatus(camp(), '2026-07-05')).toBe('draft')
+describe('campWindow', () => {
+  const block = (over: Partial<PerDiemBlock>): PerDiemBlock => ({
+    id: 'b1',
+    campId: 'c1',
+    sourceId: 'pd',
+    variant: 'granted',
+    numPersons: 4,
+    ratePerPersonDayCents: 800,
+    startDate: '2026-07-01',
+    endDate: '2026-07-03',
+    ...over,
   })
-  it('is draft with only a start date', () => {
-    expect(campStatus(camp({ startDate: '2026-07-01' }), '2026-07-05')).toBe('draft')
+
+  it('spans a single block', () => {
+    expect(campWindow([block({})])).toEqual({ startIso: '2026-07-01', endIso: '2026-07-03' })
+  })
+  it('spans the outermost dates of several blocks', () => {
+    const blocks = [
+      block({ id: 'b1', startDate: '2026-07-05', endDate: '2026-07-09' }),
+      block({ id: 'b2', startDate: '2026-07-02', endDate: '2026-07-06' }),
+    ]
+    expect(campWindow(blocks)).toEqual({ startIso: '2026-07-02', endIso: '2026-07-09' })
+  })
+  it('is null with no blocks at all', () => {
+    expect(campWindow([])).toBeNull()
+  })
+  it('is null when a block ends before it starts', () => {
+    expect(campWindow([block({ startDate: '2026-07-10', endDate: '2026-07-01' })])).toBeNull()
+  })
+  it('follows the actual blocks once a source has them', () => {
+    const blocks = [
+      block({ id: 'b1', startDate: '2026-07-01', endDate: '2026-07-10' }),
+      block({ id: 'b2', variant: 'actual', startDate: '2026-07-03', endDate: '2026-07-08' }),
+    ]
+    expect(campWindow(blocks)).toEqual({ startIso: '2026-07-03', endIso: '2026-07-08' })
+  })
+  it('keeps each source on its own variant', () => {
+    const blocks = [
+      block({ id: 'a1', sourceId: 'pd-a', startDate: '2026-07-01', endDate: '2026-07-10' }),
+      block({
+        id: 'a2',
+        sourceId: 'pd-a',
+        variant: 'actual',
+        startDate: '2026-07-04',
+        endDate: '2026-07-06',
+      }),
+      block({ id: 'b1', sourceId: 'pd-b', startDate: '2026-07-02', endDate: '2026-07-08' }),
+    ]
+    // pd-a shrinks to its actual block, pd-b still runs on granted.
+    expect(campWindow(blocks)).toEqual({ startIso: '2026-07-02', endIso: '2026-07-08' })
+  })
+})
+
+describe('campStatus', () => {
+  const dated: CampWindow = { startIso: '2026-07-01', endIso: '2026-07-14' }
+
+  it('is draft with no window at all', () => {
+    expect(campStatus(null, '2026-07-05')).toBe('draft')
   })
   it('is upcoming before the start', () => {
     expect(campStatus(dated, '2026-06-30')).toBe('upcoming')
@@ -121,7 +174,7 @@ describe('campStatus', () => {
   it('is running in the middle', () => {
     expect(campStatus(dated, '2026-07-07')).toBe('running')
   })
-  it('is running on the last day (endDate is inclusive)', () => {
+  it('is running on the last day (the end is inclusive)', () => {
     expect(campStatus(dated, '2026-07-14')).toBe('running')
   })
   it('is finished the day after', () => {

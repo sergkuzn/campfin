@@ -9,18 +9,19 @@ import { computeBurn, emptyBurn } from '../lib/burn'
 import { todayIso } from '../lib/dates'
 import { buildCampExport, exportFileName } from '../lib/exportJson'
 import { isCampAdmin, memberCount } from '../lib/members'
-import { custodyReading } from '../lib/movements'
+import { type CustodyFocus, custodyReading } from '../lib/movements'
 import { depositPools, everydayPool, summarisePools } from '../lib/pools'
 import { computeSettlement } from '../lib/settlement'
 import { CampDashboard } from './CampDashboard'
 import { CampList } from './CampList'
+import { CampSettingsScreen } from './CampSettingsScreen'
 import { IncomeSetup } from './IncomeSetup'
 import { MovementsScreen } from './MovementsScreen'
 import { ReceiptsScreen } from './ReceiptsScreen'
 import { SettlementSheet } from './SettlementSheet'
 
 /**
- * Three screens, no router. `View` is a discriminated union rather than two independent
+ * Every screen, no router. `View` is a discriminated union rather than two independent
  * pieces of state: `campId` exists only on the screens that have a camp open, so "income
  * screen with no camp" cannot be represented at all. A real router arrives only if we need
  * URLs.
@@ -30,8 +31,9 @@ type View =
   | { screen: 'dashboard'; campId: string }
   | { screen: 'income'; campId: string }
   | { screen: 'receipts'; campId: string }
-  | { screen: 'movements'; campId: string }
+  | { screen: 'movements'; campId: string; focus: CustodyFocus }
   | { screen: 'settlement'; campId: string }
+  | { screen: 'settings'; campId: string }
 
 type Props = {
   session: Session
@@ -46,6 +48,7 @@ export function SignedInApp({ session }: Props) {
   const {
     camps,
     memberships,
+    blocks: campBlocks,
     isLoading,
     error,
     createCamp,
@@ -109,7 +112,6 @@ export function SignedInApp({ session }: Props) {
       openCamp === undefined
         ? emptyBurn
         : computeBurn({
-            camp: openCamp,
             everydayPoolId: everydayPool(pools, openCamp.id)?.id ?? '',
             sources,
             blocks,
@@ -177,6 +179,7 @@ export function SignedInApp({ session }: Props) {
     return (
       <CampList
         camps={camps}
+        blocks={campBlocks}
         userId={session.userId}
         isLoading={isLoading}
         error={error}
@@ -202,6 +205,7 @@ export function SignedInApp({ session }: Props) {
     return (
       <MovementsScreen
         campId={openCamp.id}
+        focus={view.focus}
         movements={movements}
         deposits={deposits}
         custody={custody}
@@ -224,6 +228,23 @@ export function SignedInApp({ session }: Props) {
     )
   }
 
+  if (view.screen === 'settings') {
+    return (
+      <CampSettingsScreen
+        camp={openCamp}
+        summaries={summaries}
+        memberCount={memberCount(memberships, openCamp.id)}
+        isAdmin={isCampAdmin(memberships, openCamp.id, session.userId)}
+        isLoading={income.isLoading}
+        error={error ?? income.error}
+        onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
+        onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
+        onRename={(name) => renameCamp(openCamp.id, name)}
+        onDelete={() => handleDelete(openCamp.id)}
+      />
+    )
+  }
+
   if (view.screen === 'income') {
     return (
       <IncomeSetup
@@ -240,8 +261,6 @@ export function SignedInApp({ session }: Props) {
       summaries={summaries}
       burn={burn}
       todayIso={today}
-      memberCount={memberCount(memberships, openCamp.id)}
-      isAdmin={isCampAdmin(memberships, openCamp.id, session.userId)}
       isLoading={income.isLoading}
       error={error ?? income.error ?? expenses.error ?? movements.error}
       hasExpenses={expenses.expenses.length > 0}
@@ -250,10 +269,9 @@ export function SignedInApp({ session }: Props) {
       onBack={handleBackToList}
       onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
       onOpenReceipts={() => setView({ screen: 'receipts', campId: openCamp.id })}
-      onOpenMovements={() => setView({ screen: 'movements', campId: openCamp.id })}
+      onOpenMovements={(focus) => setView({ screen: 'movements', campId: openCamp.id, focus })}
       onOpenSettlement={() => setView({ screen: 'settlement', campId: openCamp.id })}
-      onRename={renameCamp}
-      onDelete={handleDelete}
+      onOpenSettings={() => setView({ screen: 'settings', campId: openCamp.id })}
     />
   )
 }

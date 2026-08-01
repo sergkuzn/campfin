@@ -1,10 +1,34 @@
 /// <reference types="vitest/config" />
+import { execSync } from 'node:child_process'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+// A default import, not `{ version }`: under NodeNext a JSON module has only a default.
+import pkg from './package.json' with { type: 'json' }
+
+/** The commit the bundle was built from, or '' where git is missing (some CI images
+ *  build from a tarball). An unidentifiable build is better than a failed one. */
+function gitCommit(): string {
+  try {
+    return execSync('git rev-parse --short HEAD', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim()
+  } catch {
+    return ''
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
+  // `define` is a compile-time text substitution: each identifier is replaced by this
+  // literal in the bundle, so the version travels inside the build it describes and
+  // costs nothing at runtime. The globals are declared for TS in `src/env.d.ts`.
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_COMMIT__: JSON.stringify(gitCommit()),
+    __APP_BUILT_AT__: JSON.stringify(new Date().toISOString().slice(0, 10)),
+  },
   plugins: [
     react(),
     VitePWA({
