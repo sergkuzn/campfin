@@ -30,6 +30,8 @@ export const en = {
     title: 'campfin',
     subtitle: 'Camp budget tracker',
     loading: 'Loading…',
+    /** Names the version line for screen readers — the string itself is not prose. */
+    versionLabel: 'App version',
   },
 
   auth: {

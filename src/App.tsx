@@ -1,4 +1,5 @@
 import './App.css'
+import { AppVersion } from './components/AppVersion'
 import { SignedInApp } from './components/SignedInApp'
 import { SignIn } from './components/SignIn'
 import { useSession } from './hooks/useSession'
@@ -44,6 +45,8 @@ export default function App() {
       </header>
 
       {renderBody()}
+
+      <AppVersion />
     </main>
   )
 }
