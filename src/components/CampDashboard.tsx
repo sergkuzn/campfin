@@ -2,13 +2,14 @@ import './CampDashboard.css'
 import { useFormat, useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus } from '../lib/camps'
-import type { CustodyReading } from '../lib/movements'
+import type { CustodyFocus, CustodyReading } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
 import type { Settlement } from '../lib/settlement'
 import type { Camp } from '../lib/types'
 import { AllowedToday } from './AllowedToday'
 import { BurnChart } from './BurnChart'
-import { CustodyStrip } from './CustodyStrip'
+import { CashStrip } from './CashStrip'
+import { DepositsStrip } from './DepositsStrip'
 import { PoolBars } from './PoolBars'
 import { ReceivedTotals } from './ReceivedTotals'
 import { StatusPill } from './StatusPill'
@@ -38,7 +39,8 @@ type Props = {
   onBack: () => void
   onOpenIncome: () => void
   onOpenReceipts: () => void
-  onOpenMovements: () => void
+  /** Opens the movements screen on one half of the custody money. */
+  onOpenMovements: (focus: CustodyFocus) => void
   onOpenSettlement: () => void
   onRename: (campId: string, name: string) => void
   onDelete: (campId: string) => void
@@ -156,15 +158,37 @@ export function CampDashboard({
 
       <section
         className={
-          custody.statuses.length > 0 || custody.volunteerHeldCents > 0
+          custody.statuses.length > 0
             ? 'dashboard__slot dashboard__slot--filled'
             : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">{t.custody.title}</p>
-        <CustodyStrip custody={custody} />
-        <button className="dashboard__slot-link" type="button" onClick={onOpenMovements}>
-          {t.custody.open}
+        <p className="dashboard__slot-title">{t.custody.deposits.title}</p>
+        <DepositsStrip statuses={custody.statuses} />
+        <button
+          className="dashboard__slot-link"
+          type="button"
+          onClick={() => onOpenMovements('deposits')}
+        >
+          {t.custody.deposits.open}
+        </button>
+      </section>
+
+      <section
+        className={
+          custody.volunteerHeldCents > 0
+            ? 'dashboard__slot dashboard__slot--filled'
+            : 'dashboard__slot'
+        }
+      >
+        <p className="dashboard__slot-title">{t.custody.cash.title}</p>
+        <CashStrip heldCents={custody.volunteerHeldCents} count={custody.volunteerCount} />
+        <button
+          className="dashboard__slot-link"
+          type="button"
+          onClick={() => onOpenMovements('cash')}
+        >
+          {t.custody.cash.open}
         </button>
       </section>
 

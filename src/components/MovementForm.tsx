@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useT } from '../i18n'
 import {
   blankMovementDraft,
+  type CustodyFocus,
   draftFromMovement,
   isDepositKind,
-  MOVEMENT_KINDS,
+  kindsForFocus,
   type MovementDraft,
   movementDraftToInput,
   movementIssues,
@@ -15,6 +16,8 @@ import type { Movement, MovementKind } from '../lib/types'
 
 type Props = {
   campId: string
+  /** Which half of the custody money the screen is on — it decides the kinds on offer. */
+  focus: CustodyFocus
   /** The row being edited, or null when adding. */
   movement: Movement | null
   /** Deposit pools only — the two deposit kinds are the only ones that name a pool. */
@@ -26,12 +29,21 @@ type Props = {
 }
 
 /** One movement being typed. Same lock model as the receipt form: one draft, Save commits. */
-export function MovementForm({ campId, movement, deposits, todayIso, onSave, onCancel }: Props) {
+export function MovementForm({
+  campId,
+  focus,
+  movement,
+  deposits,
+  todayIso,
+  onSave,
+  onCancel,
+}: Props) {
   const t = useT()
 
-  // Without a deposit pool the two deposit kinds have nothing to point at, so the menu
-  // offers volunteer money alone rather than a picker with no options.
-  const kinds: readonly MovementKind[] = deposits.length === 0 ? ['volunteer_in'] : MOVEMENT_KINDS
+  // The screen has already narrowed the choice to one half of the custody money; on the
+  // cash side that leaves a single kind, so the picker is dropped rather than shown with
+  // one option.
+  const kinds = kindsForFocus(focus, deposits.length > 0)
   const firstPoolId = deposits[0]?.pool.id ?? ''
 
   // The initialiser runs only on the first render — otherwise it would rebuild the draft
@@ -64,22 +76,24 @@ export function MovementForm({ campId, movement, deposits, todayIso, onSave, onC
 
   return (
     <form className="card card--editing" onSubmit={handleSubmit}>
-      <label className="field">
-        <span className="field__label">{t.movements.kindLabel}</span>
-        <select
-          className="income-form__input"
-          value={draft.kind}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-            handleKind(event.target.value as MovementKind)
-          }
-        >
-          {kinds.map((kind) => (
-            <option key={kind} value={kind}>
-              {t.movements.kinds[kind]}
-            </option>
-          ))}
-        </select>
-      </label>
+      {kinds.length > 1 && (
+        <label className="field">
+          <span className="field__label">{t.movements.kindLabel}</span>
+          <select
+            className="income-form__input"
+            value={draft.kind}
+            onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+              handleKind(event.target.value as MovementKind)
+            }
+          >
+            {kinds.map((kind) => (
+              <option key={kind} value={kind}>
+                {t.movements.kinds[kind]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {isDepositKind(draft.kind) && (
         <label className="field">

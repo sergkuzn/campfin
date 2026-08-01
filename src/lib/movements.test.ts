@@ -6,9 +6,11 @@ import {
   depositStatus,
   depositStatuses,
   draftFromMovement,
+  kindsForFocus,
   type MovementDraft,
   movementDraftToInput,
   movementIssues,
+  movementsInFocus,
   sortMovements,
   volunteerHeldCents,
 } from './movements'
@@ -237,6 +239,38 @@ describe('movementDraftToInput', () => {
       name: 'Bike shop',
     })
     expect(input?.existing).toBe(movement)
+  })
+})
+
+describe('the custody focus split', () => {
+  const mixed: Movement[] = [out(20_000), volunteer(5_000), back(20_000), volunteer(2_500, 'm-v2')]
+
+  it('movementsInFocus keeps the deposit rows out of the cash list and back', () => {
+    expect(movementsInFocus(mixed, 'deposits').map((m) => m.id)).toEqual(['m-out', 'm-in'])
+    expect(movementsInFocus(mixed, 'cash').map((m) => m.id)).toEqual(['m-v', 'm-v2'])
+  })
+
+  it('movementsInFocus preserves the order it was given', () => {
+    // The screens sort for themselves; filtering must not quietly reorder rows first.
+    expect(movementsInFocus(mixed, 'deposits')).toEqual([mixed[0], mixed[2]])
+  })
+
+  it('movementsInFocus returns nothing for an empty list', () => {
+    expect(movementsInFocus([], 'deposits')).toEqual([])
+    expect(movementsInFocus([], 'cash')).toEqual([])
+  })
+
+  it('kindsForFocus offers both directions of a deposit, and only those', () => {
+    expect(kindsForFocus('deposits', true)).toEqual(['deposit_out', 'deposit_in'])
+  })
+
+  it('kindsForFocus offers no deposit kind while the camp has no deposit pool', () => {
+    expect(kindsForFocus('deposits', false)).toEqual([])
+  })
+
+  it('kindsForFocus offers volunteer money regardless of the deposit pools', () => {
+    expect(kindsForFocus('cash', false)).toEqual(['volunteer_in'])
+    expect(kindsForFocus('cash', true)).toEqual(['volunteer_in'])
   })
 })
 

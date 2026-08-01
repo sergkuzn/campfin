@@ -14,6 +14,13 @@ import type { DepositMovement, Movement, MovementKind, Pool } from './types'
 /** Menu order of the movement kinds. Labels live in the dictionary. */
 export const MOVEMENT_KINDS: readonly MovementKind[] = ['deposit_out', 'deposit_in', 'volunteer_in']
 
+/**
+ * The two halves of the custody money, shown as separate blocks: a Kaution that travels to
+ * a counterparty and back, and cash collected from volunteers for the organisation. They
+ * behave nothing alike, so every screen shows one of them at a time.
+ */
+export type CustodyFocus = 'deposits' | 'cash'
+
 /** Whether a *kind* names a pool — for a draft, where the kind is all there is. */
 export function isDepositKind(kind: MovementKind): kind is 'deposit_out' | 'deposit_in' {
   return kind === 'deposit_out' || kind === 'deposit_in'
@@ -26,6 +33,26 @@ export function isDepositKind(kind: MovementKind): kind is 'deposit_out' | 'depo
  */
 export function isDepositMovement(movement: Movement): movement is DepositMovement {
   return isDepositKind(movement.kind)
+}
+
+/** Which half of the custody money a row belongs to. */
+function focusOfMovement(movement: Movement): CustodyFocus {
+  return isDepositMovement(movement) ? 'deposits' : 'cash'
+}
+
+/** One focus's rows only — what its screen lists. */
+export function movementsInFocus(movements: Movement[], focus: CustodyFocus): Movement[] {
+  return movements.filter((movement) => focusOfMovement(movement) === focus)
+}
+
+/**
+ * The kinds a focused form may offer. Cash has exactly one, so its screen can drop the
+ * picker entirely; deposits have two, and none at all until a deposit source exists —
+ * without a pool to point at, the kinds have nothing to name.
+ */
+export function kindsForFocus(focus: CustodyFocus, hasDeposits: boolean): readonly MovementKind[] {
+  if (focus === 'cash') return ['volunteer_in']
+  return hasDeposits ? MOVEMENT_KINDS.filter(isDepositKind) : []
 }
 
 /** The form's editable shape: everything a string, euros still euros. */

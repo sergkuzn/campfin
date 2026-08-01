@@ -9,7 +9,7 @@ import { computeBurn, emptyBurn } from '../lib/burn'
 import { todayIso } from '../lib/dates'
 import { buildCampExport, exportFileName } from '../lib/exportJson'
 import { isCampAdmin, memberCount } from '../lib/members'
-import { custodyReading } from '../lib/movements'
+import { type CustodyFocus, custodyReading } from '../lib/movements'
 import { depositPools, everydayPool, summarisePools } from '../lib/pools'
 import { computeSettlement } from '../lib/settlement'
 import { CampDashboard } from './CampDashboard'
@@ -30,7 +30,7 @@ type View =
   | { screen: 'dashboard'; campId: string }
   | { screen: 'income'; campId: string }
   | { screen: 'receipts'; campId: string }
-  | { screen: 'movements'; campId: string }
+  | { screen: 'movements'; campId: string; focus: CustodyFocus }
   | { screen: 'settlement'; campId: string }
 
 type Props = {
@@ -202,6 +202,7 @@ export function SignedInApp({ session }: Props) {
     return (
       <MovementsScreen
         campId={openCamp.id}
+        focus={view.focus}
         movements={movements}
         deposits={deposits}
         custody={custody}
@@ -250,7 +251,7 @@ export function SignedInApp({ session }: Props) {
       onBack={handleBackToList}
       onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
       onOpenReceipts={() => setView({ screen: 'receipts', campId: openCamp.id })}
-      onOpenMovements={() => setView({ screen: 'movements', campId: openCamp.id })}
+      onOpenMovements={(focus) => setView({ screen: 'movements', campId: openCamp.id, focus })}
       onOpenSettlement={() => setView({ screen: 'settlement', campId: openCamp.id })}
       onRename={renameCamp}
       onDelete={handleDelete}

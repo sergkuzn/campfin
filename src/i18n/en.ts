@@ -278,12 +278,20 @@ export const en = {
    * wording deliberately avoids "spent" and "budget" — this money is held, not consumed.
    */
   movements: {
-    title: 'Deposits & cash',
     back: '← Back to camp',
-    add: '＋ Add movement',
-    empty: 'Nothing handed over or collected yet.',
-    /** Shown instead of the form when neither kind of movement is possible yet. */
-    noDeposits: 'Add a deposit under income first, or record volunteer money below.',
+    /** One screen, opened on one half of the custody money — the labels follow the half. */
+    deposits: {
+      title: 'Deposits',
+      add: '＋ Record a deposit move',
+      empty: 'No deposit handed over or returned yet.',
+      /** Shown instead of the form: without a deposit source there is no Kaution to move. */
+      noDeposits: 'Add a deposit under income first — then you can hand it over here.',
+    },
+    cash: {
+      title: 'Volunteer cash',
+      add: '＋ Record cash collected',
+      empty: 'No volunteer money collected yet.',
+    },
     kindLabel: 'What happened?',
     kinds: {
       deposit_out: 'Deposit handed over',
@@ -317,20 +325,31 @@ export const en = {
     },
   },
 
-  /** The dashboard strip: where the custody money currently sits. */
+  /**
+   * The two custody blocks: money passing through your hands, split by where it goes next.
+   * A deposit travels to a counterparty and comes back; volunteers' cash only goes onward
+   * to the organisation.
+   */
   custody: {
-    title: 'Deposits & cash',
-    empty: 'No deposits and no volunteer money.',
-    open: 'Deposits & cash →',
-    /** One deposit pool, in the order the money moves: out to a vendor, kept, coming back. */
-    atVendor: (amount: string) => `${amount} at the counterparty`,
-    settled: 'All back with you',
-    /** More came back than went out — a bookkeeping mistake worth naming. */
-    overReturned: (amount: string) => `${amount} more came back than went out`,
-    forfeited: (amount: string) => `${amount} kept for damage`,
-    toReturn: (amount: string) => `${amount} goes back`,
-    volunteers: 'Volunteer money to hand over',
-    volunteerCount: (n: number) => `${n} ${n === 1 ? 'handover' : 'handovers'}`,
+    deposits: {
+      title: 'Deposits',
+      empty: 'No deposit set up yet.',
+      open: 'Deposits →',
+      /** One deposit pool, in the order the money moves: out to a vendor, kept, coming back. */
+      atVendor: (amount: string) => `${amount} at the counterparty`,
+      settled: 'All back with you',
+      /** More came back than went out — a bookkeeping mistake worth naming. */
+      overReturned: (amount: string) => `${amount} more came back than went out`,
+      forfeited: (amount: string) => `${amount} kept for damage`,
+      toReturn: (amount: string) => `${amount} goes back`,
+    },
+    cash: {
+      title: 'Volunteer cash',
+      empty: 'No volunteer money collected.',
+      open: 'Volunteer cash →',
+      held: 'To hand over to the organisation',
+      count: (n: number) => `${n} ${n === 1 ? 'handover' : 'handovers'}`,
+    },
   },
 
   /**
