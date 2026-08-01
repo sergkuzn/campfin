@@ -8,12 +8,9 @@ import type { Settlement } from '../lib/settlement'
 import type { Camp } from '../lib/types'
 import { AllowedToday } from './AllowedToday'
 import { BurnChart } from './BurnChart'
-import { CampSettingsMenu } from './CampSettingsMenu'
 import { CashStrip } from './CashStrip'
 import { DepositsStrip } from './DepositsStrip'
-import { JoinCodeCard } from './JoinCodeCard'
 import { PoolBars } from './PoolBars'
-import { ReceivedTotals } from './ReceivedTotals'
 import { StatusPill } from './StatusPill'
 
 type Props = {
@@ -25,10 +22,6 @@ type Props = {
   /** One clock read for the whole screen, passed in so the status pill, the burn math
    *  and the chart's "today" line can never disagree mid-render. */
   todayIso: string
-  /** How many leaders share this camp. A count, never names. */
-  memberCount: number
-  /** Only the camp's creator is offered the delete button. */
-  isAdmin: boolean
   isLoading: boolean
   error: string | null
   /** Whether any receipt exists yet — the bars alone cannot say so, since an
@@ -44,8 +37,7 @@ type Props = {
   /** Opens the movements screen on one half of the custody money. */
   onOpenMovements: (focus: CustodyFocus) => void
   onOpenSettlement: () => void
-  onRename: (campId: string, name: string) => void
-  onDelete: (campId: string) => void
+  onOpenSettings: () => void
 }
 
 /**
@@ -56,8 +48,6 @@ export function CampDashboard({
   summaries,
   burn,
   todayIso,
-  memberCount,
-  isAdmin,
   isLoading,
   error,
   hasExpenses,
@@ -68,50 +58,75 @@ export function CampDashboard({
   onOpenReceipts,
   onOpenMovements,
   onOpenSettlement,
-  onRename,
-  onDelete,
+  onOpenSettings,
 }: Props) {
   const t = useT()
   const format = useFormat()
 
+  // Every camp has an everyday pool, so "nothing here yet" means no *income*, not no pools.
   const funded = summaries.some((summary) => summary.sources.length > 0)
+  // A camp with neither money nor receipts has nothing to show on any of the blocks below,
+  // and five empty boxes hide the one thing that needs doing. Receipts count too: entering
+  // one before the income is unusual, but it must not blank the screen it belongs on.
+  const untouched = !funded && !hasExpenses
 
-  return (
-    <div className="dashboard">
+  const header = (
+    <>
       <button className="dashboard__back" type="button" onClick={onBack}>
         {t.dashboard.back}
       </button>
 
       <header className="dashboard__header">
         <h2 className="dashboard__name">{camp.name}</h2>
-        <StatusPill status={campStatus(camp, todayIso)} />
-        <CampSettingsMenu
-          campName={camp.name}
-          canDelete={isAdmin}
-          onRename={(name) => onRename(camp.id, name)}
-          onDelete={() => onDelete(camp.id)}
-        />
+        <StatusPill status={campStatus(burn.window, todayIso)} />
+        <button
+          className="dashboard__settings"
+          type="button"
+          aria-label={t.dashboard.openSettings}
+          onClick={onOpenSettings}
+        >
+          {/* The glyph carries no meaning a screen reader could use — the label does. */}
+          <span aria-hidden="true">⚙</span>
+        </button>
       </header>
 
-      <JoinCodeCard joinCode={camp.joinCode} memberCount={memberCount} />
+      {error !== null && (
+        <p className="dashboard__error" role="alert">
+          {error}
+        </p>
+      )}
+    </>
+  )
 
-      <section
-        className={
-          // Every camp has an everyday pool, so "nothing here yet" means no *income*,
-          // not no pools.
-          funded ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'
-        }
-      >
-        <p className="dashboard__slot-title">{t.dashboard.receivedTotal}</p>
-        {isLoading && !funded ? (
-          <p className="dashboard__slot-hint">{t.app.loading}</p>
-        ) : (
-          <ReceivedTotals summaries={summaries} />
-        )}
-        <button className="dashboard__slot-link" type="button" onClick={onOpenIncome}>
-          {t.dashboard.setUpIncome}
-        </button>
-      </section>
+  // "Nothing here yet" would be a lie for the first second, and so would the first-step
+  // screen — a funded camp still loading looks exactly like an empty one.
+  if (untouched && isLoading) {
+    return (
+      <div className="dashboard">
+        {header}
+        <p className="dashboard__slot-hint">{t.app.loading}</p>
+      </div>
+    )
+  }
+
+  if (untouched) {
+    return (
+      <div className="dashboard">
+        {header}
+        <section className="dashboard__first-step">
+          <p className="dashboard__slot-title">{t.dashboard.firstStepTitle}</p>
+          <button className="dashboard__first-step-button" type="button" onClick={onOpenIncome}>
+            {t.dashboard.firstStep}
+          </button>
+          <p className="dashboard__first-step-hint">{t.dashboard.firstStepHint}</p>
+        </section>
+      </div>
+    )
+  }
+
+  return (
+    <div className="dashboard">
+      {header}
 
       <section
         className={burn.hasCurve ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'}
@@ -197,12 +212,6 @@ export function CampDashboard({
           {t.settlement.open}
         </button>
       </section>
-
-      {error !== null && (
-        <p className="dashboard__error" role="alert">
-          {error}
-        </p>
-      )}
     </div>
   )
 }

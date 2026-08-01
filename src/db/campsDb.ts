@@ -75,8 +75,6 @@ export function importCamp(args: ImportCampArgs): { camp: Camp; done: Promise<un
       name: dump.camp.name,
       joinCode: dump.camp.joinCode,
       createdAt: dump.camp.createdAt,
-      startDate: dump.camp.startDate,
-      endDate: dump.camp.endDate,
     }),
     membershipChunk({ campId, userId, role: 'admin', now }),
 

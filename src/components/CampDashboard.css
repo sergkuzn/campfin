@@ -34,8 +34,58 @@
 
 /* The name and its status pill stay together on the left; settings is pushed to the far
    right corner, away from anything tapped in daily use. */
-.dashboard__header .camp-settings {
+.dashboard__settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 2.5rem square: a comfortable thumb target for a glyph that is only ~1rem wide. */
+  width: 2.5rem;
+  height: 2.5rem;
   margin-left: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--muted);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dashboard__settings:hover {
+  color: var(--fg);
+}
+
+/* A camp with no money in it yet: one thing to do, said at a size you cannot miss. */
+.dashboard__first-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.dashboard__first-step-button {
+  width: 100%;
+  padding: var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background-color: var(--accent);
+  color: var(--surface);
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard__first-step-hint {
+  margin: 0;
+  max-width: 24rem;
+  font-size: 0.875rem;
+  color: var(--muted);
 }
 
 .dashboard__error {
@@ -80,10 +130,6 @@
   border-radius: 0 var(--radius) var(--radius) 0;
   background-color: color-mix(in srgb, var(--warn) 10%, transparent);
   font-size: 0.875rem;
-}
-
-.dashboard__slot .received {
-  margin-top: var(--space-2);
 }
 
 .dashboard__slot-link {

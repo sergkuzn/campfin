@@ -15,13 +15,16 @@ import { useT } from '../i18n'
 import { campNameExists, uniqueCampName } from '../lib/camps'
 import { parseCampExport } from '../lib/importJson'
 import { generateJoinCode } from '../lib/joinCode'
-import { mapRows, toCamp, toMembership } from '../lib/rows'
-import type { Camp, Membership } from '../lib/types'
+import { mapRows, toBlock, toCamp, toMembership } from '../lib/rows'
+import type { Camp, Membership, PerDiemBlock } from '../lib/types'
 
 export type UseCamps = {
   camps: Camp[]
   /** Memberships of every visible camp — enough to count leaders and to know my own role. */
   memberships: Membership[]
+  /** Per-diem blocks of every visible camp. They are what date a camp, so the list needs
+   *  them to say whether one is upcoming, running or finished. */
+  blocks: PerDiemBlock[]
   isLoading: boolean
   /** A rejected write, a rejected name, or a failed load; null when all is well. */
   error: string | null
@@ -41,19 +44,24 @@ export function useCamps(userId: string): UseCamps {
   // Validation failures and rejected writes are a UI concern, not query state.
   const [error, setError] = useState<string | null>(null)
 
-  // `members: {}` nests each camp's membership rows into the same subscription, so the
-  // leader count and my role cost no second query.
+  // The nested `members` and `perDiemBlocks` ride along in the same subscription, so the
+  // leader count, my role and every camp's date window cost no second query. Blocks are a
+  // handful of rows per camp — cheap enough to carry for the list.
   const {
     isLoading,
     error: queryError,
     data,
   } = db.useQuery({
-    camps: { $: { where: { 'members.user.id': userId } }, members: {} },
+    camps: { $: { where: { 'members.user.id': userId } }, members: {}, perDiemBlocks: {} },
   })
 
   const camps = useMemo(() => mapRows(data?.camps, toCamp), [data])
   const memberships = useMemo(
     () => (data?.camps ?? []).flatMap((camp) => mapRows(camp.members, toMembership)),
+    [data],
+  )
+  const blocks = useMemo(
+    () => (data?.camps ?? []).flatMap((camp) => mapRows(camp.perDiemBlocks, toBlock)),
     [data],
   )
 
@@ -140,6 +148,7 @@ export function useCamps(userId: string): UseCamps {
   return {
     camps,
     memberships,
+    blocks,
     isLoading,
     // A failed load outranks a stale validation message: if the data isn't there, nothing
     // else on screen is trustworthy either.

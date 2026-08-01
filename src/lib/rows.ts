@@ -43,8 +43,8 @@ export function mapRows<T>(
 export function toCamp(row: unknown): Camp | null {
   const value = withoutNulls(row)
   if (!isCamp(value)) return null
-  const { id, name, joinCode, createdAt, startDate, endDate } = value
-  return { id, name, joinCode, createdAt, startDate, endDate }
+  const { id, name, joinCode, createdAt } = value
+  return { id, name, joinCode, createdAt }
 }
 
 export function toMembership(row: unknown): Membership | null {

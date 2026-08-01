@@ -8,12 +8,9 @@
  * would make the line meaningless.
  */
 
-import { effectiveBlocks } from './budget'
+import { type CampWindow, campWindow, realityBlocks } from './camps'
 import { eachDay, isWithin } from './dates'
-import type { Camp, Expense, IncomeSource, PerDiemBlock } from './types'
-
-/** The days the chart spans, inclusive at both ends. */
-export type CampWindow = { startIso: string; endIso: string }
+import type { Expense, IncomeSource, PerDiemBlock } from './types'
 
 /** One calendar day of the chart. Both series live on the same row because that is
  *  exactly the shape a Recharts `LineChart` takes as its `data`. */
@@ -37,7 +34,6 @@ export type BurnPoint = {
  * swap would type-check and quietly produce a plausible wrong chart.
  */
 export type BurnInput = {
-  camp: Camp
   /** The only pool the curve measures. Passed in, never re-derived here. */
   everydayPoolId: string
   sources: IncomeSource[]
@@ -76,43 +72,6 @@ export const emptyBurn: Burn = {
   allowedTodayCents: 0,
   spentTodayCents: 0,
   normalDayCents: 0,
-}
-
-/**
- * The blocks that describe reality: a source's `actual` blocks when it has any, its
- * `granted` ones otherwise. Every source in the list is resolved, so a camp that ever
- * grows a second per-diem source needs no change here.
- */
-function realityBlocks(blocks: PerDiemBlock[]): PerDiemBlock[] {
-  const sourceIds = [...new Set(blocks.map((b) => b.sourceId))]
-  return sourceIds.flatMap((sourceId) => effectiveBlocks(blocks, sourceId))
-}
-
-/** ISO dates sort chronologically as plain strings, so min/max need no Date parsing. */
-function earliest(isoDates: string[]): string | undefined {
-  return isoDates.toSorted().at(0)
-}
-
-function latest(isoDates: string[]): string | undefined {
-  return isoDates.toSorted().at(-1)
-}
-
-/**
- * The camp's days: its own dates when set, otherwise the span of the blocks that
- * describe who really came. `null` when nothing dates the camp at all — a camp with no
- * income yet has no window, and inventing one would draw a chart out of nothing.
- */
-export function campWindow(camp: Camp, blocks: PerDiemBlock[]): CampWindow | null {
-  const reality = realityBlocks(blocks)
-  const startIso = camp.startDate ?? earliest(reality.map((b) => b.startDate))
-  const endIso = camp.endDate ?? latest(reality.map((b) => b.endDate))
-
-  if (startIso === undefined || endIso === undefined) return null
-  // A window that ends before it starts is a typo, not a camp; `eachDay` would return
-  // an empty list anyway, and `null` says why.
-  if (startIso > endIso) return null
-
-  return { startIso, endIso }
 }
 
 /** Σ people on blocks covering this day. Advisory only: two blocks covering the same
@@ -187,7 +146,7 @@ function spentUpTo(day: string, expenses: Expense[]): number {
 /** One row per calendar day of the camp, both series on it. Empty when the camp has no
  *  window yet. */
 export function burnSeries(input: BurnInput): BurnPoint[] {
-  const window = campWindow(input.camp, input.blocks)
+  const window = campWindow(input.blocks)
   if (window === null) return []
 
   const days = eachDay(window.startIso, window.endIso)
@@ -219,7 +178,7 @@ export function computeBurn(input: BurnInput): Burn {
   // Without the daily grant there is no "a day's worth of money", so there is no curve —
   // flat money alone would spread itself over a window it never defined.
   const hasPerDiem = input.sources.some((s) => s.kind === 'per_diem')
-  const window = campWindow(input.camp, input.blocks)
+  const window = campWindow(input.blocks)
   const points = hasPerDiem ? burnSeries(input) : []
 
   const spending = everydayExpenses(input.expenses, input.everydayPoolId)

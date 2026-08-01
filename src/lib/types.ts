@@ -8,8 +8,8 @@ export type Camp = {
    */
   joinCode: string
   createdAt: number
-  startDate?: string // ISO "YYYY-MM-DD"; if unset, derived from per-diem blocks
-  endDate?: string // ISO, inclusive
+  // No dates of its own: the camp's window is the span of its per-diem blocks, which is
+  // the only place camp days are ever entered. One source, so the two cannot disagree.
 }
 
 /**

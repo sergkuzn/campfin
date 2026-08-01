@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { type BurnInput, burnSeries, campWindow, computeBurn } from './burn'
-import type { AmountSource, Camp, Expense, PerDiemBlock, PerDiemSource } from './types'
-
-const camp: Camp = { id: 'C', name: 'Moorland', joinCode: 'MOOR-7F3K', createdAt: 1 }
+import { type BurnInput, burnSeries, computeBurn } from './burn'
+import type { AmountSource, Expense, PerDiemBlock, PerDiemSource } from './types'
 
 const perDiem: PerDiemSource = {
   id: 'src-pd',
@@ -41,7 +39,6 @@ function expense(over: Partial<Expense> & { id: string }): Expense {
 
 function input(over: Partial<BurnInput> = {}): BurnInput {
   return {
-    camp,
     everydayPoolId: 'pool-e',
     sources: [perDiem],
     blocks: [block({ id: 'b1' })], // 2 ppl × 3 days × €10 = €60
@@ -50,41 +47,6 @@ function input(over: Partial<BurnInput> = {}): BurnInput {
     ...over,
   }
 }
-
-describe('campWindow', () => {
-  it('prefers the camp’s own start and end dates', () => {
-    const dated: Camp = { ...camp, startDate: '2026-06-28', endDate: '2026-07-10' }
-    expect(campWindow(dated, [block({ id: 'b1' })])).toEqual({
-      startIso: '2026-06-28',
-      endIso: '2026-07-10',
-    })
-  })
-
-  it('falls back to the earliest and latest block dates', () => {
-    const blocks = [
-      block({ id: 'b1', startDate: '2026-07-05', endDate: '2026-07-09' }),
-      block({ id: 'b2', startDate: '2026-07-02', endDate: '2026-07-06' }),
-    ]
-    expect(campWindow(camp, blocks)).toEqual({ startIso: '2026-07-02', endIso: '2026-07-09' })
-  })
-
-  it('is null when neither the camp nor a block carries a date', () => {
-    expect(campWindow(camp, [])).toBeNull()
-  })
-
-  it('is null when the camp ends before it starts', () => {
-    const inverted: Camp = { ...camp, startDate: '2026-07-10', endDate: '2026-07-01' }
-    expect(campWindow(inverted, [])).toBeNull()
-  })
-
-  it('spans actual blocks, not granted ones, once actual exists', () => {
-    const blocks = [
-      block({ id: 'b1', startDate: '2026-07-01', endDate: '2026-07-10' }),
-      block({ id: 'b2', variant: 'actual', startDate: '2026-07-03', endDate: '2026-07-08' }),
-    ]
-    expect(campWindow(camp, blocks)).toEqual({ startIso: '2026-07-03', endIso: '2026-07-08' })
-  })
-})
 
 describe('burnSeries', () => {
   it('emits one ascending point per calendar day', () => {

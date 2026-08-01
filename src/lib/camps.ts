@@ -3,11 +3,15 @@
  * No React, no storage, no `Date.now()` — "today" and new rows are always passed in.
  */
 
+import { effectiveBlocks } from './budget'
 import { isWithin } from './dates'
-import type { Camp } from './types'
+import type { Camp, PerDiemBlock } from './types'
 
 /** Where a camp sits in time. `draft` = no dates entered yet (income setup not done). */
 export type CampStatus = 'draft' | 'upcoming' | 'running' | 'finished'
+
+/** The days a camp spans, inclusive at both ends. */
+export type CampWindow = { startIso: string; endIso: string }
 
 /**
  * A *type guard*: the `value is Camp` return type tells TypeScript that when this
@@ -26,12 +30,6 @@ export function isCamp(value: unknown): value is Camp {
     typeof c.joinCode !== 'string' ||
     typeof c.createdAt !== 'number'
   ) {
-    return false
-  }
-  if (c.startDate !== undefined && typeof c.startDate !== 'string') {
-    return false
-  }
-  if (c.endDate !== undefined && typeof c.endDate !== 'string') {
     return false
   }
   return true
@@ -63,19 +61,60 @@ export function sortCampsByRecent(camps: Camp[]): Camp[] {
   return camps.toSorted((a, b) => b.createdAt - a.createdAt)
 }
 
+/** ISO dates sort chronologically as plain strings, so min/max need no Date parsing. */
+function earliest(isoDates: string[]): string | undefined {
+  return isoDates.toSorted().at(0)
+}
+
+function latest(isoDates: string[]): string | undefined {
+  return isoDates.toSorted().at(-1)
+}
+
+/**
+ * The camp's days: the span of the blocks that describe who really came — a source's
+ * `actual` blocks when it has any, its `granted` ones otherwise.
+ *
+ * This is the camp's *only* window. It is derived rather than stored so it cannot drift
+ * from the blocks the money is computed from: shorten a stay and the camp shortens with
+ * it. `null` when nothing dates the camp at all — a camp with no per-diem income yet has
+ * no window, and inventing one would draw a chart out of nothing.
+ */
+export function campWindow(blocks: PerDiemBlock[]): CampWindow | null {
+  const reality = realityBlocks(blocks)
+  const startIso = earliest(reality.map((b) => b.startDate))
+  const endIso = latest(reality.map((b) => b.endDate))
+
+  if (startIso === undefined || endIso === undefined) return null
+  // A window that ends before it starts is a typo, not a camp; `eachDay` would return
+  // an empty list anyway, and `null` says why.
+  if (startIso > endIso) return null
+
+  return { startIso, endIso }
+}
+
+/**
+ * The blocks that describe reality, across every source in the list. Resolving each
+ * source separately is what lets one source be corrected to `actual` while another still
+ * runs on `granted`.
+ */
+export function realityBlocks(blocks: PerDiemBlock[]): PerDiemBlock[] {
+  const sourceIds = [...new Set(blocks.map((b) => b.sourceId))]
+  return sourceIds.flatMap((sourceId) => effectiveBlocks(blocks, sourceId))
+}
+
 /**
  * `draft` when the camp has no window yet; otherwise compare `todayIso` against it.
  * ISO "YYYY-MM-DD" strings compare correctly with `<` / `>` — their digit order is
  * their chronological order — so no Date parsing is needed here.
  */
-export function campStatus(camp: Camp, todayIso: string): CampStatus {
-  if (!camp.startDate || !camp.endDate) {
+export function campStatus(window: CampWindow | null, todayIso: string): CampStatus {
+  if (window === null) {
     return 'draft'
   }
-  if (isWithin(todayIso, camp.startDate, camp.endDate)) {
+  if (isWithin(todayIso, window.startIso, window.endIso)) {
     return 'running'
   }
-  if (todayIso < camp.startDate) {
+  if (todayIso < window.startIso) {
     return 'upcoming'
   }
   return 'finished'

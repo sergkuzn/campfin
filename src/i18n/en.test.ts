@@ -37,7 +37,7 @@ describe('the English dictionary', () => {
 
   it('interpolates its arguments rather than dropping them', () => {
     expect(en.camps.nameTaken('Moorwerder')).toContain('Moorwerder')
-    expect(en.dashboard.settings.deleteConfirm('Moorwerder')).toContain('Moorwerder')
+    expect(en.campSettings.deleteConfirm('Moorwerder')).toContain('Moorwerder')
     expect(en.pools.sourceDeleteLine('€20,00', 'Everyday')).toContain('€20,00')
     expect(en.pools.sourceDeleteLine('€20,00', 'Everyday')).toContain('Everyday')
     expect(en.receipts.dayTotal('€32,50')).toContain('€32,50')

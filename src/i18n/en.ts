@@ -65,7 +65,6 @@ export const en = {
   },
 
   share: {
-    title: 'Share this camp',
     hint: 'The other leader types this code into their phone.',
     members: (count: number) => `${count} ${count === 1 ? 'leader' : 'leaders'} share this camp.`,
     /** On the join-code button itself, under the code — it has to say what the tap does. */
@@ -110,25 +109,36 @@ export const en = {
     receivedTotal: 'Received total',
     noIncome: 'No income sources yet.',
     setUpIncome: 'Set up income →',
+    /** The whole dashboard while the camp has no money in it yet: one thing to do, said
+     *  large, instead of five empty blocks. */
+    firstStepTitle: 'Start here',
+    firstStep: 'Set up income',
+    firstStepHint: 'Enter the money your camp was granted. Everything else follows from it.',
     spending: 'Spending',
     noReceipts: 'No receipts yet.',
     openReceipts: 'Receipts →',
     /** Shown until the camp has its daily grant — nothing per-day can be computed
      *  without it, so the chart and "allowed today" stay hidden. */
     setupCallout: 'Add the daily grant to start tracking.',
-    /** Everything that changes the camp itself rather than its money, behind the ⚙. */
-    settings: {
-      open: 'Camp settings',
-      rename: 'Rename camp',
-      delete: 'Delete camp',
-      renameTitle: 'Rename camp',
-      renameLabel: 'Camp name',
-      save: 'Save',
-      deleteTitle: 'Delete camp',
-      deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
-      deleteLine: 'Its income, receipts and movements go with it.',
-      deleteConfirmLabel: 'Delete',
-    },
+    openSettings: 'Camp settings',
+  },
+
+  /** The camp's own screen: what it is called, who can reach it, and how to be rid of it —
+   *  everything that changes the camp rather than its money. */
+  campSettings: {
+    title: 'Camp settings',
+    back: '← Back to camp',
+    nameSection: 'Name',
+    nameLabel: 'Camp name',
+    save: 'Save',
+    shareSection: 'Join code',
+    incomeSection: 'Income',
+    dangerSection: 'Danger zone',
+    delete: 'Delete camp',
+    deleteTitle: 'Delete camp',
+    deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
+    deleteLine: 'Its income, receipts and movements go with it.',
+    deleteConfirmLabel: 'Delete',
   },
 
   income: {

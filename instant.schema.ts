@@ -40,8 +40,7 @@ const _schema = i.schema({
       // answer the same code; indexed because the join screen queries by it.
       joinCode: i.string().unique().indexed(),
       createdAt: i.number().indexed(),
-      startDate: i.string().optional(),
-      endDate: i.string().optional(),
+      // No dates: a camp's window is the span of its per-diem blocks, derived on read.
     }),
 
     // Who may touch a camp. No names, no emails — a user id and a role (golden rule 3).
