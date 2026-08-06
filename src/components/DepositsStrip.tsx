@@ -1,6 +1,6 @@
 import './Custody.css'
 import { useFormat, useT } from '../i18n'
-import type { DepositStatus } from '../lib/movements'
+import { type DepositStatus, type DepositStep, depositSteps } from '../lib/movements'
 
 type Props = {
   /** One reading per deposit pool, computed once by the parent. */
@@ -28,21 +28,21 @@ export function DepositsStrip({ statuses }: Props) {
   )
 }
 
+/** The glyph in front of a step. Decorative — the label and amount carry the meaning. */
+const STEP_MARK: Record<DepositStep['state'], string> = {
+  todo: '○',
+  partial: '◑',
+  done: '✓',
+  over: '!',
+}
+
 function DepositRow({ status }: { status: DepositStatus }) {
   const t = useT()
   const format = useFormat()
 
-  // Three readings of the same deposit, and only one of them is ever the interesting one:
-  // still out at a counterparty, back in your pocket, or — a mistake — over-returned.
-  const whereItIs =
-    status.atVendorCents > 0
-      ? { text: t.custody.deposits.atVendor(format.euros(status.atVendorCents)), state: 'out' }
-      : status.atVendorCents < 0
-        ? {
-            text: t.custody.deposits.overReturned(format.euros(-status.atVendorCents)),
-            state: 'odd',
-          }
-        : { text: t.custody.deposits.settled, state: 'settled' }
+  // A deposit is a two-step errand — hand it over, get it back — so the strip shows it as a
+  // checklist rather than as a sentence about where the money currently is.
+  const steps = depositSteps(status)
 
   return (
     <div className="custody__row">
@@ -51,7 +51,11 @@ function DepositRow({ status }: { status: DepositStatus }) {
         <span className="custody__amount">{format.euros(status.fundedCents)}</span>
       </div>
 
-      <p className={`custody__line custody__line--${whereItIs.state}`}>{whereItIs.text}</p>
+      <StepLine
+        step={steps.out}
+        label={t.custody.deposits.stepOut}
+        excess={t.custody.deposits.stepOverOut}
+      />
 
       {/* Only worth a line when it happened: a Kaution the counterparty kept is the one
           part of a deposit that never comes back. */}
@@ -61,9 +65,46 @@ function DepositRow({ status }: { status: DepositStatus }) {
         </p>
       )}
 
-      <p className="custody__line">
-        {t.custody.deposits.toReturn(format.euros(status.toReturnCents))}
-      </p>
+      <StepLine
+        step={steps.back}
+        label={t.custody.deposits.stepBack}
+        excess={t.custody.deposits.stepOverBack}
+      />
     </div>
+  )
+}
+
+type StepLineProps = {
+  step: DepositStep
+  label: string
+  /** Names the surplus when more money moved than the step expected. */
+  excess: (amount: string) => string
+}
+
+function StepLine({ step, label, excess }: StepLineProps) {
+  const t = useT()
+  const format = useFormat()
+
+  return (
+    <>
+      <p className={`custody__step custody__step--${step.state}`}>
+        <span aria-hidden="true" className="custody__tick">
+          {STEP_MARK[step.state]}
+        </span>
+        <span className="custody__step-label">{label}</span>
+        <span className="custody__step-amount">
+          {t.custody.deposits.stepAmount(
+            format.euros(step.doneCents),
+            format.euros(step.targetCents),
+          )}
+        </span>
+      </p>
+
+      {step.state === 'over' && (
+        <p className="custody__line custody__line--odd">
+          {excess(format.euros(step.doneCents - step.targetCents))}
+        </p>
+      )}
+    </>
   )
 }

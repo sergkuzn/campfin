@@ -128,7 +128,10 @@ export function isMovement(value: unknown): value is Movement {
     case 'deposit_out':
     case 'deposit_in':
       // The union's whole point: a Kaution movement without its pool is not a Movement.
-      return typeof m.poolId === 'string'
+      return (
+        typeof m.poolId === 'string' &&
+        (m.completesDeposit === undefined || typeof m.completesDeposit === 'boolean')
+      )
     case 'volunteer_in':
       return true
     default:

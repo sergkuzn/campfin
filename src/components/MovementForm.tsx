@@ -153,6 +153,24 @@ export function MovementForm({
         />
       </label>
 
+      {/* Only a handover can be "the whole deposit" — a return is measured against what
+          actually went out, so the box would mean nothing there. */}
+      {draft.kind === 'deposit_out' && (
+        <label className="field field--check">
+          <input
+            type="checkbox"
+            checked={draft.completesDeposit}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              patch({ completesDeposit: event.target.checked })
+            }
+          />
+          <span>
+            <span className="field__check-label">{t.movements.completesLabel}</span>
+            <span className="field__hint">{t.movements.completesHint}</span>
+          </span>
+        </label>
+      )}
+
       <label className="field">
         <span className="field__label">{t.movements.noteLabel}</span>
         <input

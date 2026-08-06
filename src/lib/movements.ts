@@ -62,6 +62,8 @@ export type MovementDraft = {
   name: string
   amount: string // euros as typed
   poolId: string // '' for volunteer money, which belongs to no pool
+  /** Handovers only: this is the whole Kaution, even if it is less than the deposit. */
+  completesDeposit: boolean
   note: string
 }
 
@@ -95,6 +97,8 @@ export type DepositStatus = {
   /** The Kaution as granted — the deposit source's amount. */
   fundedCents: number
   handedOverCents: number
+  /** A handover was marked final: what went out *is* the whole Kaution, short or not. */
+  handoverCompleted: boolean
   returnedCents: number
   /** Kept by the counterparty for damage, booked as an ordinary expense on this pool. */
   forfeitedCents: number
@@ -110,7 +114,7 @@ export function blankMovementDraft(
   kind: MovementKind,
   poolId: string,
 ): MovementDraft {
-  return { kind, date: todayIso, name: '', amount: '', poolId, note: '' }
+  return { kind, date: todayIso, name: '', amount: '', poolId, completesDeposit: false, note: '' }
 }
 
 /** Seed the editor from a persisted row. */
@@ -122,6 +126,7 @@ export function draftFromMovement(movement: Movement): MovementDraft {
     amount: (movement.amountCents / 100).toFixed(2).replace('.', ','),
     name: movement.name,
     poolId: isDepositMovement(movement) ? movement.poolId : '',
+    completesDeposit: isDepositMovement(movement) && movement.completesDeposit === true,
     note: movement.note ?? '',
   }
 }
@@ -168,7 +173,14 @@ export function movementDraftToInput(
   // Building the two branches separately is what keeps `poolId` off a volunteer row: a
   // spread of the whole draft would carry a stale pool id into money that has no pool.
   const fields: NewMovement = isDepositKind(draft.kind)
-    ? { ...common, kind: draft.kind, poolId: draft.poolId }
+    ? {
+        ...common,
+        kind: draft.kind,
+        poolId: draft.poolId,
+        // Only a handover can end the handover step; a return carrying the flag would
+        // silently tick a step it knows nothing about.
+        completesDeposit: draft.kind === 'deposit_out' && draft.completesDeposit,
+      }
     : { ...common, kind: draft.kind }
 
   return { existing, fields }
@@ -195,11 +207,16 @@ export function sortMovements(movements: Movement[]): Movement[] {
 export function depositStatus(summary: PoolSummary, movements: Movement[]): DepositStatus {
   let handedOverCents = 0
   let returnedCents = 0
+  let handoverCompleted = false
 
   for (const movement of movements) {
     if (!isDepositMovement(movement) || movement.poolId !== summary.pool.id) continue
-    if (movement.kind === 'deposit_out') handedOverCents += movement.amountCents
-    else returnedCents += movement.amountCents
+    if (movement.kind === 'deposit_out') {
+      handedOverCents += movement.amountCents
+      // Any one handover may close the step: the last instalment is the one that carries
+      // the flag, whatever the instalments before it added up to.
+      handoverCompleted ||= movement.completesDeposit === true
+    } else returnedCents += movement.amountCents
   }
 
   // The pool's expenses *are* the forfeited money: a deposit pool has no other spending.
@@ -209,6 +226,7 @@ export function depositStatus(summary: PoolSummary, movements: Movement[]): Depo
     pool: summary.pool,
     fundedCents: summary.fundedCents,
     handedOverCents,
+    handoverCompleted,
     returnedCents,
     forfeitedCents,
     atVendorCents: handedOverCents - returnedCents - forfeitedCents,
@@ -216,6 +234,66 @@ export function depositStatus(summary: PoolSummary, movements: Movement[]): Depo
     // never a negative amount that would eat another pool's leftover in the total.
     toReturnCents: Math.max(0, summary.fundedCents - forfeitedCents),
   }
+}
+
+/**
+ * How far one step of a deposit has got. `over` is a mistake worth showing rather than
+ * clamping: more money out or back than expected means a row was entered wrong.
+ */
+export type DepositStepState = 'todo' | 'partial' | 'done' | 'over'
+
+/** One step, with the figures the strip prints next to its tick. */
+export type DepositStep = {
+  state: DepositStepState
+  doneCents: number
+  targetCents: number
+}
+
+/** A deposit's life as two checkable steps: it goes out, then it comes back. */
+export type DepositSteps = {
+  out: DepositStep
+  back: DepositStep
+}
+
+function step(doneCents: number, targetCents: number): DepositStep {
+  // Nothing to do is done: a €0 deposit, or a return after the whole Kaution was forfeited,
+  // would otherwise sit unticked forever with no way to complete it.
+  const state: DepositStepState =
+    targetCents <= 0
+      ? 'done'
+      : doneCents <= 0
+        ? 'todo'
+        : doneCents > targetCents
+          ? 'over'
+          : doneCents === targetCents
+            ? 'done'
+            : 'partial'
+
+  return { state, doneCents, targetCents }
+}
+
+/**
+ * The checklist reading of a deposit.
+ *
+ * The second step's target is what *can* still come back — handed over minus forfeited —
+ * not the deposit as granted. Money the counterparty kept for damage is gone by agreement,
+ * so counting it as an outstanding return would leave the step permanently short.
+ */
+export function depositSteps(status: DepositStatus): DepositSteps {
+  // A handover declared final measures itself: the counterparty wanted less than the
+  // organisation granted, so the step is complete at the amount that actually went out.
+  const out = status.handoverCompleted
+    ? step(status.handedOverCents, status.handedOverCents)
+    : step(status.handedOverCents, status.fundedCents)
+
+  // A deposit that has not left yet has no amount to come back either, but the step is
+  // still ahead of you — `step` would read that empty target as finished.
+  const back =
+    status.handedOverCents === 0 && status.fundedCents > 0
+      ? ({ state: 'todo', doneCents: 0, targetCents: 0 } as const)
+      : step(status.returnedCents, Math.max(0, status.handedOverCents - status.forfeitedCents))
+
+  return { out, back }
 }
 
 /** One reading per deposit pool, in the order the pools were created. */

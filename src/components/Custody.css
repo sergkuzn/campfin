@@ -33,14 +33,43 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Still with a counterparty: not wrong, but the one thing that has to come back before
-   the camp can settle. */
-.custody__line--out {
+/* One step of the deposit checklist: tick, what it is, how far it has got. The amount is
+   pushed right so the sums line up down the strip. */
+.custody__step {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.custody__tick {
+  width: 1em;
+  text-align: center;
+}
+
+.custody__step-label {
+  flex: 1;
+}
+
+.custody__step-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Started but not finished: not wrong, just the thing that still has to happen before the
+   camp can settle. */
+.custody__step--partial {
   color: var(--warn);
 }
 
-.custody__line--settled {
+.custody__step--done {
   color: var(--ok);
+}
+
+/* More money moved than the step expected — a row was entered wrong. */
+.custody__step--over {
+  color: var(--danger);
 }
 
 /* More came back than went out, or money the counterparty kept: both need a second look

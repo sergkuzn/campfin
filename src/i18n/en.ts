@@ -333,6 +333,8 @@ export const en = {
     amountLabel: 'Amount',
     amountPlaceholder: '€ e.g. 200,00',
     poolLabel: 'Which deposit',
+    completesLabel: 'This is the full deposit',
+    completesHint: 'Tick when the counterparty asked for less than the deposit you were given.',
     noteLabel: 'Note (optional)',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
@@ -364,13 +366,15 @@ export const en = {
       title: 'Deposits',
       empty: 'No deposit set up yet.',
       open: 'Deposits →',
-      /** One deposit pool, in the order the money moves: out to a vendor, kept, coming back. */
-      atVendor: (amount: string) => `${amount} at the counterparty`,
-      settled: 'All back with you',
-      /** More came back than went out — a bookkeeping mistake worth naming. */
-      overReturned: (amount: string) => `${amount} more came back than went out`,
+      /** The two steps of a deposit's life, ticked off in the order the money moves. */
+      stepOut: 'Handed over',
+      stepBack: 'Came back',
+      /** How far a step has got: what has moved, out of what it should be. */
+      stepAmount: (done: string, target: string) => `${done} of ${target}`,
+      /** More moved than expected — a bookkeeping mistake worth naming. */
+      stepOverOut: (amount: string) => `${amount} more handed over than the deposit`,
+      stepOverBack: (amount: string) => `${amount} more came back than went out`,
       forfeited: (amount: string) => `${amount} kept for damage`,
-      toReturn: (amount: string) => `${amount} goes back`,
     },
     cash: {
       title: 'Volunteer cash',
