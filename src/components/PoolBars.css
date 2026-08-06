@@ -85,11 +85,3 @@
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-
-/* Why the bar's budget is smaller than the money that arrived. */
-.bars__note {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--warn);
-  font-variant-numeric: tabular-nums;
-}

@@ -82,12 +82,6 @@ function PoolBarRow({ summary }: { summary: PoolSummary }) {
               format.euros(summary.entitledCents),
             )}
       </p>
-
-      {/* The bar's budget is smaller than the money that arrived — say why, or the
-          difference from the received total looks like a bug. */}
-      {summary.unusableCents > 0 && (
-        <p className="bars__note">{t.bars.unusable(format.euros(summary.unusableCents))}</p>
-      )}
     </div>
   )
 }

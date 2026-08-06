@@ -248,8 +248,6 @@ export const en = {
     left: (amount: string) => `${amount} left`,
     over: (amount: string) => `${amount} over budget`,
     unfunded: 'Nothing granted to this pool yet.',
-    /** The bar measures what may be spent, so money for absentees needs saying out loud. */
-    unusable: (amount: string) => `${amount} of it was never ours to spend.`,
   },
 
   /** The day-by-day allowance: the headline number and the chart under it. */
