@@ -58,6 +58,7 @@ const settlement: Settlement = {
 function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboard>> = {}) {
   const onOpenIncome = vi.fn()
   const onOpenSettings = vi.fn()
+  const onAddExpense = vi.fn()
   const user = userEvent.setup()
   render(
     <I18nProvider>
@@ -71,6 +72,7 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
         hasExpenses={false}
         custody={{ statuses: [], volunteerHeldCents: 0, volunteerCount: 0 }}
         settlement={settlement}
+        onAddExpense={onAddExpense}
         onBack={vi.fn()}
         onOpenIncome={onOpenIncome}
         onOpenReceipts={vi.fn()}
@@ -81,7 +83,7 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
       />
     </I18nProvider>,
   )
-  return { onOpenIncome, onOpenSettings, user }
+  return { onOpenIncome, onOpenSettings, onAddExpense, user }
 }
 
 describe('CampDashboard', () => {
@@ -150,6 +152,55 @@ describe('CampDashboard', () => {
     expect(screen.queryByText(en.camps.status.running)).not.toBeInTheDocument()
     expect(screen.queryByText(en.camps.status.upcoming)).not.toBeInTheDocument()
     expect(screen.queryByText(en.camps.status.finished)).not.toBeInTheDocument()
+  })
+
+  it('adds a receipt to the pool whose ＋ was tapped, without a pool picker', async () => {
+    const { user, onAddExpense } = renderDashboard({ summaries: [fundedPool] })
+
+    await user.click(screen.getByRole('button', { name: en.bars.addTo(fundedPool.pool.name) }))
+    // Which pool is settled by the button, so the dialog names it instead of asking.
+    expect(screen.getByText(en.receipts.quickTitle('Group money'))).toBeInTheDocument()
+    expect(screen.queryByLabelText(en.receipts.poolLabel)).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(en.receipts.amountLabel), '8,00')
+    await user.type(screen.getByLabelText(en.receipts.nameLabel), 'Bakery')
+    await user.click(screen.getByRole('button', { name: en.receipts.save }))
+
+    expect(onAddExpense).toHaveBeenCalledWith({
+      existing: null,
+      campId: 'c1',
+      poolId: 'pool-e',
+      name: 'Bakery',
+      amountCents: 800, // euros as typed, cents on the way out
+      date: '2026-07-05', // today, unasked
+      note: undefined,
+    })
+  })
+
+  it('will not save a receipt with no amount', async () => {
+    const { user, onAddExpense } = renderDashboard({ summaries: [fundedPool] })
+    await user.click(screen.getByRole('button', { name: en.bars.addTo(fundedPool.pool.name) }))
+
+    // An untouched draft says nothing — the complaints appear only once something is typed.
+    expect(screen.queryByText(en.receipts.issues.amount)).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(en.receipts.nameLabel), 'Bakery')
+
+    expect(screen.getByText(en.receipts.issues.amount)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: en.receipts.save }))
+    expect(onAddExpense).not.toHaveBeenCalled()
+  })
+
+  it('drops the half-typed draft when the dialog is cancelled', async () => {
+    const { user } = renderDashboard({ summaries: [fundedPool] })
+    const add = screen.getByRole('button', { name: en.bars.addTo(fundedPool.pool.name) })
+
+    await user.click(add)
+    await user.type(screen.getByLabelText(en.receipts.nameLabel), 'Bakery')
+    await user.click(screen.getByRole('button', { name: en.receipts.cancel }))
+
+    await user.click(add)
+    expect(screen.getByLabelText(en.receipts.nameLabel)).toHaveValue('')
   })
 
   it('says the camp is running when today falls inside the block window', () => {

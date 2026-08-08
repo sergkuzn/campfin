@@ -248,6 +248,9 @@ export const en = {
     left: (amount: string) => `${amount} left`,
     over: (amount: string) => `${amount} over budget`,
     unfunded: 'Nothing granted to this pool yet.',
+    /** The ＋ beside each bar. Names the pool, so the buttons are told apart by anyone
+     *  hearing them read out one after another. */
+    addTo: (pool: string) => `Add a receipt to ${pool}`,
   },
 
   /** The day-by-day allowance: the headline number and the chart under it. */
@@ -279,6 +282,9 @@ export const en = {
     amountLabel: 'Amount',
     amountPlaceholder: '€ e.g. 8,00',
     poolLabel: 'Paid from',
+    /** The quick-add dialog names the pool in its title instead of offering a picker —
+     *  which pool was decided by the ＋ that opened it. */
+    quickTitle: (pool: string) => `Add to ${pool}`,
     noteLabel: 'Note (optional)',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
