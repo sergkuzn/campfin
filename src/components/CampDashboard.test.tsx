@@ -59,6 +59,9 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
   const onOpenIncome = vi.fn()
   const onOpenSettings = vi.fn()
   const onAddExpense = vi.fn()
+  const onOpenReceipts = vi.fn()
+  const onOpenMovements = vi.fn()
+  const onOpenSettlement = vi.fn()
   const user = userEvent.setup()
   render(
     <I18nProvider>
@@ -75,15 +78,29 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
         onAddExpense={onAddExpense}
         onBack={vi.fn()}
         onOpenIncome={onOpenIncome}
-        onOpenReceipts={vi.fn()}
-        onOpenMovements={vi.fn()}
-        onOpenSettlement={vi.fn()}
+        onOpenReceipts={onOpenReceipts}
+        onOpenMovements={onOpenMovements}
+        onOpenSettlement={onOpenSettlement}
         onOpenSettings={onOpenSettings}
         {...props}
       />
     </I18nProvider>,
   )
-  return { onOpenIncome, onOpenSettings, onAddExpense, user }
+  return {
+    onOpenIncome,
+    onOpenSettings,
+    onAddExpense,
+    onOpenReceipts,
+    onOpenMovements,
+    onOpenSettlement,
+    user,
+  }
+}
+
+/** A block header names itself "<visible title> <screen-reader-only destination>", so the
+ *  destination alone identifies it — matched as a regex because the title comes first. */
+function slotHeader(action: string) {
+  return screen.getByRole('button', { name: new RegExp(action) })
 }
 
 describe('CampDashboard', () => {
@@ -201,6 +218,37 @@ describe('CampDashboard', () => {
 
     await user.click(add)
     expect(screen.getByLabelText(en.receipts.nameLabel)).toHaveValue('')
+  })
+
+  it('opens each block’s screen from its title row', async () => {
+    const { user, onOpenReceipts, onOpenMovements, onOpenSettlement } = renderDashboard({
+      summaries: [fundedPool],
+    })
+
+    await user.click(slotHeader(en.dashboard.openReceipts))
+    expect(onOpenReceipts).toHaveBeenCalledOnce()
+
+    // The two custody blocks share one screen, so the header has to say which half.
+    await user.click(slotHeader(en.custody.deposits.open))
+    expect(onOpenMovements).toHaveBeenCalledWith('deposits')
+
+    await user.click(slotHeader(en.custody.cash.open))
+    expect(onOpenMovements).toHaveBeenLastCalledWith('cash')
+
+    await user.click(slotHeader(en.settlement.open))
+    expect(onOpenSettlement).toHaveBeenCalledOnce()
+  })
+
+  it('leaves the chart block with no way in — it has no screen of its own', () => {
+    renderDashboard({
+      summaries: [fundedPool],
+      burn: { ...emptyBurn, window: { startIso: '2026-07-01', endIso: '2026-07-14' } },
+    })
+
+    expect(screen.getByText(en.burn.title)).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: new RegExp(en.burn.title) }),
+    ).not.toBeInTheDocument()
   })
 
   it('says the camp is running when today falls inside the block window', () => {

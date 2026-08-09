@@ -59,3 +59,18 @@ body {
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Text for screen readers only. Clipped to a 1px box rather than `display: none` or
+   `visibility: hidden`, both of which remove it from the accessibility tree as well as
+   from the screen. Used where a control's meaning is carried by a glyph or by its
+   position, and the name it needs would be noise if drawn. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

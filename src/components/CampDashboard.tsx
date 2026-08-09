@@ -46,6 +46,32 @@ type Props = {
 }
 
 /**
+ * A block title that is also the way into the block's own screen. The whole row is the
+ * button, so the destination no longer hangs off a line of small text at the bottom of the
+ * card. `action` is never drawn — it is what a screen reader reads after the title, since
+ * the chevron alone says nothing about where the row leads.
+ */
+function SlotHeader({
+  title,
+  action,
+  onOpen,
+}: {
+  title: string
+  action: string
+  onOpen: () => void
+}) {
+  return (
+    <button className="dashboard__slot-head" type="button" onClick={onOpen}>
+      <span className="dashboard__slot-title">{title}</span>
+      <span className="visually-hidden">{action}</span>
+      <span className="dashboard__slot-chevron" aria-hidden="true">
+        ›
+      </span>
+    </button>
+  )
+}
+
+/**
  * The camp hub.
  */
 export function CampDashboard({
@@ -163,7 +189,11 @@ export function CampDashboard({
           funded || hasExpenses ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">{t.dashboard.spending}</p>
+        <SlotHeader
+          title={t.dashboard.spending}
+          action={t.dashboard.openReceipts}
+          onOpen={onOpenReceipts}
+        />
         {funded || hasExpenses ? (
           <>
             {!hasExpenses && <p className="dashboard__slot-hint">{t.dashboard.noReceipts}</p>}
@@ -172,9 +202,6 @@ export function CampDashboard({
         ) : (
           <p className="dashboard__slot-hint">{t.dashboard.noIncome}</p>
         )}
-        <button className="dashboard__slot-link" type="button" onClick={onOpenReceipts}>
-          {t.dashboard.openReceipts}
-        </button>
       </section>
 
       <section
@@ -184,15 +211,12 @@ export function CampDashboard({
             : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">{t.custody.deposits.title}</p>
+        <SlotHeader
+          title={t.custody.deposits.title}
+          action={t.custody.deposits.open}
+          onOpen={() => onOpenMovements('deposits')}
+        />
         <DepositsStrip statuses={custody.statuses} />
-        <button
-          className="dashboard__slot-link"
-          type="button"
-          onClick={() => onOpenMovements('deposits')}
-        >
-          {t.custody.deposits.open}
-        </button>
       </section>
 
       <section
@@ -202,15 +226,12 @@ export function CampDashboard({
             : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">{t.custody.cash.title}</p>
+        <SlotHeader
+          title={t.custody.cash.title}
+          action={t.custody.cash.open}
+          onOpen={() => onOpenMovements('cash')}
+        />
         <CashStrip heldCents={custody.volunteerHeldCents} count={custody.volunteerCount} />
-        <button
-          className="dashboard__slot-link"
-          type="button"
-          onClick={() => onOpenMovements('cash')}
-        >
-          {t.custody.cash.open}
-        </button>
       </section>
 
       <section
@@ -220,11 +241,12 @@ export function CampDashboard({
             : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">{t.settlement.toReturn}</p>
+        <SlotHeader
+          title={t.settlement.toReturn}
+          action={t.settlement.open}
+          onOpen={onOpenSettlement}
+        />
         <p className="dashboard__to-return">{format.euros(settlement.toReturnCents)}</p>
-        <button className="dashboard__slot-link" type="button" onClick={onOpenSettlement}>
-          {t.settlement.open}
-        </button>
       </section>
 
       {/* One dialog for the screen, not one per bar: only one receipt is ever being typed,

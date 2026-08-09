@@ -118,7 +118,9 @@ export const en = {
     firstStepHint: 'Enter the money your camp was granted. Everything else follows from it.',
     spending: 'Spending',
     noReceipts: 'No receipts yet.',
-    openReceipts: 'Receipts →',
+    /** Not drawn: the block's title row is the button, and this is what names its
+     *  destination for a screen reader, which cannot read a chevron. */
+    openReceipts: 'Open receipts',
     /** Shown until the camp has its daily grant — nothing per-day can be computed
      *  without it, so the chart and "allowed today" stay hidden. */
     setupCallout: 'Add the daily grant to start tracking.',
@@ -371,7 +373,8 @@ export const en = {
     deposits: {
       title: 'Deposits',
       empty: 'No deposit set up yet.',
-      open: 'Deposits →',
+      /** Screen-reader-only, like every block's `open` — see `dashboard.openReceipts`. */
+      open: 'Open deposits',
       /** The two steps of a deposit's life, ticked off in the order the money moves. */
       stepOut: 'Handed over',
       stepBack: 'Came back',
@@ -385,7 +388,7 @@ export const en = {
     cash: {
       title: 'Volunteer cash',
       empty: 'No volunteer money collected.',
-      open: 'Volunteer cash →',
+      open: 'Open volunteer cash',
       held: 'To hand over to the organisation',
       count: (n: number) => `${n} ${n === 1 ? 'handover' : 'handovers'}`,
     },
@@ -398,8 +401,8 @@ export const en = {
   settlement: {
     title: 'Settle up',
     back: '← Back to camp',
-    open: 'Settle up →',
-    /** The dashboard headline above the button. */
+    open: 'Open the settlement sheet',
+    /** The dashboard block's title, above the figure the sheet explains. */
     toReturn: 'To return',
     intro: 'What goes back, and where each amount comes from.',
     columnCategory: 'Category',

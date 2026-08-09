@@ -115,6 +115,45 @@
   color: var(--muted);
 }
 
+/* The block's title row doubles as the door to its screen. Pulled out to the card's own
+   edges by negative margins so the tap target spans the full width and reaches the top
+   corner — a thumb aiming anywhere along the title hits it, which a 14px line of text at
+   the bottom of the card never allowed. */
+.dashboard__slot-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  /* 2.75rem ≈ 44px, the smallest comfortable touch target; the title alone is half that. */
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard__slot-head:hover .dashboard__slot-title {
+  color: var(--fg);
+}
+
+/* A phone has no hover, so the press itself is the only chance to show the row reacted. */
+.dashboard__slot-head:active {
+  background-color: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+
+/* Accent-coloured so the row still reads as interactive now that the blue link is gone. */
+.dashboard__slot-chevron {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 .dashboard__slot-hint {
   margin: var(--space-2) 0 0;
   font-size: 0.875rem;
@@ -130,17 +169,6 @@
   border-radius: 0 var(--radius) var(--radius) 0;
   background-color: color-mix(in srgb, var(--warn) 10%, transparent);
   font-size: 0.875rem;
-}
-
-.dashboard__slot-link {
-  margin-top: var(--space-3);
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--accent);
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
 }
 
 /* The number the whole camp ends on. Big, because it is the one figure that gets typed
