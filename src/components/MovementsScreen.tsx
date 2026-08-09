@@ -51,6 +51,9 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
   // `find` gives undefined once the row is gone — deleted here or by the other leader
   // mid-sync — and the dialog simply closes rather than quoting a row that no longer exists.
   const pending = pendingId === null ? undefined : rows.find((m) => m.id === pendingId)
+  // A row can vanish under an open form — the other leader deleted it mid-sync. Nothing is
+  // unlocked then, so the rest of the screen must not stay inert with no form to cancel.
+  const locked = editing?.mode === 'new' || editingRow !== null
 
   const handleSave = (input: SaveMovementInput) => {
     movements.saveMovement(input)
@@ -73,7 +76,7 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
         <button
           className="income-form__button"
           type="button"
-          disabled={editing !== null || missingDeposits}
+          disabled={locked || missingDeposits}
           onClick={() => setEditing({ mode: 'new' })}
         >
           {labels.add}
@@ -111,33 +114,33 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
         />
       )}
 
-      {editingRow !== null && (
-        <MovementForm
-          // Re-seed the draft when the user switches to a different row.
-          key={editingRow.id}
-          campId={campId}
-          focus={focus}
-          movement={editingRow}
-          deposits={deposits}
-          todayIso={todayIso()}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
-      )}
-
       {/* "Nothing here yet" would be a lie for the first second, so the loading line wins
           while the query is still out — and the hint above already explains an empty
           deposits screen, so this would only repeat it. */}
-      {rows.length === 0 && editing === null && !missingDeposits && (
+      {rows.length === 0 && !locked && !missingDeposits && (
         <p className="income__empty">{movements.isLoading ? t.app.loading : labels.empty}</p>
       )}
 
       <MovementList
         movements={rows}
         pools={deposits.map((s) => s.pool)}
-        locked={editing !== null}
+        editingId={editingRow?.id ?? null}
+        locked={locked}
         onEdit={(movementId) => setEditing({ mode: 'edit', movementId })}
         onDelete={(movementId) => setPendingId(movementId)}
+        // Called only for the edited row. Switching rows moves the form to a different
+        // <li>, which remounts it, so the draft re-seeds without a `key` of its own.
+        renderForm={() => (
+          <MovementForm
+            campId={campId}
+            focus={focus}
+            movement={editingRow}
+            deposits={deposits}
+            todayIso={todayIso()}
+            onSave={handleSave}
+            onCancel={() => setEditing(null)}
+          />
+        )}
       />
 
       <footer className="income__totals">

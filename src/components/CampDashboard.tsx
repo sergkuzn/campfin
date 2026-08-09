@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import './CampDashboard.css'
 import { useFormat, useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus } from '../lib/camps'
+import type { SaveExpenseInput } from '../lib/expenses'
 import type { CustodyFocus, CustodyReading } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
 import type { Settlement } from '../lib/settlement'
@@ -11,6 +13,7 @@ import { BurnChart } from './BurnChart'
 import { CashStrip } from './CashStrip'
 import { DepositsStrip } from './DepositsStrip'
 import { PoolBars } from './PoolBars'
+import { QuickExpenseDialog } from './QuickExpenseDialog'
 import { StatusPill } from './StatusPill'
 
 type Props = {
@@ -31,6 +34,8 @@ type Props = {
   custody: CustodyReading
   /** The end-of-camp reading. Only its total shows here; the sheet explains it. */
   settlement: Settlement
+  /** Writes one new receipt. The dashboard never touches the database itself. */
+  onAddExpense: (input: SaveExpenseInput) => void
   onBack: () => void
   onOpenIncome: () => void
   onOpenReceipts: () => void
@@ -38,6 +43,32 @@ type Props = {
   onOpenMovements: (focus: CustodyFocus) => void
   onOpenSettlement: () => void
   onOpenSettings: () => void
+}
+
+/**
+ * A block title that is also the way into the block's own screen. The whole row is the
+ * button, so the destination no longer hangs off a line of small text at the bottom of the
+ * card. `action` is never drawn — it is what a screen reader reads after the title, since
+ * the chevron alone says nothing about where the row leads.
+ */
+function SlotHeader({
+  title,
+  action,
+  onOpen,
+}: {
+  title: string
+  action: string
+  onOpen: () => void
+}) {
+  return (
+    <button className="dashboard__slot-head" type="button" onClick={onOpen}>
+      <span className="dashboard__slot-title">{title}</span>
+      <span className="visually-hidden">{action}</span>
+      <span className="dashboard__slot-chevron" aria-hidden="true">
+        ›
+      </span>
+    </button>
+  )
 }
 
 /**
@@ -53,6 +84,7 @@ export function CampDashboard({
   hasExpenses,
   custody,
   settlement,
+  onAddExpense,
   onBack,
   onOpenIncome,
   onOpenReceipts,
@@ -62,6 +94,14 @@ export function CampDashboard({
 }: Props) {
   const t = useT()
   const format = useFormat()
+
+  // The id, not the pool: looking it up again each render means the open dialog follows a
+  // rename and closes itself if the other leader deletes the pool mid-entry.
+  const [quickAddPoolId, setQuickAddPoolId] = useState<string | null>(null)
+  const quickAddPool =
+    quickAddPoolId === null
+      ? null
+      : (summaries.find((s) => s.pool.id === quickAddPoolId)?.pool ?? null)
 
   // Every camp has an everyday pool, so "nothing here yet" means no *income*, not no pools.
   const funded = summaries.some((summary) => summary.sources.length > 0)
@@ -149,18 +189,19 @@ export function CampDashboard({
           funded || hasExpenses ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">{t.dashboard.spending}</p>
+        <SlotHeader
+          title={t.dashboard.spending}
+          action={t.dashboard.openReceipts}
+          onOpen={onOpenReceipts}
+        />
         {funded || hasExpenses ? (
           <>
             {!hasExpenses && <p className="dashboard__slot-hint">{t.dashboard.noReceipts}</p>}
-            <PoolBars summaries={summaries} />
+            <PoolBars summaries={summaries} onAdd={setQuickAddPoolId} />
           </>
         ) : (
           <p className="dashboard__slot-hint">{t.dashboard.noIncome}</p>
         )}
-        <button className="dashboard__slot-link" type="button" onClick={onOpenReceipts}>
-          {t.dashboard.openReceipts}
-        </button>
       </section>
 
       <section
@@ -170,15 +211,12 @@ export function CampDashboard({
             : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">{t.custody.deposits.title}</p>
+        <SlotHeader
+          title={t.custody.deposits.title}
+          action={t.custody.deposits.open}
+          onOpen={() => onOpenMovements('deposits')}
+        />
         <DepositsStrip statuses={custody.statuses} />
-        <button
-          className="dashboard__slot-link"
-          type="button"
-          onClick={() => onOpenMovements('deposits')}
-        >
-          {t.custody.deposits.open}
-        </button>
       </section>
 
       <section
@@ -188,15 +226,12 @@ export function CampDashboard({
             : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">{t.custody.cash.title}</p>
+        <SlotHeader
+          title={t.custody.cash.title}
+          action={t.custody.cash.open}
+          onOpen={() => onOpenMovements('cash')}
+        />
         <CashStrip heldCents={custody.volunteerHeldCents} count={custody.volunteerCount} />
-        <button
-          className="dashboard__slot-link"
-          type="button"
-          onClick={() => onOpenMovements('cash')}
-        >
-          {t.custody.cash.open}
-        </button>
       </section>
 
       <section
@@ -206,12 +241,23 @@ export function CampDashboard({
             : 'dashboard__slot'
         }
       >
-        <p className="dashboard__slot-title">{t.settlement.toReturn}</p>
+        <SlotHeader
+          title={t.settlement.toReturn}
+          action={t.settlement.open}
+          onOpen={onOpenSettlement}
+        />
         <p className="dashboard__to-return">{format.euros(settlement.toReturnCents)}</p>
-        <button className="dashboard__slot-link" type="button" onClick={onOpenSettlement}>
-          {t.settlement.open}
-        </button>
       </section>
+
+      {/* One dialog for the screen, not one per bar: only one receipt is ever being typed,
+          and a <dialog> per pool would put a draft's worth of state behind every button. */}
+      <QuickExpenseDialog
+        campId={camp.id}
+        pool={quickAddPool}
+        todayIso={todayIso}
+        onSave={onAddExpense}
+        onClose={() => setQuickAddPoolId(null)}
+      />
     </div>
   )
 }

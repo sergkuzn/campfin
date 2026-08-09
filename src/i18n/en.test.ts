@@ -44,7 +44,6 @@ describe('the English dictionary', () => {
     expect(en.bars.spentOfFunded('€10,00', '€40,00')).toContain('€10,00')
     expect(en.bars.spentOfFunded('€10,00', '€40,00')).toContain('€40,00')
     expect(en.bars.over('€5,00')).toContain('€5,00')
-    expect(en.bars.unusable('€300,00')).toContain('€300,00')
     expect(en.attendance.comparison('€2.180,00', '€1.880,00')).toContain('€2.180,00')
     expect(en.attendance.comparison('€2.180,00', '€1.880,00')).toContain('€1.880,00')
     expect(en.attendance.goesBack('€300,00')).toContain('€300,00')

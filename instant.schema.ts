@@ -99,6 +99,9 @@ const _schema = i.schema({
       // `src/lib/types.ts` is what makes that check compile-time on the client.
       poolId: i.string().optional().indexed(),
       kind: i.string<MovementKind>().indexed(),
+      // Only a handover carries it: "this is the whole Kaution, even though it is less
+      // than the deposit the organisation granted".
+      completesDeposit: i.boolean().optional(),
       name: i.string(),
       amountCents: i.number(),
       date: i.string().indexed(),

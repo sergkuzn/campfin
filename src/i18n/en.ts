@@ -118,7 +118,9 @@ export const en = {
     firstStepHint: 'Enter the money your camp was granted. Everything else follows from it.',
     spending: 'Spending',
     noReceipts: 'No receipts yet.',
-    openReceipts: 'Receipts →',
+    /** Not drawn: the block's title row is the button, and this is what names its
+     *  destination for a screen reader, which cannot read a chevron. */
+    openReceipts: 'Open receipts',
     /** Shown until the camp has its daily grant — nothing per-day can be computed
      *  without it, so the chart and "allowed today" stay hidden. */
     setupCallout: 'Add the daily grant to start tracking.',
@@ -248,8 +250,9 @@ export const en = {
     left: (amount: string) => `${amount} left`,
     over: (amount: string) => `${amount} over budget`,
     unfunded: 'Nothing granted to this pool yet.',
-    /** The bar measures what may be spent, so money for absentees needs saying out loud. */
-    unusable: (amount: string) => `${amount} of it was never ours to spend.`,
+    /** The ＋ beside each bar. Names the pool, so the buttons are told apart by anyone
+     *  hearing them read out one after another. */
+    addTo: (pool: string) => `Add a receipt to ${pool}`,
   },
 
   /** The day-by-day allowance: the headline number and the chart under it. */
@@ -281,6 +284,9 @@ export const en = {
     amountLabel: 'Amount',
     amountPlaceholder: '€ e.g. 8,00',
     poolLabel: 'Paid from',
+    /** The quick-add dialog names the pool in its title instead of offering a picker —
+     *  which pool was decided by the ＋ that opened it. */
+    quickTitle: (pool: string) => `Add to ${pool}`,
     noteLabel: 'Note (optional)',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
@@ -335,6 +341,8 @@ export const en = {
     amountLabel: 'Amount',
     amountPlaceholder: '€ e.g. 200,00',
     poolLabel: 'Which deposit',
+    completesLabel: 'This is the full deposit',
+    completesHint: 'Tick when the counterparty asked for less than the deposit you were given.',
     noteLabel: 'Note (optional)',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
@@ -365,19 +373,22 @@ export const en = {
     deposits: {
       title: 'Deposits',
       empty: 'No deposit set up yet.',
-      open: 'Deposits →',
-      /** One deposit pool, in the order the money moves: out to a vendor, kept, coming back. */
-      atVendor: (amount: string) => `${amount} at the counterparty`,
-      settled: 'All back with you',
-      /** More came back than went out — a bookkeeping mistake worth naming. */
-      overReturned: (amount: string) => `${amount} more came back than went out`,
+      /** Screen-reader-only, like every block's `open` — see `dashboard.openReceipts`. */
+      open: 'Open deposits',
+      /** The two steps of a deposit's life, ticked off in the order the money moves. */
+      stepOut: 'Handed over',
+      stepBack: 'Came back',
+      /** How far a step has got: what has moved, out of what it should be. */
+      stepAmount: (done: string, target: string) => `${done} of ${target}`,
+      /** More moved than expected — a bookkeeping mistake worth naming. */
+      stepOverOut: (amount: string) => `${amount} more handed over than the deposit`,
+      stepOverBack: (amount: string) => `${amount} more came back than went out`,
       forfeited: (amount: string) => `${amount} kept for damage`,
-      toReturn: (amount: string) => `${amount} goes back`,
     },
     cash: {
       title: 'Volunteer cash',
       empty: 'No volunteer money collected.',
-      open: 'Volunteer cash →',
+      open: 'Open volunteer cash',
       held: 'To hand over to the organisation',
       count: (n: number) => `${n} ${n === 1 ? 'handover' : 'handovers'}`,
     },
@@ -390,8 +401,8 @@ export const en = {
   settlement: {
     title: 'Settle up',
     back: '← Back to camp',
-    open: 'Settle up →',
-    /** The dashboard headline above the button. */
+    open: 'Open the settlement sheet',
+    /** The dashboard block's title, above the figure the sheet explains. */
     toReturn: 'To return',
     intro: 'What goes back, and where each amount comes from.',
     columnCategory: 'Category',

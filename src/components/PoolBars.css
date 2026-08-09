@@ -5,7 +5,18 @@
   margin-top: var(--space-3);
 }
 
+/* The bar and its ＋ side by side; the ＋ is centred against the whole three-line block. */
 .bars__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* min-width: 0 lets this column shrink below the width of its content — without it a long
+   pool name would push the ＋ off the screen instead of ellipsising. */
+.bars__body {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
@@ -20,11 +31,35 @@
 
 .bars__name {
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bars__balance {
+  flex: none; /* the figure never truncates; the name gives way instead */
   font-variant-numeric: tabular-nums;
   color: var(--muted);
+}
+
+/* 2.75rem ≈ the 44 px minimum a fingertip can hit reliably. Round and accent-coloured so
+   it reads as the one thing on the row you press. */
+.bars__add {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background-color: var(--bg);
+  color: var(--accent);
+  font: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bars__add:hover {
+  border-color: var(--accent);
 }
 
 /* The colour lives on the balance figure as well as the bar: the number is what a leader
@@ -83,13 +118,5 @@
   margin: 0;
   font-size: 0.75rem;
   color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Why the bar's budget is smaller than the money that arrived. */
-.bars__note {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--warn);
   font-variant-numeric: tabular-nums;
 }

@@ -266,6 +266,7 @@ export function SignedInApp({ session }: Props) {
       hasExpenses={expenses.expenses.length > 0}
       custody={custody}
       settlement={settlement}
+      onAddExpense={expenses.saveExpense}
       onBack={handleBackToList}
       onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
       onOpenReceipts={() => setView({ screen: 'receipts', campId: openCamp.id })}

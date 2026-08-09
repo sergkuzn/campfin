@@ -14,7 +14,7 @@ import { mapRows, toBlock, toCamp, toExpense, toMovement, toPool, toSource } fro
 import type { Camp, Expense, IncomeSource, Movement, PerDiemBlock, Pool } from './types'
 
 /** The dump version this build writes and the newest it can read. */
-const CURRENT_VERSION = 5
+const CURRENT_VERSION = 6
 
 /** Why a file was refused. Codes, not sentences — the dictionary phrases them. */
 export type ImportIssue =

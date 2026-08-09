@@ -33,6 +33,9 @@ export function saveMovement(input: SaveMovementInput): Promise<unknown> {
         // Comparing the discriminant (rather than calling a helper) is what lets
         // TypeScript narrow the union and see `poolId` on the deposit branch.
         poolId: fields.kind === 'volunteer_in' ? null : fields.poolId,
+        // Only a handover can declare the deposit complete; any other kind clears the flag
+        // so a row edited from `deposit_out` into something else stops closing the step.
+        completesDeposit: fields.kind === 'deposit_out' ? (fields.completesDeposit ?? false) : null,
         note: fields.note ?? null,
         createdAt,
       })

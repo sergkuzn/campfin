@@ -58,6 +58,10 @@ const settlement: Settlement = {
 function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboard>> = {}) {
   const onOpenIncome = vi.fn()
   const onOpenSettings = vi.fn()
+  const onAddExpense = vi.fn()
+  const onOpenReceipts = vi.fn()
+  const onOpenMovements = vi.fn()
+  const onOpenSettlement = vi.fn()
   const user = userEvent.setup()
   render(
     <I18nProvider>
@@ -71,17 +75,32 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
         hasExpenses={false}
         custody={{ statuses: [], volunteerHeldCents: 0, volunteerCount: 0 }}
         settlement={settlement}
+        onAddExpense={onAddExpense}
         onBack={vi.fn()}
         onOpenIncome={onOpenIncome}
-        onOpenReceipts={vi.fn()}
-        onOpenMovements={vi.fn()}
-        onOpenSettlement={vi.fn()}
+        onOpenReceipts={onOpenReceipts}
+        onOpenMovements={onOpenMovements}
+        onOpenSettlement={onOpenSettlement}
         onOpenSettings={onOpenSettings}
         {...props}
       />
     </I18nProvider>,
   )
-  return { onOpenIncome, onOpenSettings, user }
+  return {
+    onOpenIncome,
+    onOpenSettings,
+    onAddExpense,
+    onOpenReceipts,
+    onOpenMovements,
+    onOpenSettlement,
+    user,
+  }
+}
+
+/** A block header names itself "<visible title> <screen-reader-only destination>", so the
+ *  destination alone identifies it — matched as a regex because the title comes first. */
+function slotHeader(action: string) {
+  return screen.getByRole('button', { name: new RegExp(action) })
 }
 
 describe('CampDashboard', () => {
@@ -150,6 +169,86 @@ describe('CampDashboard', () => {
     expect(screen.queryByText(en.camps.status.running)).not.toBeInTheDocument()
     expect(screen.queryByText(en.camps.status.upcoming)).not.toBeInTheDocument()
     expect(screen.queryByText(en.camps.status.finished)).not.toBeInTheDocument()
+  })
+
+  it('adds a receipt to the pool whose ＋ was tapped, without a pool picker', async () => {
+    const { user, onAddExpense } = renderDashboard({ summaries: [fundedPool] })
+
+    await user.click(screen.getByRole('button', { name: en.bars.addTo(fundedPool.pool.name) }))
+    // Which pool is settled by the button, so the dialog names it instead of asking.
+    expect(screen.getByText(en.receipts.quickTitle('Group money'))).toBeInTheDocument()
+    expect(screen.queryByLabelText(en.receipts.poolLabel)).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(en.receipts.amountLabel), '8,00')
+    await user.type(screen.getByLabelText(en.receipts.nameLabel), 'Bakery')
+    await user.click(screen.getByRole('button', { name: en.receipts.save }))
+
+    expect(onAddExpense).toHaveBeenCalledWith({
+      existing: null,
+      campId: 'c1',
+      poolId: 'pool-e',
+      name: 'Bakery',
+      amountCents: 800, // euros as typed, cents on the way out
+      date: '2026-07-05', // today, unasked
+      note: undefined,
+    })
+  })
+
+  it('will not save a receipt with no amount', async () => {
+    const { user, onAddExpense } = renderDashboard({ summaries: [fundedPool] })
+    await user.click(screen.getByRole('button', { name: en.bars.addTo(fundedPool.pool.name) }))
+
+    // An untouched draft says nothing — the complaints appear only once something is typed.
+    expect(screen.queryByText(en.receipts.issues.amount)).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(en.receipts.nameLabel), 'Bakery')
+
+    expect(screen.getByText(en.receipts.issues.amount)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: en.receipts.save }))
+    expect(onAddExpense).not.toHaveBeenCalled()
+  })
+
+  it('drops the half-typed draft when the dialog is cancelled', async () => {
+    const { user } = renderDashboard({ summaries: [fundedPool] })
+    const add = screen.getByRole('button', { name: en.bars.addTo(fundedPool.pool.name) })
+
+    await user.click(add)
+    await user.type(screen.getByLabelText(en.receipts.nameLabel), 'Bakery')
+    await user.click(screen.getByRole('button', { name: en.receipts.cancel }))
+
+    await user.click(add)
+    expect(screen.getByLabelText(en.receipts.nameLabel)).toHaveValue('')
+  })
+
+  it('opens each block’s screen from its title row', async () => {
+    const { user, onOpenReceipts, onOpenMovements, onOpenSettlement } = renderDashboard({
+      summaries: [fundedPool],
+    })
+
+    await user.click(slotHeader(en.dashboard.openReceipts))
+    expect(onOpenReceipts).toHaveBeenCalledOnce()
+
+    // The two custody blocks share one screen, so the header has to say which half.
+    await user.click(slotHeader(en.custody.deposits.open))
+    expect(onOpenMovements).toHaveBeenCalledWith('deposits')
+
+    await user.click(slotHeader(en.custody.cash.open))
+    expect(onOpenMovements).toHaveBeenLastCalledWith('cash')
+
+    await user.click(slotHeader(en.settlement.open))
+    expect(onOpenSettlement).toHaveBeenCalledOnce()
+  })
+
+  it('leaves the chart block with no way in — it has no screen of its own', () => {
+    renderDashboard({
+      summaries: [fundedPool],
+      burn: { ...emptyBurn, window: { startIso: '2026-07-01', endIso: '2026-07-14' } },
+    })
+
+    expect(screen.getByText(en.burn.title)).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: new RegExp(en.burn.title) }),
+    ).not.toBeInTheDocument()
   })
 
   it('says the camp is running when today falls inside the block window', () => {

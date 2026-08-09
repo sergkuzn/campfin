@@ -36,6 +36,9 @@ export function ReceiptsScreen({ campId, expenses, summaries, onBack }: Props) {
   // `find` gives undefined once the row is gone — deleted here or by the other leader
   // mid-sync — and the dialog simply closes rather than quoting a row that no longer exists.
   const pending = pendingId === null ? undefined : rows.find((e) => e.id === pendingId)
+  // A row can vanish under an open form — the other leader deleted it mid-sync. Nothing is
+  // unlocked then, so the rest of the screen must not stay inert with no form to cancel.
+  const locked = editing?.mode === 'new' || editingRow !== null
 
   const handleSave = (input: SaveExpenseInput) => {
     expenses.saveExpense(input)
@@ -61,7 +64,7 @@ export function ReceiptsScreen({ campId, expenses, summaries, onBack }: Props) {
         <button
           className="income-form__button"
           type="button"
-          disabled={editing !== null || summaries.length === 0}
+          disabled={locked || summaries.length === 0}
           onClick={() => setEditing({ mode: 'new' })}
         >
           {t.receipts.add}
@@ -88,31 +91,31 @@ export function ReceiptsScreen({ campId, expenses, summaries, onBack }: Props) {
         />
       )}
 
-      {editingRow !== null && (
-        <ExpenseForm
-          // Re-seed the draft when the user switches to a different row.
-          key={editingRow.id}
-          campId={campId}
-          expense={editingRow}
-          pools={summaries}
-          todayIso={todayIso()}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
-      )}
-
       {/* "Nothing here yet" would be a lie for the first second, so the loading line wins
           while the query is still out. */}
-      {rows.length === 0 && editing === null && (
+      {rows.length === 0 && !locked && (
         <p className="income__empty">{expenses.isLoading ? t.app.loading : t.receipts.empty}</p>
       )}
 
       <ExpenseDayList
         expenses={rows}
         pools={summaries.map((s) => s.pool)}
-        locked={editing !== null}
+        editingId={editingRow?.id ?? null}
+        locked={locked}
         onEdit={(expenseId) => setEditing({ mode: 'edit', expenseId })}
         onDelete={(expenseId) => setPendingId(expenseId)}
+        // Called only for the edited row. Switching rows moves the form to a different
+        // <li>, which remounts it, so the draft re-seeds without a `key` of its own.
+        renderForm={() => (
+          <ExpenseForm
+            campId={campId}
+            expense={editingRow}
+            pools={summaries}
+            todayIso={todayIso()}
+            onSave={handleSave}
+            onCancel={() => setEditing(null)}
+          />
+        )}
       />
 
       <footer className="income__totals">

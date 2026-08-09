@@ -5,6 +5,7 @@ import {
   type DepositStatus,
   depositStatus,
   depositStatuses,
+  depositSteps,
   draftFromMovement,
   kindsForFocus,
   type MovementDraft,
@@ -75,6 +76,7 @@ const validDraft: MovementDraft = {
   name: 'Bike shop',
   amount: '200,00',
   poolId: bikePool.id,
+  completesDeposit: false,
   note: ' left in cash ',
 }
 
@@ -154,6 +156,95 @@ describe('depositStatuses', () => {
     ]
     const statuses = depositStatuses(summaries, [out(20_000)])
     expect(statuses.map((s) => s.pool.id)).toEqual([bikePool.id, toolPool.id])
+  })
+})
+
+describe('depositSteps', () => {
+  it('marks both steps as still to do before anything moves', () => {
+    const steps = depositSteps(depositStatus(summary(bikePool, 20_000), []))
+    expect(steps.out).toEqual({ state: 'todo', doneCents: 0, targetCents: 20_000 })
+    // Nothing is out, so nothing can come back: the second step has no target yet.
+    expect(steps.back).toEqual({ state: 'todo', doneCents: 0, targetCents: 0 })
+  })
+
+  it('marks a part-paid deposit as partial', () => {
+    const steps = depositSteps(depositStatus(summary(bikePool, 20_000), [out(5_000)]))
+    expect(steps.out).toEqual({ state: 'partial', doneCents: 5_000, targetCents: 20_000 })
+    expect(steps.back).toEqual({ state: 'todo', doneCents: 0, targetCents: 5_000 })
+  })
+
+  it('completes the first step once the whole deposit is handed over', () => {
+    const steps = depositSteps(depositStatus(summary(bikePool, 20_000), [out(20_000)]))
+    expect(steps.out.state).toBe('done')
+    expect(steps.back).toEqual({ state: 'todo', doneCents: 0, targetCents: 20_000 })
+  })
+
+  it('completes the second step on a full return', () => {
+    const steps = depositSteps(
+      depositStatus(summary(bikePool, 20_000), [out(20_000), back(20_000)]),
+    )
+    expect(steps.back).toEqual({ state: 'done', doneCents: 20_000, targetCents: 20_000 })
+  })
+
+  it('reads a partial return as partial', () => {
+    const steps = depositSteps(
+      depositStatus(summary(bikePool, 20_000), [out(20_000), back(15_000)]),
+    )
+    expect(steps.back).toEqual({ state: 'partial', doneCents: 15_000, targetCents: 20_000 })
+  })
+
+  it('discounts a forfeit from what can still come back', () => {
+    // €200 out, €30 kept for damage, €170 back — the return is complete, not €30 short.
+    const steps = depositSteps(
+      depositStatus(summary(bikePool, 20_000, 3_000), [out(20_000), back(17_000)]),
+    )
+    expect(steps.back).toEqual({ state: 'done', doneCents: 17_000, targetCents: 17_000 })
+  })
+
+  it('completes the return when the whole deposit was forfeited', () => {
+    // Nothing can come back, so the step is finished rather than stuck at zero.
+    const steps = depositSteps(depositStatus(summary(bikePool, 20_000, 20_000), [out(20_000)]))
+    expect(steps.back).toEqual({ state: 'done', doneCents: 0, targetCents: 0 })
+  })
+
+  it('completes the handover at a short amount marked as the full deposit', () => {
+    // €150 asked for out of a €200 grant: the step is done, measured against what went out.
+    const short = { ...out(15_000), completesDeposit: true }
+    const steps = depositSteps(depositStatus(summary(bikePool, 20_000), [short]))
+    expect(steps.out).toEqual({ state: 'done', doneCents: 15_000, targetCents: 15_000 })
+    // And only that €150 has to come back.
+    expect(steps.back).toEqual({ state: 'todo', doneCents: 0, targetCents: 15_000 })
+  })
+
+  it('lets the last instalment complete a handover paid in parts', () => {
+    const movements = [
+      out(5_000),
+      { ...out(10_000, bikePool.id, 'm-out-2'), completesDeposit: true },
+    ]
+    const status = depositStatus(summary(bikePool, 20_000), movements)
+    expect(status.handoverCompleted).toBe(true)
+    expect(depositSteps(status).out).toEqual({
+      state: 'done',
+      doneCents: 15_000,
+      targetCents: 15_000,
+    })
+  })
+
+  it('flags more money out or back than expected as over', () => {
+    const tooMuchOut = depositSteps(depositStatus(summary(bikePool, 20_000), [out(25_000)]))
+    expect(tooMuchOut.out.state).toBe('over')
+
+    const tooMuchBack = depositSteps(
+      depositStatus(summary(bikePool, 20_000), [out(20_000), back(25_000)]),
+    )
+    expect(tooMuchBack.back.state).toBe('over')
+  })
+
+  it('leaves both steps done for a deposit that was never funded', () => {
+    // A €0 deposit pool has nothing to hand over and nothing to chase.
+    const steps = depositSteps(depositStatus(summary(bikePool, 0), []))
+    expect(steps.out.state).toBe('done')
+    expect(steps.back.state).toBe('done')
   })
 })
 
