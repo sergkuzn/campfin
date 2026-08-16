@@ -49,8 +49,6 @@ describe('the English dictionary', () => {
     expect(en.attendance.goesBack('€300,00')).toContain('€300,00')
     expect(en.attendance.overAttended('€120,00')).toContain('€120,00')
     expect(en.burn.overspentBy('€40,00')).toContain('€40,00')
-    expect(en.burn.spentToday('€12,00')).toContain('€12,00')
-    expect(en.burn.normalDay('€80,00')).toContain('€80,00')
     expect(en.burn.chartAlt(14)).toContain('14')
     expect(en.settlement.rows.poolUnspent('Group money')).toContain('Group money')
     expect(en.settlement.rows.depositReturn('Bikes')).toContain('Bikes')

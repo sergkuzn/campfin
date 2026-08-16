@@ -285,9 +285,13 @@ export const en = {
     /** The headline goes red rather than negative-with-a-minus: "you are €40 over" is
      *  what a leader needs to read, not "−40 allowed". */
     overspentBy: (amount: string) => `${amount} over`,
-    spentToday: (amount: string) => `${amount} spent today`,
-    normalDay: (amount: string) => `A normal day here costs ${amount}`,
-    chartTitle: 'Allowance vs spending',
+    /** The four figures under the headline are labelled, not spelled out in sentences:
+     *  a leader reads this row at a till, and a label above a number is quicker than
+     *  prose around it. */
+    spentToday: 'Spent today',
+    medianDay: 'Median day',
+    daysLeft: 'Days left',
+    moneyLeft: 'Total left',
     theoretical: 'Allowed',
     actual: 'Spent',
     today: 'Today',

@@ -205,8 +205,39 @@ describe('computeBurn', () => {
     expect(computeBurn(input({ expenses })).spentTodayCents).toBe(700)
   })
 
-  it('falls back to the average day when today is outside the camp', () => {
-    // Before the camp, "today costs nothing" is useless — a normal day here is €20.
-    expect(computeBurn(input({ todayIso: '2026-06-25' })).normalDayCents).toBe(2000)
+  it('takes the median day as the typical day', () => {
+    expect(computeBurn(input()).medianDayCents).toBe(2000)
+  })
+
+  it('lets a thin arrival day skew the median no further than one place', () => {
+    // Two leaders arrive a day early, then twenty people join: the mean day would be
+    // €153, which is not what any day of this camp costs.
+    const blocks = [
+      block({ id: 'b1' }),
+      block({ id: 'b2', numPersons: 20, startDate: '2026-07-02', endDate: '2026-07-03' }),
+    ]
+    expect(computeBurn(input({ blocks })).medianDayCents).toBe(22_000)
+  })
+
+  it('averages the two middle days when the camp has an even number of them', () => {
+    const blocks = [
+      block({ id: 'b1', endDate: '2026-07-04' }), // €20 on all four days
+      block({ id: 'b2', numPersons: 3, startDate: '2026-07-03', endDate: '2026-07-04' }),
+    ]
+    // Days: 2000, 2000, 5000, 5000 → the middle pair averages to €35.
+    expect(computeBurn(input({ blocks })).medianDayCents).toBe(3500)
+  })
+
+  it('counts today as one of the days left', () => {
+    expect(computeBurn(input()).remainingDays).toBe(2)
+  })
+
+  it('reports the whole camp as left before it starts, and nothing after it ends', () => {
+    expect(computeBurn(input({ todayIso: '2026-06-25' })).remainingDays).toBe(3)
+    expect(computeBurn(input({ todayIso: '2026-07-09' })).remainingDays).toBe(0)
+  })
+
+  it('has no days left while the camp has no window', () => {
+    expect(computeBurn(input({ sources: [], blocks: [] })).remainingDays).toBe(0)
   })
 })

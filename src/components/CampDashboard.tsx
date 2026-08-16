@@ -93,6 +93,10 @@ export function CampDashboard({
 
   // Every camp has an everyday pool, so "nothing here yet" means no *income*, not no pools.
   const funded = summaries.some((summary) => summary.sources.length > 0)
+  // The curve only ever measures the everyday pool, so "left" has to come from that same
+  // pool — the one whose bar further down shows the identical figure.
+  const everydayRemainingCents =
+    summaries.find((summary) => summary.pool.role === 'everyday')?.remainingCents ?? 0
   // A camp with neither money nor receipts has nothing to show on any of the blocks below,
   // and five empty boxes hide the one thing that needs doing. Receipts count too: entering
   // one before the income is unusual, but it must not blank the screen it belongs on.
@@ -162,7 +166,7 @@ export function CampDashboard({
         <p className="dashboard__slot-title">{t.burn.title}</p>
         {burn.hasCurve ? (
           <>
-            <AllowedToday burn={burn} />
+            <AllowedToday burn={burn} remainingCents={everydayRemainingCents} />
             <BurnChart burn={burn} todayIso={todayIso} />
           </>
         ) : (

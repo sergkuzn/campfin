@@ -11,6 +11,7 @@ import {
   YAxis,
 } from 'recharts'
 import { useFormat, useT } from '../i18n'
+import { axisTicks, niceAxisTop } from '../lib/axis'
 import type { Burn, BurnPoint } from '../lib/burn'
 
 type Props = {
@@ -35,12 +36,21 @@ export function BurnChart({ burn, todayIso }: Props) {
   const actualColor = burn.allowedTodayCents < 0 ? 'var(--danger)' : 'var(--ok)'
   const todayLabel = burn.points.find((p) => p.date === todayIso)?.dayLabel
 
+  // Recharts' own "auto" domain rounds the *step* up first and lets the top follow it, so
+  // a €430 camp gets an axis to €600. Fixing the domain and the ticks ourselves keeps the
+  // labels round while stopping just above the highest of the two series.
+  const highestCents = burn.points.reduce(
+    (max, p) => Math.max(max, p.theoreticalCents, p.actualCents ?? 0),
+    0,
+  )
+  const scale = niceAxisTop(highestCents)
+
   return (
     <div className="burn">
-      <p className="burn__title">{t.burn.chartTitle}</p>
-
-      {/* The SVG carries no text an assistive tech can make sense of, so the whole chart
-          is announced as one image; the numbers above it say where the camp stands. */}
+      {/* No heading of its own: the section around it is already called "Daily burn" and
+          the legend names both lines. The SVG carries no text an assistive tech can make
+          sense of, so the whole chart is announced as one image; the numbers above it say
+          where the camp stands. */}
       <div className="burn__canvas" role="img" aria-label={t.burn.chartAlt(burn.points.length)}>
         {/* ResponsiveContainer measures its parent, so the chart has to be given a height
             in CSS or as a prop — an SVG has no intrinsic size to fall back on. */}
@@ -57,6 +67,8 @@ export function BurnChart({ burn, todayIso }: Props) {
               minTickGap={12}
             />
             <YAxis
+              domain={[0, scale.topCents]}
+              ticks={axisTicks(scale)}
               tickFormatter={format.eurosRounded}
               tickLine={false}
               axisLine={false}
@@ -92,8 +104,10 @@ export function BurnChart({ burn, todayIso }: Props) {
               stroke="var(--accent)"
               strokeWidth={2}
               strokeDasharray="5 4"
-              dot={{ r: 2 }}
-              activeDot={{ r: 4 }}
+              // A dot left to its defaults is drawn white with a coloured ring, which reads
+              // as a hollow marker at this size; filling it makes each day one solid point.
+              dot={{ r: 2.5, fill: 'var(--accent)', strokeWidth: 0 }}
+              activeDot={{ r: 4, fill: 'var(--accent)', strokeWidth: 0 }}
             />
             <Line
               type="linear"
@@ -101,8 +115,8 @@ export function BurnChart({ burn, todayIso }: Props) {
               name={t.burn.actual}
               stroke={actualColor}
               strokeWidth={2}
-              dot={{ r: 2 }}
-              activeDot={{ r: 4 }}
+              dot={{ r: 2.5, fill: actualColor, strokeWidth: 0 }}
+              activeDot={{ r: 4, fill: actualColor, strokeWidth: 0 }}
               // Without this a gap would be bridged, drawing spending we have not made.
               connectNulls={false}
             />
