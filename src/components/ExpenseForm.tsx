@@ -16,8 +16,8 @@ type Props = {
   campId: string
   /** The row being edited, or null when adding a new receipt. */
   expense: Expense | null
-  /** Pools a receipt can be tagged to — including deposit pools, since a forfeited
-   *  Kaution is an ordinary expense against its own pool. */
+  /** Pools a receipt can be tagged to: the spendable ones. Deposit money is held, not
+   *  spent, and is settled on the deposits screen instead. */
   pools: PoolSummary[]
   /** Today, local. Passed in so the form has no clock of its own. */
   todayIso: string

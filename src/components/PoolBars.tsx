@@ -6,9 +6,9 @@ import { PoolTag } from './PoolTag'
 type Props = {
   /** This camp's pools. Deposit pools are filtered out here, not by the caller. */
   summaries: PoolSummary[]
-  /** Start a receipt against one pool. The bar is where a leader already looks to decide
-   *  whether there is room for a purchase, so it is also where entering one belongs. */
-  onAdd: (poolId: string) => void
+  /** Open the receipt list narrowed to one pool. The bar is where a leader reads how much
+   *  is left, so it is also where the question "on what?" is asked. */
+  onOpenPool: (poolId: string) => void
 }
 
 /**
@@ -16,13 +16,13 @@ type Props = {
  * percentage rather than a chart library — it has to be readable at 3 cm wide, and the
  * geometry is already a tested pure function (`poolBar`).
  */
-export function PoolBars({ summaries, onAdd }: Props) {
+export function PoolBars({ summaries, onOpenPool }: Props) {
   const spendable = spendablePools(summaries)
 
   return (
     <div className="bars">
       {spendable.map((summary) => (
-        <PoolBarRow key={summary.pool.id} summary={summary} onAdd={onAdd} />
+        <PoolBarRow key={summary.pool.id} summary={summary} onOpenPool={onOpenPool} />
       ))}
     </div>
   )
@@ -37,7 +37,13 @@ function segmentWidth(units: number, overPercent: number): string {
   return `${(units / (100 + overPercent)) * 100}%`
 }
 
-function PoolBarRow({ summary, onAdd }: { summary: PoolSummary; onAdd: (poolId: string) => void }) {
+function PoolBarRow({
+  summary,
+  onOpenPool,
+}: {
+  summary: PoolSummary
+  onOpenPool: (poolId: string) => void
+}) {
   const t = useT()
   const format = useFormat()
   // Measured against what may be spent, not against what arrived: money for people who
@@ -51,10 +57,11 @@ function PoolBarRow({ summary, onAdd }: { summary: PoolSummary; onAdd: (poolId: 
       : t.bars.left(format.euros(summary.remainingCents))
 
   return (
-    <div className="bars__row">
-      {/* The reading and the action sit side by side: the bar keeps the full width it needs
-          to stay legible, and the ＋ gets a tap target of its own that no thumb aiming at
-          the bar can hit by accident. */}
+    // The whole row is the button — the reading and the way into its receipts are the same
+    // thing, so there is nothing on the row a thumb can miss. No aria-label: that would
+    // replace the figures inside, and they are what the row is for. The destination is
+    // added as hidden text instead, like every block header on this screen.
+    <button className="bars__row" type="button" onClick={() => onOpenPool(summary.pool.id)}>
       <div className="bars__body">
         <div className="bars__head">
           <span className="bars__name">
@@ -97,16 +104,10 @@ function PoolBarRow({ summary, onAdd }: { summary: PoolSummary; onAdd: (poolId: 
         </p>
       </div>
 
-      <button
-        className="bars__add"
-        type="button"
-        // The glyph says nothing a screen reader could use, and "Add" alone would repeat
-        // once per pool with no way to tell the buttons apart — the pool name is the label.
-        aria-label={t.bars.addTo(summary.pool.name)}
-        onClick={() => onAdd(summary.pool.id)}
-      >
-        <span aria-hidden="true">＋</span>
-      </button>
-    </div>
+      <span className="visually-hidden">{t.bars.openPool}</span>
+      <span className="bars__chevron" aria-hidden="true">
+        ›
+      </span>
+    </button>
   )
 }

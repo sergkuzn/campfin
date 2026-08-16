@@ -28,6 +28,9 @@ function summary(p: Pool): PoolSummary {
 
 const food = pool('pool-food', 'Group money')
 const tools = pool('pool-tools', 'Tools')
+/** Held money, not spendable: the deposits screen settles it, so it must not appear in the
+ *  picker or the chips here. */
+const busDeposit: Pool = { ...pool('pool-bus', 'Bus deposit'), role: 'deposit' }
 
 function expense(fields: Partial<Expense> & { id: string }): Expense {
   return {
@@ -47,7 +50,10 @@ const rows = [
   expense({ id: 'c', name: 'Ferry', date: '2026-07-16', poolId: food.id }),
 ]
 
-function renderScreen(expenses: Expense[] = rows) {
+function renderScreen(
+  options: { expenses?: Expense[]; pools?: Pool[]; focusPoolId?: string | null } = {},
+) {
+  const { expenses = rows, pools = [food, tools], focusPoolId = null } = options
   const saveExpense = vi.fn()
   const stub: UseExpenses = {
     expenses,
@@ -62,7 +68,8 @@ function renderScreen(expenses: Expense[] = rows) {
       <ReceiptsScreen
         campId="c1"
         expenses={stub}
-        summaries={[summary(food), summary(tools)]}
+        summaries={pools.map(summary)}
+        focusPoolId={focusPoolId}
         onBack={vi.fn()}
       />
     </I18nProvider>,
@@ -142,5 +149,32 @@ describe('ReceiptsScreen — pool filter', () => {
     const { user } = renderScreen()
     await user.click(screen.getByRole('button', { name: tools.name }))
     expect(screen.getByText(t.filterCount(1, 3))).toBeInTheDocument()
+  })
+
+  it('opens filtered to the pool it was asked to focus', () => {
+    renderScreen({ focusPoolId: tools.id })
+    expect(renderedNames()).toEqual(['Rope'])
+  })
+
+  it('lets the focused pool be switched back off — it is a starting point, not a lock', async () => {
+    const { user } = renderScreen({ focusPoolId: tools.id })
+    await user.click(screen.getByRole('button', { name: tools.name }))
+    expect(renderedNames()).toHaveLength(3)
+  })
+})
+
+describe('ReceiptsScreen — deposits stay out', () => {
+  it('offers no deposit pool in the picker', async () => {
+    const { user } = renderScreen({ pools: [food, tools, busDeposit] })
+    await user.click(screen.getByRole('button', { name: t.add }))
+
+    const picker = screen.getByLabelText(t.poolLabel)
+    expect(within(picker).getByRole('option', { name: food.name })).toBeInTheDocument()
+    expect(within(picker).queryByRole('option', { name: busDeposit.name })).not.toBeInTheDocument()
+  })
+
+  it('offers no deposit chip in the filter', () => {
+    renderScreen({ pools: [food, tools, busDeposit] })
+    expect(screen.queryByRole('button', { name: busDeposit.name })).not.toBeInTheDocument()
   })
 })

@@ -273,9 +273,9 @@ export const en = {
     left: (amount: string) => `${amount} left`,
     over: (amount: string) => `${amount} over budget`,
     unfunded: 'Nothing granted to this pool yet.',
-    /** The ＋ beside each bar. Names the pool, so the buttons are told apart by anyone
-     *  hearing them read out one after another. */
-    addTo: (pool: string) => `Add a receipt to ${pool}`,
+    /** Not drawn: the whole bar is the button into that pool's receipts, and this is the
+     *  hidden word that says so — the figures on the row are read out first. */
+    openPool: 'Open its receipts',
   },
 
   /** The day-by-day allowance: the headline number and the chart under it. */
@@ -315,9 +315,6 @@ export const en = {
      *  nobody should have to remember where the folder got to. */
     numberSuggest: (n: number) => `Next: #${n}`,
     numberTag: (n: number) => `#${n}`,
-    /** The quick-add dialog names the pool in its title instead of offering a picker —
-     *  which pool was decided by the ＋ that opened it. */
-    quickTitle: (pool: string) => `Add to ${pool}`,
     noteLabel: 'Note (optional)',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',

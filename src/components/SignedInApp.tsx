@@ -7,7 +7,6 @@ import { useMovements } from '../hooks/useMovements'
 import type { Session } from '../hooks/useSession'
 import { computeBurn, emptyBurn } from '../lib/burn'
 import { todayIso } from '../lib/dates'
-import { nextReceiptNumber, takenReceiptNumbers } from '../lib/expenses'
 import { buildCampExport, exportFileName } from '../lib/exportJson'
 import { isCampAdmin, memberCount } from '../lib/members'
 import { type CustodyFocus, custodyReading } from '../lib/movements'
@@ -31,7 +30,9 @@ type View =
   | { screen: 'list' }
   | { screen: 'dashboard'; campId: string }
   | { screen: 'income'; campId: string }
-  | { screen: 'receipts'; campId: string }
+  // `poolId` is where the receipt list *opens*, not a lasting setting: the screen seeds its
+  // filter from it once and owns the chips from then on.
+  | { screen: 'receipts'; campId: string; poolId: string | null }
   | { screen: 'movements'; campId: string; focus: CustodyFocus }
   | { screen: 'settlement'; campId: string }
   | { screen: 'settings'; campId: string }
@@ -197,6 +198,7 @@ export function SignedInApp({ session }: Props) {
         campId={openCamp.id}
         expenses={expenses}
         summaries={summaries}
+        focusPoolId={view.poolId}
         onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
       />
     )
@@ -265,15 +267,11 @@ export function SignedInApp({ session }: Props) {
       isLoading={income.isLoading}
       error={error ?? income.error ?? expenses.error ?? movements.error}
       hasExpenses={expenses.expenses.length > 0}
-      // Quick-add only ever creates a row, so nothing is excluded from the taken set.
-      takenReceiptNumbers={takenReceiptNumbers(expenses.expenses, null)}
-      suggestedReceiptNumber={nextReceiptNumber(expenses.expenses)}
       custody={custody}
       settlement={settlement}
-      onAddExpense={expenses.saveExpense}
       onBack={handleBackToList}
       onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
-      onOpenReceipts={() => setView({ screen: 'receipts', campId: openCamp.id })}
+      onOpenReceipts={(poolId) => setView({ screen: 'receipts', campId: openCamp.id, poolId })}
       onOpenMovements={(focus) => setView({ screen: 'movements', campId: openCamp.id, focus })}
       onOpenSettlement={() => setView({ screen: 'settlement', campId: openCamp.id })}
       onOpenSettings={() => setView({ screen: 'settings', campId: openCamp.id })}

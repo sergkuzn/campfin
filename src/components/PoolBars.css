@@ -5,11 +5,32 @@
   margin-top: var(--space-3);
 }
 
-/* The bar and its ＋ side by side; the ＋ is centred against the whole three-line block. */
+/* The whole row is the button into that pool's receipts. Reset to look like the reading it
+   is — a button's own background and centring would fight the three stacked lines — while
+   keeping the full width and the padding that make it comfortable to hit. */
 .bars__row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2);
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The same tint the block headers use when pressed, so everything tappable on the
+   dashboard answers the same way. Not --border: that is the bar's own track colour. */
+.bars__row:hover {
+  background-color: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.bars__row:active {
+  background-color: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 /* min-width: 0 lets this column shrink below the width of its content — without it a long
@@ -48,24 +69,13 @@
   color: var(--muted);
 }
 
-/* 2.75rem ≈ the 44 px minimum a fingertip can hit reliably. Round and accent-coloured so
-   it reads as the one thing on the row you press. */
-.bars__add {
+/* The only mark that the row leads somewhere; the row's own size is already a comfortable
+   target, so this stays small and quiet. */
+.bars__chevron {
   flex: none;
-  width: 2.75rem;
-  height: 2.75rem;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background-color: var(--bg);
-  color: var(--accent);
-  font: inherit;
+  color: var(--muted);
   font-size: 1.25rem;
   line-height: 1;
-  cursor: pointer;
-}
-
-.bars__add:hover {
-  border-color: var(--accent);
 }
 
 /* The colour lives on the balance figure as well as the bar: the number is what a leader
