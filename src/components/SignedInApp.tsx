@@ -4,6 +4,7 @@ import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
 import { useMovements } from '../hooks/useMovements'
+import { useScrollToTop } from '../hooks/useScrollToTop'
 import type { Session } from '../hooks/useSession'
 import { computeBurn, emptyBurn } from '../lib/burn'
 import { todayIso } from '../lib/dates'
@@ -60,6 +61,10 @@ export function SignedInApp({ session }: Props) {
     clearError,
   } = useCamps(session.userId)
   const [view, setView] = useState<View>({ screen: 'list' })
+
+  // No router means no automatic scroll reset: without this, opening a pool's receipts from
+  // a bar low on the dashboard would show that screen already scrolled down.
+  useScrollToTop(view)
 
   // `find` returns `Camp | undefined`; if the open camp was just deleted — by us, or by the
   // other leader mid-sync — we fall back to the list automatically, with no effect and no
