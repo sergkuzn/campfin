@@ -27,14 +27,13 @@
   gap: var(--space-2);
 }
 
-/* Same row shape as a receipt: name and note grow, the amount stays put, actions wrap
-   under it on a phone-width screen. */
+/* Same row shape as a receipt: name and note grow, the amount and the ⋮ keep their width,
+   and the line never wraps. */
 .movement {
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-2) var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background-color: var(--surface);
@@ -56,7 +55,7 @@
 }
 
 .movement__main {
-  flex: 1 1 8rem;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -76,11 +75,7 @@
 }
 
 .movement__amount {
+  flex: 0 0 auto;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-}
-
-.movement__actions {
-  display: flex;
-  gap: var(--space-2);
 }

@@ -1,6 +1,7 @@
 import { useFormat, useT } from '../i18n'
 import { groupExpensesByDay } from '../lib/expenses'
 import type { Expense, Pool } from '../lib/types'
+import { RowMenu } from './RowMenu'
 
 type Props = {
   expenses: Expense[]
@@ -64,26 +65,12 @@ export function ExpenseDayList({
 
                   <span className="receipt__amount">{format.euros(expense.amountCents)}</span>
 
-                  <div className="receipt__actions">
-                    <button
-                      className="receipt__action"
-                      type="button"
-                      disabled={locked}
-                      aria-label={t.receipts.editAction(expense.name)}
-                      onClick={() => onEdit(expense.id)}
-                    >
-                      {t.receipts.edit}
-                    </button>
-                    <button
-                      className="receipt__action receipt__action--danger"
-                      type="button"
-                      disabled={locked}
-                      aria-label={t.receipts.deleteAction(expense.name)}
-                      onClick={() => onDelete(expense.id)}
-                    >
-                      {t.receipts.delete}
-                    </button>
-                  </div>
+                  <RowMenu
+                    label={expense.name}
+                    disabled={locked}
+                    onEdit={() => onEdit(expense.id)}
+                    onDelete={() => onDelete(expense.id)}
+                  />
                 </li>
               ),
             )}

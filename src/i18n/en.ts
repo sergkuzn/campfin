@@ -26,6 +26,14 @@ export const en = {
     cancel: 'Cancel',
   },
 
+  /** The ⋮ menu carrying a list row's actions. Shared by the receipt and custody rows —
+   *  the words are the same on both, so they are written once. */
+  rowMenu: {
+    open: (name: string) => `Actions for ${name}`,
+    edit: 'Edit',
+    delete: 'Delete',
+  },
+
   app: {
     title: 'campfin',
     subtitle: 'Camp budget tracker',
@@ -291,10 +299,6 @@ export const en = {
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
     cancel: 'Cancel',
-    edit: 'Edit',
-    delete: 'Delete',
-    editAction: (name: string) => `Edit ${name}`,
-    deleteAction: (name: string) => `Delete ${name}`,
     spentTotal: 'Spent total',
     dayTotal: (amount: string) => `${amount} that day`,
     count: (n: number) => `${n} ${n === 1 ? 'receipt' : 'receipts'}`,
@@ -347,10 +351,6 @@ export const en = {
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
     cancel: 'Cancel',
-    edit: 'Edit',
-    delete: 'Delete',
-    editAction: (name: string) => `Edit ${name}`,
-    deleteAction: (name: string) => `Delete ${name}`,
     count: (n: number) => `${n} ${n === 1 ? 'movement' : 'movements'}`,
     unknownPool: 'Unknown deposit',
     deleteTitle: (name: string) => `Delete "${name}"?`,
