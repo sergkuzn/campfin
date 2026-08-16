@@ -4,7 +4,8 @@
   "version": "0.3.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev:test": "vite --mode test",
+    "dev:prod": "vite --mode prod",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -12,7 +13,8 @@
     "lint": "biome check --write .",
     "lint:ci": "biome check .",
     "typecheck": "tsc -b",
-    "db:push": "pnpm dlx instant-cli@latest push"
+    "db:push:test": "pnpm dlx instant-cli@latest push --app \"$(grep -m1 '^VITE_INSTANT_APP_ID=' .env.local | cut -d= -f2-)\"",
+    "db:push:prod": "pnpm dlx instant-cli@latest push --app \"$(grep -m1 '^VITE_INSTANT_APP_ID=' .env.prod.local | cut -d= -f2-)\""
   },
   "dependencies": {
     "@instantdb/react": "^1.0.49",

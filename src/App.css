@@ -77,3 +77,10 @@
   font-size: 0.6875rem;
   color: var(--muted);
 }
+
+/* A non-production build writes to the test database. Amber, not muted grey, so the
+   difference is visible at a glance before anyone types a real receipt into it. */
+.app__version--test {
+  color: var(--warn);
+  font-weight: 600;
+}
