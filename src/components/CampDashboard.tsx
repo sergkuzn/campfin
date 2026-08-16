@@ -30,6 +30,10 @@ type Props = {
   /** Whether any receipt exists yet — the bars alone cannot say so, since an
    *  untouched pool and a camp with no receipts look the same. */
   hasExpenses: boolean
+  /** Receipt numbers already in use, and the next free one — the quick-add dialog offers
+   *  the same number the receipts screen would. */
+  takenReceiptNumbers: ReadonlySet<number>
+  suggestedReceiptNumber: number
   /** Cash held rather than spent: the deposits and the volunteer money. */
   custody: CustodyReading
   /** The end-of-camp reading. Only its total shows here; the sheet explains it. */
@@ -82,6 +86,8 @@ export function CampDashboard({
   isLoading,
   error,
   hasExpenses,
+  takenReceiptNumbers,
+  suggestedReceiptNumber,
   custody,
   settlement,
   onAddExpense,
@@ -255,6 +261,8 @@ export function CampDashboard({
         campId={camp.id}
         pool={quickAddPool}
         todayIso={todayIso}
+        takenNumbers={takenReceiptNumbers}
+        suggestedNumber={suggestedReceiptNumber}
         onSave={onAddExpense}
         onClose={() => setQuickAddPoolId(null)}
       />

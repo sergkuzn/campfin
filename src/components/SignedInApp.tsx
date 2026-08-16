@@ -7,6 +7,7 @@ import { useMovements } from '../hooks/useMovements'
 import type { Session } from '../hooks/useSession'
 import { computeBurn, emptyBurn } from '../lib/burn'
 import { todayIso } from '../lib/dates'
+import { nextReceiptNumber, takenReceiptNumbers } from '../lib/expenses'
 import { buildCampExport, exportFileName } from '../lib/exportJson'
 import { isCampAdmin, memberCount } from '../lib/members'
 import { type CustodyFocus, custodyReading } from '../lib/movements'
@@ -264,6 +265,9 @@ export function SignedInApp({ session }: Props) {
       isLoading={income.isLoading}
       error={error ?? income.error ?? expenses.error ?? movements.error}
       hasExpenses={expenses.expenses.length > 0}
+      // Quick-add only ever creates a row, so nothing is excluded from the taken set.
+      takenReceiptNumbers={takenReceiptNumbers(expenses.expenses, null)}
+      suggestedReceiptNumber={nextReceiptNumber(expenses.expenses)}
       custody={custody}
       settlement={settlement}
       onAddExpense={expenses.saveExpense}

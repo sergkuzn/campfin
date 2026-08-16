@@ -86,9 +86,31 @@
   min-width: 0; /* lets a long name wrap instead of pushing the amount off the row */
 }
 
+/* The number and the name share a line, with the number keeping its width so a run of
+   numbered rows lines up down the list. */
+.receipt__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.receipt__number {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .receipt__name {
   font-size: 0.9375rem;
   overflow-wrap: anywhere;
+}
+
+/* A pool tag is an inline pill, so the row that holds it needs a start alignment —
+   otherwise it stretches to the column's full width. */
+.receipt__main > .pool-tag {
+  align-self: flex-start;
 }
 
 .receipt__pool,

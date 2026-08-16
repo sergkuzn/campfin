@@ -11,6 +11,7 @@
 
 import { id } from '@instantdb/react'
 import { type CampDump, remapCampExport } from '../lib/importJson'
+import { nextPoolColor } from '../lib/poolColors'
 import type { Camp, MemberRole } from '../lib/types'
 import { chunk, db } from './instant'
 
@@ -38,7 +39,15 @@ export function createCamp(args: CreateCampArgs): { camp: Camp; done: Promise<un
   const done = db.transact([
     chunk(db.tx.camps[campId]).update({ name, joinCode, createdAt: now }),
     chunk(db.tx.pools[id()])
-      .update({ campId, name: everydayPoolName, role: 'everyday', createdAt: now })
+      // The camp's first pool takes the first hue; every pool added later picks the next
+      // one nobody is using.
+      .update({
+        campId,
+        name: everydayPoolName,
+        role: 'everyday',
+        color: nextPoolColor([]),
+        createdAt: now,
+      })
       .link({ camp: campId }),
     membershipChunk({ campId, userId, role: 'admin', now }),
   ])
@@ -80,7 +89,13 @@ export function importCamp(args: ImportCampArgs): { camp: Camp; done: Promise<un
 
     ...dump.pools.map((pool) =>
       chunk(db.tx.pools[pool.id])
-        .update({ campId, name: pool.name, role: pool.role, createdAt: pool.createdAt })
+        .update({
+          campId,
+          name: pool.name,
+          role: pool.role,
+          color: pool.color,
+          createdAt: pool.createdAt,
+        })
         .link({ camp: campId }),
     ),
 
@@ -132,6 +147,7 @@ export function importCamp(args: ImportCampArgs): { camp: Camp; done: Promise<un
           name: expense.name,
           amountCents: expense.amountCents,
           date: expense.date,
+          number: expense.number,
           note: expense.note,
           enteredBy: expense.enteredBy,
           createdAt: expense.createdAt,

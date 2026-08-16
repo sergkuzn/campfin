@@ -1,14 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import {
+  arrangeExpenses,
   blankExpenseDraft,
   draftFromExpense,
   type ExpenseDraft,
   expenseDraftToInput,
   expenseIssues,
+  filterExpensesByPools,
   groupExpensesByDay,
   isExpense,
+  nextReceiptNumber,
+  readReceiptNumber,
+  takenReceiptNumbers,
 } from './expenses'
 import type { Expense } from './types'
+
+/** No receipt number is in use — the case most of these tests are not about. */
+const NONE: ReadonlySet<number> = new Set()
 
 /** A complete draft; each test overrides the one field it is about. */
 function draft(fields: Partial<ExpenseDraft> = {}): ExpenseDraft {
@@ -17,6 +25,7 @@ function draft(fields: Partial<ExpenseDraft> = {}): ExpenseDraft {
     name: 'Bread',
     amount: '12,50',
     poolId: 'pool-1',
+    number: '',
     note: '',
     ...fields,
   }
@@ -37,63 +46,67 @@ function expense(fields: Partial<Expense> = {}): Expense {
 
 describe('expenseIssues', () => {
   it('is empty for a complete draft', () => {
-    expect(expenseIssues(draft())).toEqual([])
+    expect(expenseIssues(draft(), NONE)).toEqual([])
   })
 
   it('flags a blank name', () => {
-    expect(expenseIssues(draft({ name: '   ' }))).toContain('name')
+    expect(expenseIssues(draft({ name: '   ' }), NONE)).toContain('name')
   })
 
   it('flags an amount that is not a euro figure', () => {
-    expect(expenseIssues(draft({ amount: 'twelve' }))).toContain('amount')
+    expect(expenseIssues(draft({ amount: 'twelve' }), NONE)).toContain('amount')
   })
 
   it('flags a zero amount', () => {
-    expect(expenseIssues(draft({ amount: '0' }))).toContain('amount')
+    expect(expenseIssues(draft({ amount: '0' }), NONE)).toContain('amount')
   })
 
   it('flags a negative amount', () => {
     // The parser rejects the minus sign outright, so this must surface as an issue
     // rather than as a negative expense that would inflate a pool's leftover.
-    expect(expenseIssues(draft({ amount: '-5,00' }))).toContain('amount')
+    expect(expenseIssues(draft({ amount: '-5,00' }), NONE)).toContain('amount')
   })
 
   it('flags a missing date', () => {
-    expect(expenseIssues(draft({ date: '' }))).toContain('date')
+    expect(expenseIssues(draft({ date: '' }), NONE)).toContain('date')
   })
 
   it('flags a missing pool', () => {
-    expect(expenseIssues(draft({ poolId: '' }))).toContain('pool')
+    expect(expenseIssues(draft({ poolId: '' }), NONE)).toContain('pool')
   })
 })
 
 describe('expenseDraftToInput', () => {
   it('returns null for an invalid draft', () => {
-    expect(expenseDraftToInput(draft({ amount: '' }), 'c1', null)).toBeNull()
+    expect(expenseDraftToInput(draft({ amount: '' }), 'c1', null, NONE)).toBeNull()
   })
 
   it('parses euros as typed into integer cents', () => {
-    expect(expenseDraftToInput(draft({ amount: '12,50' }), 'c1', null)?.amountCents).toBe(1250)
-    expect(expenseDraftToInput(draft({ amount: '19.99' }), 'c1', null)?.amountCents).toBe(1999)
+    expect(expenseDraftToInput(draft({ amount: '12,50' }), 'c1', null, NONE)?.amountCents).toBe(
+      1250,
+    )
+    expect(expenseDraftToInput(draft({ amount: '19.99' }), 'c1', null, NONE)?.amountCents).toBe(
+      1999,
+    )
   })
 
   it('trims the name', () => {
-    expect(expenseDraftToInput(draft({ name: '  Bread  ' }), 'c1', null)?.name).toBe('Bread')
+    expect(expenseDraftToInput(draft({ name: '  Bread  ' }), 'c1', null, NONE)?.name).toBe('Bread')
   })
 
   it('drops an empty note rather than storing one', () => {
-    expect(expenseDraftToInput(draft({ note: '  ' }), 'c1', null)?.note).toBeUndefined()
-    expect(expenseDraftToInput(draft({ note: ' rain ' }), 'c1', null)?.note).toBe('rain')
+    expect(expenseDraftToInput(draft({ note: '  ' }), 'c1', null, NONE)?.note).toBeUndefined()
+    expect(expenseDraftToInput(draft({ note: ' rain ' }), 'c1', null, NONE)?.note).toBe('rain')
   })
 
   it('carries the row being edited forward', () => {
     const existing = expense()
-    expect(expenseDraftToInput(draft(), 'c1', existing)?.existing).toBe(existing)
+    expect(expenseDraftToInput(draft(), 'c1', existing, NONE)?.existing).toBe(existing)
   })
 
   it('round-trips a persisted row through the draft unchanged', () => {
-    const row = expense({ note: 'market' })
-    const input = expenseDraftToInput(draftFromExpense(row), row.campId, row)
+    const row = expense({ note: 'market', number: 7 })
+    const input = expenseDraftToInput(draftFromExpense(row), row.campId, row, NONE)
     expect(input).toEqual({
       existing: row,
       campId: row.campId,
@@ -101,6 +114,7 @@ describe('expenseDraftToInput', () => {
       name: row.name,
       amountCents: row.amountCents,
       date: row.date,
+      number: 7,
       note: 'market',
     })
   })
@@ -113,8 +127,153 @@ describe('blankExpenseDraft', () => {
       name: '',
       amount: '',
       poolId: 'pool-2',
+      number: '',
       note: '',
     })
+  })
+})
+
+describe('readReceiptNumber', () => {
+  it('reads a plain counting number', () => {
+    expect(readReceiptNumber('12')).toEqual({ kind: 'value', value: 12 })
+    expect(readReceiptNumber(' 3 ')).toEqual({ kind: 'value', value: 3 })
+  })
+
+  it('treats an empty field as no number at all', () => {
+    expect(readReceiptNumber('')).toEqual({ kind: 'empty' })
+    expect(readReceiptNumber('   ')).toEqual({ kind: 'empty' })
+  })
+
+  it('refuses anything that is not a positive whole number', () => {
+    // "12a" must not be filed as 12: the number's job is to match a paper slip exactly.
+    for (const text of ['12a', '1,5', '1.5', '-3', '0', '1e3', '٣']) {
+      expect(readReceiptNumber(text).kind).toBe('invalid')
+    }
+  })
+})
+
+describe('takenReceiptNumbers', () => {
+  it('collects the numbers in use', () => {
+    const rows = [expense({ id: 'a', number: 1 }), expense({ id: 'b', number: 4 }), expense()]
+    expect([...takenReceiptNumbers(rows, null)].toSorted()).toEqual([1, 4])
+  })
+
+  it('leaves out the row being edited, so re-saving it is not a collision', () => {
+    const rows = [expense({ id: 'a', number: 1 }), expense({ id: 'b', number: 4 })]
+    expect([...takenReceiptNumbers(rows, 'a')]).toEqual([4])
+  })
+})
+
+describe('nextReceiptNumber', () => {
+  it('starts at 1 in a camp with no numbered receipts', () => {
+    expect(nextReceiptNumber([])).toBe(1)
+    expect(nextReceiptNumber([expense()])).toBe(1)
+  })
+
+  it('is one past the highest in use, even with gaps', () => {
+    expect(
+      nextReceiptNumber([expense({ id: 'a', number: 1 }), expense({ id: 'b', number: 9 })]),
+    ).toBe(10)
+  })
+})
+
+describe('expenseIssues — receipt numbers', () => {
+  it('accepts a draft with no number', () => {
+    expect(expenseIssues(draft({ number: '' }), NONE)).toEqual([])
+  })
+
+  it('flags a number that is not a counting number', () => {
+    expect(expenseIssues(draft({ number: '7b' }), NONE)).toContain('number')
+  })
+
+  it('flags a number another receipt already carries', () => {
+    expect(expenseIssues(draft({ number: '7' }), new Set([7]))).toContain('numberTaken')
+  })
+
+  it('allows a number nobody else has', () => {
+    expect(expenseIssues(draft({ number: '8' }), new Set([7]))).toEqual([])
+  })
+})
+
+describe('filterExpensesByPools', () => {
+  const rows = [
+    expense({ id: 'a', poolId: 'pool-1' }),
+    expense({ id: 'b', poolId: 'pool-2' }),
+    expense({ id: 'c', poolId: 'pool-3' }),
+  ]
+
+  it('shows everything when nothing is selected', () => {
+    expect(filterExpensesByPools(rows, new Set())).toEqual(rows)
+  })
+
+  it('keeps only the selected pools', () => {
+    const kept = filterExpensesByPools(rows, new Set(['pool-1', 'pool-3']))
+    expect(kept.map((e) => e.id)).toEqual(['a', 'c'])
+  })
+
+  it('is empty when the selected pool has no receipts', () => {
+    expect(filterExpensesByPools(rows, new Set(['pool-9']))).toEqual([])
+  })
+})
+
+describe('arrangeExpenses', () => {
+  const rows = [
+    expense({ id: 'a', date: '2026-07-12', number: 2 }),
+    expense({ id: 'b', date: '2026-07-15', number: 1 }),
+    expense({ id: 'c', date: '2026-07-13' }),
+  ]
+
+  it('groups by day, newest first, for date_desc', () => {
+    const view = arrangeExpenses(rows, 'date_desc')
+    expect(view.mode).toBe('days')
+    if (view.mode !== 'days') return
+    expect(view.days.map((d) => d.date)).toEqual(['2026-07-15', '2026-07-13', '2026-07-12'])
+  })
+
+  it('groups by day, oldest first, for date_asc', () => {
+    const view = arrangeExpenses(rows, 'date_asc')
+    if (view.mode !== 'days') throw new Error('expected day groups')
+    expect(view.days.map((d) => d.date)).toEqual(['2026-07-12', '2026-07-13', '2026-07-15'])
+  })
+
+  it('turns the oldest-first rows inside a day round too', () => {
+    const sameDay = [
+      expense({ id: 'a', createdAt: 100 }),
+      expense({ id: 'b', createdAt: 300 }),
+      expense({ id: 'c', createdAt: 200 }),
+    ]
+    const view = arrangeExpenses(sameDay, 'date_asc')
+    if (view.mode !== 'days') throw new Error('expected day groups')
+    expect(view.days[0]?.expenses.map((e) => e.id)).toEqual(['a', 'c', 'b'])
+  })
+
+  it('sorts by number ascending, unnumbered last', () => {
+    const view = arrangeExpenses(rows, 'number_asc')
+    if (view.mode !== 'flat') throw new Error('expected a flat list')
+    expect(view.expenses.map((e) => e.id)).toEqual(['b', 'a', 'c'])
+  })
+
+  it('keeps the unnumbered rows last when the numbers run the other way', () => {
+    const view = arrangeExpenses(rows, 'number_desc')
+    if (view.mode !== 'flat') throw new Error('expected a flat list')
+    expect(view.expenses.map((e) => e.id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('orders the unnumbered tail newest first', () => {
+    const unnumbered = [
+      expense({ id: 'a', date: '2026-07-12' }),
+      expense({ id: 'b', date: '2026-07-15' }),
+    ]
+    const view = arrangeExpenses(unnumbered, 'number_asc')
+    if (view.mode !== 'flat') throw new Error('expected a flat list')
+    expect(view.expenses.map((e) => e.id)).toEqual(['b', 'a'])
+  })
+
+  it('is empty for no receipts, in every mode', () => {
+    for (const sort of ['date_desc', 'date_asc', 'number_asc', 'number_desc'] as const) {
+      const view = arrangeExpenses([], sort)
+      expect(view.mode === 'days' ? view.days : view.expenses).toEqual([])
+    }
   })
 })
 
@@ -172,6 +331,13 @@ describe('isExpense', () => {
 
   it('rejects a row with no pool to spend from', () => {
     expect(isExpense({ ...expense(), poolId: 42 })).toBe(false)
+  })
+
+  it('accepts a numbered row and rejects a broken number', () => {
+    expect(isExpense(expense({ number: 3 }))).toBe(true)
+    expect(isExpense({ ...expense(), number: 0 })).toBe(false)
+    expect(isExpense({ ...expense(), number: 1.5 })).toBe(false)
+    expect(isExpense({ ...expense(), number: '3' })).toBe(false)
   })
 
   it('rejects non-objects', () => {

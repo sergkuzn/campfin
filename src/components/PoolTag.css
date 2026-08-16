@@ -1,0 +1,99 @@
+/* The pool palette. Each hue is two custom properties — an ink for text and the dot, a
+   tint for the pill behind it — so a component only ever asks for `--pool-ink` and
+   `--pool-tint` and never knows which colour it got.
+
+   Deliberately separate from the status colours (--ok / --warn / --danger): a pool's hue
+   says *which pot*, the status colours say *how bad*, and one channel cannot carry both. */
+.pool-tag--blue {
+  --pool-ink: #2563eb;
+  --pool-tint: #dbeafe;
+}
+.pool-tag--teal {
+  --pool-ink: #0d9488;
+  --pool-tint: #ccfbf1;
+}
+.pool-tag--green {
+  --pool-ink: #15803d;
+  --pool-tint: #dcfce7;
+}
+.pool-tag--amber {
+  --pool-ink: #b45309;
+  --pool-tint: #fef3c7;
+}
+.pool-tag--orange {
+  --pool-ink: #c2410c;
+  --pool-tint: #ffedd5;
+}
+.pool-tag--rose {
+  --pool-ink: #be123c;
+  --pool-tint: #ffe4e6;
+}
+.pool-tag--violet {
+  --pool-ink: #7c3aed;
+  --pool-tint: #ede9fe;
+}
+.pool-tag--slate {
+  --pool-ink: #475569;
+  --pool-tint: #e2e8f0;
+}
+
+/* Dark mode needs a lighter ink and a dim tint rather than the same pair dimmed: the
+   light tints are near-white and would glow on a near-black card. */
+@media (prefers-color-scheme: dark) {
+  .pool-tag--blue {
+    --pool-ink: #60a5fa;
+    --pool-tint: #1e3a8a;
+  }
+  .pool-tag--teal {
+    --pool-ink: #2dd4bf;
+    --pool-tint: #134e4a;
+  }
+  .pool-tag--green {
+    --pool-ink: #4ade80;
+    --pool-tint: #14532d;
+  }
+  .pool-tag--amber {
+    --pool-ink: #fbbf24;
+    --pool-tint: #78350f;
+  }
+  .pool-tag--orange {
+    --pool-ink: #fb923c;
+    --pool-tint: #7c2d12;
+  }
+  .pool-tag--rose {
+    --pool-ink: #fb7185;
+    --pool-tint: #881337;
+  }
+  .pool-tag--violet {
+    --pool-ink: #a78bfa;
+    --pool-tint: #4c1d95;
+  }
+  .pool-tag--slate {
+    --pool-ink: #94a3b8;
+    --pool-tint: #334155;
+  }
+}
+
+.pool-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.1rem var(--space-2);
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--pool-tint) 70%, transparent);
+  color: var(--pool-ink);
+  font-size: 0.75rem;
+  /* A pool name can be long; the pill shrinks instead of pushing the amount off the row. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pool-tag__dot {
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background-color: var(--pool-ink);
+}

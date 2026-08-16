@@ -27,8 +27,9 @@ export function saveExpense(input: SaveExpenseInput): Promise<unknown> {
         name: input.name,
         amountCents: input.amountCents,
         date: input.date,
-        // null clears the attribute: a note the user emptied must actually go away,
-        // otherwise the old one survives the save.
+        // null clears the attribute: a note or a number the user emptied must actually go
+        // away, otherwise the old one survives the save.
+        number: input.number ?? null,
         note: input.note ?? null,
         createdAt,
       })

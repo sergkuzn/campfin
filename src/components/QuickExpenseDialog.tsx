@@ -9,6 +9,7 @@ import {
   type SaveExpenseInput,
 } from '../lib/expenses'
 import type { Pool } from '../lib/types'
+import { ReceiptNumberField } from './ReceiptNumberField'
 
 type Props = {
   campId: string
@@ -18,6 +19,10 @@ type Props = {
   pool: Pool | null
   /** Today, local. Passed in so the dialog has no clock of its own. */
   todayIso: string
+  /** Receipt numbers other rows already carry — a duplicate blocks the save. */
+  takenNumbers: ReadonlySet<number>
+  /** What the "next number" button fills in: one past the highest in the camp. */
+  suggestedNumber: number
   onSave: (input: SaveExpenseInput) => void
   /** Fired once the dialog has actually closed, whatever closed it. */
   onClose: () => void
@@ -29,7 +34,15 @@ type Props = {
  * whole receipt, amount first, with the date already on today. Same fields as the receipts
  * screen minus the one the button answered.
  */
-export function QuickExpenseDialog({ campId, pool, todayIso, onSave, onClose }: Props) {
+export function QuickExpenseDialog({
+  campId,
+  pool,
+  todayIso,
+  takenNumbers,
+  suggestedNumber,
+  onSave,
+  onClose,
+}: Props) {
   const t = useT()
   const ref = useRef<HTMLDialogElement>(null)
   // useId gives a value that is stable across renders and unique per component instance —
@@ -62,6 +75,8 @@ export function QuickExpenseDialog({ campId, pool, todayIso, onSave, onClose }: 
             campId={campId}
             pool={pool}
             todayIso={todayIso}
+            takenNumbers={takenNumbers}
+            suggestedNumber={suggestedNumber}
             onSave={onSave}
             onDone={() => ref.current?.close()}
           />
@@ -78,12 +93,22 @@ type FieldsProps = {
    *  down. */
   pool: Pool
   todayIso: string
+  takenNumbers: ReadonlySet<number>
+  suggestedNumber: number
   onSave: (input: SaveExpenseInput) => void
   /** Close the dialog. Separate from onSave so a save that fails validation cannot close. */
   onDone: () => void
 }
 
-function QuickExpenseFields({ campId, pool, todayIso, onSave, onDone }: FieldsProps) {
+function QuickExpenseFields({
+  campId,
+  pool,
+  todayIso,
+  takenNumbers,
+  suggestedNumber,
+  onSave,
+  onDone,
+}: FieldsProps) {
   const t = useT()
 
   // The initialiser runs only on the first render — rebuilding the draft on every keystroke
@@ -94,7 +119,7 @@ function QuickExpenseFields({ campId, pool, todayIso, onSave, onDone }: FieldsPr
 
   // Derived during render, never stored: `issues` in state could drift out of step with the
   // draft it describes.
-  const issues = expenseIssues(draft)
+  const issues = expenseIssues(draft, takenNumbers)
   // An untouched draft is not a mistake — without this, two "fill this in" lines would greet
   // every open. They appear once the receipt is half-entered, explaining the grey Save.
   const pristine = draft.name === '' && draft.amount === ''
@@ -103,7 +128,7 @@ function QuickExpenseFields({ campId, pool, todayIso, onSave, onDone }: FieldsPr
     event.preventDefault()
     // null for `existing`: quick-add only ever creates. Editing stays on the receipts list,
     // where the row being changed is visible next to the form.
-    const input = expenseDraftToInput(draft, campId, null)
+    const input = expenseDraftToInput(draft, campId, null, takenNumbers)
     if (input === null) return // invalid; the check also narrows the type
     onSave(input)
     onDone()
@@ -154,6 +179,12 @@ function QuickExpenseFields({ campId, pool, todayIso, onSave, onDone }: FieldsPr
           }
         />
       </label>
+
+      <ReceiptNumberField
+        value={draft.number}
+        suggestion={suggestedNumber}
+        onChange={(number) => patch({ number })}
+      />
 
       <label className="field">
         <span className="field__label">{t.receipts.noteLabel}</span>

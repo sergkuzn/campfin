@@ -90,6 +90,7 @@ export function SettlementSheet({
         [],
         [t.settlement.csv.receiptsTitle],
         [
+          t.settlement.csv.number,
           t.settlement.csv.date,
           t.settlement.csv.pool,
           t.settlement.csv.name,
@@ -101,6 +102,8 @@ export function SettlementSheet({
         ...expenses
           .toSorted((a, b) => a.date.localeCompare(b.date))
           .map((expense) => [
+            // An unnumbered receipt leaves the cell empty rather than inventing a number.
+            expense.number === undefined ? '' : String(expense.number),
             expense.date,
             poolNames.get(expense.poolId) ?? t.receipts.unknownPool,
             expense.name,

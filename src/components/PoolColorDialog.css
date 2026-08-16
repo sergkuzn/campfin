@@ -1,0 +1,56 @@
+/* The swatches wear the `pool-tag--<hue>` classes, so their colours come from the palette
+   in PoolTag.css — one definition of what "violet" means, wherever a pool is drawn. */
+.colors {
+  max-width: 20rem;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--fg);
+}
+
+.colors::backdrop {
+  background-color: rgb(0 0 0 / 0.4);
+}
+
+.colors__title {
+  margin: 0 0 var(--space-3);
+  font-size: 1rem;
+}
+
+.colors__grid {
+  display: grid;
+  /* Four to a row on a phone, so every swatch keeps a thumb-sized target. */
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+}
+
+.colors__swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background-color: color-mix(in srgb, var(--pool-tint) 70%, transparent);
+  cursor: pointer;
+}
+
+/* The pool's current colour is outlined rather than merely brighter: a ring survives being
+   looked at by someone who cannot separate two of these hues. */
+.colors__swatch[aria-pressed="true"] {
+  border-color: var(--pool-ink);
+}
+
+.colors__dot {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background-color: var(--pool-ink);
+}
+
+.colors__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}

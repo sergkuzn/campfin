@@ -200,6 +200,21 @@ export const en = {
     actions: (name: string) => `Actions for ${name}`,
     rename: 'Rename pool',
     renamePrompt: 'Rename pool',
+    /** Colours are how a pool is recognised in a list of receipts, so every pool gets one
+     *  at creation and this is where it is changed. */
+    color: 'Colour',
+    colorTitle: (name: string) => `Colour for ${name}`,
+    colorNames: {
+      blue: 'Blue',
+      teal: 'Teal',
+      green: 'Green',
+      amber: 'Amber',
+      orange: 'Orange',
+      rose: 'Rose',
+      violet: 'Violet',
+      slate: 'Slate',
+    },
+    colorDone: 'Done',
     delete: 'Delete pool',
     confirmDelete: 'Delete',
     deleteTitle: (name: string) => `Delete the ${name} pool?`,
@@ -292,6 +307,14 @@ export const en = {
     amountLabel: 'Amount',
     amountPlaceholder: '€ e.g. 8,00',
     poolLabel: 'Paid from',
+    /** The number written on the paper slip, so the folder and the app can be matched
+     *  row by row. Optional — a receipt is worth entering before it is filed. */
+    numberLabel: 'Receipt no. (optional)',
+    numberPlaceholder: 'e.g. 12',
+    /** Fills the field with the next free number, which is the whole point of the button:
+     *  nobody should have to remember where the folder got to. */
+    numberSuggest: (n: number) => `Next: #${n}`,
+    numberTag: (n: number) => `#${n}`,
     /** The quick-add dialog names the pool in its title instead of offering a picker —
      *  which pool was decided by the ＋ that opened it. */
     quickTitle: (pool: string) => `Add to ${pool}`,
@@ -303,6 +326,21 @@ export const en = {
     dayTotal: (amount: string) => `${amount} that day`,
     count: (n: number) => `${n} ${n === 1 ? 'receipt' : 'receipts'}`,
     unknownPool: 'Unknown pool',
+    /** Sorting and filtering the list. The totals below the list follow the filter, so the
+     *  wording says which receipts are being counted. */
+    sortLabel: 'Sort by',
+    sorts: {
+      date_desc: 'Date — newest first',
+      date_asc: 'Date — oldest first',
+      number_asc: 'Number — 1 upwards',
+      number_desc: 'Number — highest first',
+    },
+    filterLabel: 'Show pools',
+    /** Tapping every chip off is the same as tapping every chip on: both mean "no filter",
+     *  which is what makes the chips safe to switch off one at a time. */
+    filterAll: 'All',
+    filterCount: (shown: number, total: number) => `${shown} of ${total} receipts shown`,
+    emptyFiltered: 'No receipts in the pools you picked.',
     deleteTitle: (name: string) => `Delete "${name}"?`,
     deleteLine: (amount: string, pool: string) => `${amount} goes back into ${pool}.`,
     confirmDelete: 'Delete',
@@ -311,6 +349,8 @@ export const en = {
       amount: 'Enter an amount in euros, e.g. 8,00.',
       date: 'Pick the date on the receipt.',
       pool: 'Choose which pool paid for it.',
+      number: 'A receipt number is a whole number: 1, 2, 3 — or leave it empty.',
+      numberTaken: 'Another receipt already has that number.',
     },
   },
 
@@ -441,6 +481,8 @@ export const en = {
       amount: 'Amount (EUR)',
       why: 'Why',
       receiptsTitle: 'Receipts',
+      /** First column, so a printed sheet can be read against the numbered paper folder. */
+      number: 'No.',
       date: 'Date',
       pool: 'Pool',
       name: 'What',

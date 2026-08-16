@@ -22,6 +22,7 @@ import type {
   MemberRole,
   MovementKind,
   PerDiemVariant,
+  PoolColor,
   PoolRole,
 } from './src/lib/types'
 
@@ -55,6 +56,9 @@ const _schema = i.schema({
       campId: i.string().indexed(),
       name: i.string(),
       role: i.string<PoolRole>().indexed(),
+      // A palette token, not a hex value — the stylesheet turns it into a colour that
+      // works in both themes. Optional: pools created before colours existed have none.
+      color: i.string<PoolColor>().optional(),
       createdAt: i.number(),
     }),
 
@@ -88,6 +92,9 @@ const _schema = i.schema({
       name: i.string(),
       amountCents: i.number(),
       date: i.string().indexed(),
+      // The number written on the paper slip. Optional, and unique within a camp — the
+      // uniqueness is enforced on the client, since it holds per camp rather than globally.
+      number: i.number().optional().indexed(),
       note: i.string().optional(),
       enteredBy: i.string().optional(),
       createdAt: i.number(),

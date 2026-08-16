@@ -91,7 +91,7 @@ describe('parseCampExport', () => {
   })
 
   it('rejects a version newer than this build', () => {
-    const future = JSON.stringify({ format: 'campfin.camp', version: 7, camp })
+    const future = JSON.stringify({ format: 'campfin.camp', version: 8, camp })
     expect(parseCampExport(future)).toEqual({ ok: false, issue: 'version' })
   })
 

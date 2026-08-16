@@ -1,6 +1,7 @@
 import './PoolBars.css'
 import { useFormat, useT } from '../i18n'
 import { type PoolSummary, poolBar, spendablePools } from '../lib/pools'
+import { PoolTag } from './PoolTag'
 
 type Props = {
   /** This camp's pools. Deposit pools are filtered out here, not by the caller. */
@@ -56,7 +57,12 @@ function PoolBarRow({ summary, onAdd }: { summary: PoolSummary; onAdd: (poolId: 
           the bar can hit by accident. */}
       <div className="bars__body">
         <div className="bars__head">
-          <span className="bars__name">{summary.pool.name}</span>
+          <span className="bars__name">
+            {/* The dot, not the bar itself: the bar's colour is the budget state
+                (green → amber → red), and one channel cannot carry two meanings. */}
+            <PoolTag pool={summary.pool} variant="dot" />
+            {summary.pool.name}
+          </span>
           <span className={`bars__balance bars__balance--${bar.state}`}>{balance}</span>
         </div>
 

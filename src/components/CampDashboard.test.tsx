@@ -73,6 +73,8 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
         isLoading={false}
         error={null}
         hasExpenses={false}
+        takenReceiptNumbers={new Set()}
+        suggestedReceiptNumber={1}
         custody={{ statuses: [], volunteerHeldCents: 0, volunteerCount: 0 }}
         settlement={settlement}
         onAddExpense={onAddExpense}

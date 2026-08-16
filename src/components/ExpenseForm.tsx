@@ -10,6 +10,7 @@ import {
 } from '../lib/expenses'
 import type { PoolSummary } from '../lib/pools'
 import type { Expense } from '../lib/types'
+import { ReceiptNumberField } from './ReceiptNumberField'
 
 type Props = {
   campId: string
@@ -20,12 +21,25 @@ type Props = {
   pools: PoolSummary[]
   /** Today, local. Passed in so the form has no clock of its own. */
   todayIso: string
+  /** Receipt numbers other rows already carry — a duplicate blocks the save. */
+  takenNumbers: ReadonlySet<number>
+  /** What the "next number" button fills in: one past the highest in the camp. */
+  suggestedNumber: number
   onSave: (input: SaveExpenseInput) => void
   onCancel: () => void
 }
 
 /** One receipt being typed. Same shape as the income card: one draft, Save commits it. */
-export function ExpenseForm({ campId, expense, pools, todayIso, onSave, onCancel }: Props) {
+export function ExpenseForm({
+  campId,
+  expense,
+  pools,
+  todayIso,
+  takenNumbers,
+  suggestedNumber,
+  onSave,
+  onCancel,
+}: Props) {
   const t = useT()
 
   // The initialiser runs only on the first render — otherwise it would rebuild the draft
@@ -40,11 +54,11 @@ export function ExpenseForm({ campId, expense, pools, todayIso, onSave, onCancel
 
   // Derived during render, never stored: `issues` in state could drift out of step with
   // the draft it describes.
-  const issues = expenseIssues(draft)
+  const issues = expenseIssues(draft, takenNumbers)
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const input = expenseDraftToInput(draft, campId, expense)
+    const input = expenseDraftToInput(draft, campId, expense, takenNumbers)
     // null means invalid; the check narrows the type as a side effect, so validation
     // lives in exactly one place.
     if (input === null) return
@@ -108,6 +122,12 @@ export function ExpenseForm({ campId, expense, pools, todayIso, onSave, onCancel
           ))}
         </select>
       </label>
+
+      <ReceiptNumberField
+        value={draft.number}
+        suggestion={suggestedNumber}
+        onChange={(number) => patch({ number })}
+      />
 
       <label className="field">
         <span className="field__label">{t.receipts.noteLabel}</span>
