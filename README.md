@@ -40,31 +40,30 @@ src/i18n/        the dictionary; no user-facing string lives in a component
 
 ```bash
 pnpm install
-cp .env.example .env.local        # then fill in the TEST app id
-pnpm dev:test
+cp .env.example .env.dev.local    # then fill in the DEV app id
+pnpm dev
 ```
 
 `VITE_INSTANT_APP_ID` comes from the InstantDB dashboard. It is inlined at build time, so a
 missing one fails loudly at startup rather than on a phone at camp.
 
-Every command that touches a database says which one in its name — there is no unlabelled
+Every command that touches a database names it — `dev` or `prod`, never an unlabelled
 default, because "which database am I about to write to?" should never be answered from
 memory.
 
 | Command | What it does |
 |---|---|
-| `pnpm dev:test` | dev server with HMR, against the **test** database |
+| `pnpm dev` | dev server with HMR, against the **dev** database |
 | `pnpm dev:prod` | same, against the **production** database |
-| `pnpm db:push:test` | push `instant.schema.ts` + `instant.perms.ts` to the **test** app |
+| `pnpm db:push:dev` | push `instant.schema.ts` + `instant.perms.ts` to the **dev** app |
 | `pnpm db:push:prod` | push the same to **production** |
-| `pnpm build` | typecheck + production build into `dist/` — the host's build command |
-| `pnpm preview` | serve the production build locally |
+| `pnpm build` | typecheck + build into `dist/` — the host's build command, env from the host |
+| `pnpm build:dev` | build locally against the **dev** database |
+| `pnpm build:prod` | build locally against the **production** database |
+| `pnpm preview` | serve the last build locally |
 | `pnpm test` | run the Vitest suite once |
 | `pnpm lint` | Biome check + format + import sort (writes fixes) |
 | `pnpm typecheck` | `tsc -b`, no emit |
-
-(`pnpm test` runs the test *suite*; the test *database* is always spelled `:test` on a
-`dev:`/`db:push:` command.)
 
 Before anything is considered done:
 
@@ -79,32 +78,37 @@ by `VITE_INSTANT_APP_ID`; `VITE_APP_ENV` only labels it.
 
 | Where | Branch / command | Database | Footer reads |
 |---|---|---|---|
-| Vercel Production | `main` | production app | `v0.3.0 · 1a2b3c4 · …` |
-| Vercel Preview | `develop` (and any branch) | test app | `test · v0.3.0 · …` in amber |
-| Local | `pnpm dev:test` → `.env.local` | test app | `test · …` |
+| Vercel Production (`campfin-web.vercel.app`) | `main` | production app | `v0.3.0 · 1a2b3c4 · …` |
+| Vercel Preview (`campfin-web-dev.vercel.app`) | `develop` (and any branch) | dev app | `dev · v0.3.0 · …` in amber |
+| Local | `pnpm dev` → `.env.dev.local` | dev app | `dev · …` |
 | Local | `pnpm dev:prod` → `.env.prod.local` | production app | `v0.3.0 · …` |
 
-Locally, `.env.local` holds the test app and is read in every Vite mode, so it is the
-default; `pnpm dev:prod` passes `--mode prod`, which layers `.env.prod.local` over it.
-Neither file is committed, and nothing in `src/` branches on the environment — only the
-value of `VITE_INSTANT_APP_ID` differs. To serve a *built* bundle against production, pass
-the same flag: `pnpm exec vite build --mode prod && pnpm preview`.
+Locally the app id comes from `.env.dev.local` or `.env.prod.local`, and Vite reads
+`.env.[mode].local` only in that mode — so `pnpm dev` sees the dev file and `pnpm dev:prod`
+the production one, with no always-loaded `.env.local` underneath either. That is why there
+is no mode-less local command: `pnpm build` alone (mode `production`) finds neither file and
+would build a bundle with no app id. Use `pnpm build:dev` or `pnpm build:prod`, then
+`pnpm preview`. On Vercel the vars arrive in the process environment instead, which Vite
+merges in whatever the mode — so the host's plain `pnpm build` is correct there.
+
+Neither local file is committed, and nothing in `src/` branches on the environment — only
+the value of `VITE_INSTANT_APP_ID` differs.
 
 The `db:push:*` scripts read the app id straight out of the matching env file, because
 `instant-cli` does its own env loading and knows nothing about Vite modes — left to itself
-it would read `.env.local` for both and push a production schema change to the test app.
+it would read the same file for both and push a production schema change to the dev app.
 
-A test build also installs as its own PWA — *campfin TEST*, amber theme — so the two
+A dev build also installs as its own PWA — *campfin DEV*, amber theme — so the two
 home-screen icons cannot be confused.
 
 Vercel scopes environment variables per environment: add `VITE_INSTANT_APP_ID` and
 `VITE_APP_ENV` twice, once scoped to **Production** (production app id, `prod`) and once to
-**Preview** + **Development** (test app id, `test`). Set the Production Branch to `main`;
-`develop` then publishes to a stable `…-git-develop-….vercel.app` URL. If Deployment
+**Preview** + **Development** (dev app id, `dev`). Set the Production Branch to `main`;
+`develop` then publishes to a stable preview URL (aliased here to `campfin-web-dev`). If Deployment
 Protection is on, previews sit behind a Vercel login — turn it off for this project, or the
-second leader cannot open the test app.
+second leader cannot open the dev app.
 
-Schema changes go to the test app first (`pnpm db:push:test`), get tried there, and only
+Schema changes go to the dev app first (`pnpm db:push:dev`), get tried there, and only
 then to production (`pnpm db:push:prod`).
 
 ## Deploying
@@ -113,7 +117,7 @@ then to production (`pnpm db:push:prod`).
 Netlify, Cloudflare Pages). There is no server and no router, so no redirect rules are
 needed.
 
-1. Push `instant.schema.ts` and `instant.perms.ts` once with `pnpm db:push:test`, then
+1. Push `instant.schema.ts` and `instant.perms.ts` once with `pnpm db:push:dev`, then
    `pnpm db:push:prod`.
 2. Point the host at this repository with build command `pnpm build` and output directory
    `dist`.

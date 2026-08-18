@@ -78,9 +78,9 @@
   color: var(--muted);
 }
 
-/* A non-production build writes to the test database. Amber, not muted grey, so the
+/* A non-production build writes to the dev database. Amber, not muted grey, so the
    difference is visible at a glance before anyone types a real receipt into it. */
-.app__version--test {
+.app__version--dev {
   color: var(--warn);
   font-weight: 600;
 }

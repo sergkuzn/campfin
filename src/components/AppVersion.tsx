@@ -26,7 +26,7 @@ export function AppVersion() {
     // role, so it cannot take an aria-label, and "v0.1.0 · 1a2b3c4" read out with no
     // context is meaningless.
     <section
-      className={env === 'prod' ? 'app__version' : 'app__version app__version--test'}
+      className={env === 'prod' ? 'app__version' : 'app__version app__version--dev'}
       aria-label={t.app.versionLabel}
     >
       {text}

@@ -20,7 +20,7 @@ type CreateCampArgs = {
   joinCode: string
   userId: string
   now: number
-  /** Comes from the dictionary at creation time, then owned by the user (plan §3.4). */
+  /** Comes from the dictionary at creation time, then owned by the user. */
   everydayPoolName: string
 }
 

@@ -47,14 +47,14 @@ export default defineConfig(({ mode }) => {
         // want a "new version available — reload" prompt (virtual:pwa-register/react).
         registerType: 'autoUpdate',
         manifest: {
-          // A test build installs as its own home-screen icon, under its own name and
+          // A dev build installs as its own home-screen icon, under its own name and
           // colour: the two apps sit side by side on the same phone and must not be
           // mistakable for one another.
-          name: isProd ? 'campfin — Camp Budget Tracker' : 'campfin TEST — Camp Budget Tracker',
-          short_name: isProd ? 'campfin' : 'campfin TEST',
+          name: isProd ? 'campfin — Camp Budget Tracker' : 'campfin DEV — Camp Budget Tracker',
+          short_name: isProd ? 'campfin' : 'campfin DEV',
           description: isProd
             ? 'Local-first camp budget tracker for two group leaders.'
-            : 'Test build of campfin — writes to the test database, not the real camp.',
+            : 'Dev build of campfin — writes to the dev database, not the real camp.',
           theme_color: isProd ? '#0f172a' : '#78350f',
           background_color: '#ffffff',
           display: 'standalone',
@@ -65,7 +65,7 @@ export default defineConfig(({ mode }) => {
             { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           ],
         },
-        // Keep the service worker out of `vite dev` so HMR stays simple; flip to test offline.
+        // Keep the service worker out of `vite dev` so HMR stays simple; flip it to try offline.
         devOptions: { enabled: false },
       }),
     ],

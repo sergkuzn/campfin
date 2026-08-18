@@ -26,6 +26,6 @@ interface ViteTypeOptions {
 interface ImportMetaEnv {
   /** InstantDB app id — which database this build talks to. */
   readonly VITE_INSTANT_APP_ID?: string
-  /** Exactly `'prod'` for the real camp data; anything else is treated as a test build. */
+  /** Exactly `'prod'` for the real camp data; anything else is treated as a dev build. */
   readonly VITE_APP_ENV?: string
 }

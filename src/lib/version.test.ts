@@ -18,13 +18,13 @@ describe('formatVersion', () => {
   it('returns an empty string when nothing is known', () => {
     expect(formatVersion({ version: '', commit: '', builtAt: '', env: 'prod' })).toBe('')
   })
-  it('leads with the environment on a test build', () => {
+  it('leads with the environment on a dev build', () => {
     expect(
-      formatVersion({ version: '0.1.0', commit: '1a2b3c4', builtAt: '2026-08-01', env: 'test' }),
-    ).toBe('test · v0.1.0 · 1a2b3c4 · 2026-08-01')
+      formatVersion({ version: '0.1.0', commit: '1a2b3c4', builtAt: '2026-08-01', env: 'dev' }),
+    ).toBe('dev · v0.1.0 · 1a2b3c4 · 2026-08-01')
   })
   it('still names the environment when the build knows nothing else', () => {
-    expect(formatVersion({ version: '', commit: '', builtAt: '', env: 'test' })).toBe('test')
+    expect(formatVersion({ version: '', commit: '', builtAt: '', env: 'dev' })).toBe('dev')
   })
 })
 
@@ -32,11 +32,11 @@ describe('parseAppEnv', () => {
   it('accepts the production label', () => {
     expect(parseAppEnv('prod')).toBe('prod')
   })
-  it('treats an unset label as a test build', () => {
-    expect(parseAppEnv(undefined)).toBe('test')
+  it('treats an unset label as a dev build', () => {
+    expect(parseAppEnv(undefined)).toBe('dev')
   })
-  it('treats an unrecognised label as a test build', () => {
-    expect(parseAppEnv('production')).toBe('test')
-    expect(parseAppEnv('')).toBe('test')
+  it('treats an unrecognised label as a dev build', () => {
+    expect(parseAppEnv('production')).toBe('dev')
+    expect(parseAppEnv('')).toBe('dev')
   })
 })

@@ -84,8 +84,6 @@ const _schema = i.schema({
       endDate: i.string(),
     }),
 
-    // Declared now, read and written from stage 08 / 11. Pushing the whole schema once is
-    // cheaper than pushing it twice, and the permission rules below already cover them.
     expenses: i.entity({
       campId: i.string().indexed(),
       poolId: i.string().indexed(),

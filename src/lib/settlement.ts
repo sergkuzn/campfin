@@ -19,7 +19,7 @@ import type { Expense, Movement, PerDiemBlock, Pool } from './types'
 
 /**
  * What one row of the breakdown is about. A *code*, not a sentence: `src/lib/` never
- * decides how the UI reads, so the dictionary turns each of these into a label (plan §3.4).
+ * decides how the UI reads, so the dictionary turns each of these into a label.
  */
 export type SettlementRowKind = 'pool_unspent' | 'pool_unusable' | 'deposit_return' | 'volunteer'
 

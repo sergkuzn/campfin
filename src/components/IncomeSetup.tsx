@@ -47,8 +47,8 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   // there is nothing left to filter here.
   const { pools, sources, blocks } = income
 
-  // No expenses until stage 08; an empty array is the honest input, and received money is
-  // independent of spending anyway.
+  // This screen is about money that arrived, which is independent of spending — so the
+  // summaries are built with no expenses at all.
   const summaries = useMemo(
     () => summarisePools(pools, sources, blocks, []),
     [pools, sources, blocks],

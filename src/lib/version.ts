@@ -7,7 +7,7 @@
  */
 
 /** Which InstantDB app — and therefore whose camp data — a build talks to. */
-export type AppEnv = 'prod' | 'test'
+export type AppEnv = 'prod' | 'dev'
 
 export type BuildInfo = {
   /** Package version, e.g. `0.1.0`. */
@@ -22,11 +22,11 @@ export type BuildInfo = {
 
 /**
  * Reads the `VITE_APP_ENV` label. Only a literal `'prod'` counts as production: an
- * unlabelled build must not claim to be the real one, because a test build silently
- * wearing no badge is how real receipts end up in the test database.
+ * unlabelled build must not claim to be the real one, because a dev build silently
+ * wearing no badge is how real receipts end up in the dev database.
  */
 export function parseAppEnv(raw: string | undefined): AppEnv {
-  return raw === 'prod' ? 'prod' : 'test'
+  return raw === 'prod' ? 'prod' : 'dev'
 }
 
 /**
