@@ -42,12 +42,13 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        // 'prompt' keeps a newly downloaded service worker in its waiting state until the
-        // user taps Reload (see `ReloadPrompt`). Under 'autoUpdate' the new worker takes
-        // over immediately and swaps the cached assets beneath a page that is still
-        // running — enough to break a lazy chunk the open page asks for later. Deferring
-        // that to a tap also means a half-typed receipt is never reloaded away.
-        registerType: 'prompt',
+        // 'autoUpdate' lets a newly downloaded service worker take over immediately and
+        // reload the page on its own (see `ReloadPrompt`), so nobody is stuck on a stale
+        // build waiting to notice a toast. The risk is a receipt mid-typed in a form field
+        // getting reloaded away before it's saved — accepted because every *submitted*
+        // write is already saved locally and synced (see golden rule 5), so the blast
+        // radius is one unsaved field, not lost data.
+        registerType: 'autoUpdate',
         manifest: {
           // A dev build installs as its own home-screen icon, under its own name and
           // colour: the two apps sit side by side on the same phone and must not be

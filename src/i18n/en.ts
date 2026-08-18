@@ -42,15 +42,6 @@ export const en = {
     versionLabel: 'App version',
   },
 
-  /** The toast shown once a new build has downloaded and is waiting to take over. */
-  update: {
-    available: 'New version available',
-    reload: 'Reload',
-    dismiss: 'Later',
-    /** Names the toast for screen readers; it announces itself as it appears. */
-    label: 'App update',
-  },
-
   auth: {
     title: 'Sign in',
     intro:
