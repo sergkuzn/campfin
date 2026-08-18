@@ -1,9 +1,7 @@
-import { useState } from 'react'
 import './CampDashboard.css'
 import { useFormat, useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus } from '../lib/camps'
-import type { SaveExpenseInput } from '../lib/expenses'
 import type { CustodyFocus, CustodyReading } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
 import type { Settlement } from '../lib/settlement'
@@ -13,7 +11,6 @@ import { BurnChart } from './BurnChart'
 import { CashStrip } from './CashStrip'
 import { DepositsStrip } from './DepositsStrip'
 import { PoolBars } from './PoolBars'
-import { QuickExpenseDialog } from './QuickExpenseDialog'
 import { StatusPill } from './StatusPill'
 
 type Props = {
@@ -34,11 +31,11 @@ type Props = {
   custody: CustodyReading
   /** The end-of-camp reading. Only its total shows here; the sheet explains it. */
   settlement: Settlement
-  /** Writes one new receipt. The dashboard never touches the database itself. */
-  onAddExpense: (input: SaveExpenseInput) => void
   onBack: () => void
   onOpenIncome: () => void
-  onOpenReceipts: () => void
+  /** Opens the receipt list. With a pool id it opens filtered to that pool — tapping a bar
+   *  asks "what went out of *this* pot?", which is the same list with one chip on. */
+  onOpenReceipts: (poolId: string | null) => void
   /** Opens the movements screen on one half of the custody money. */
   onOpenMovements: (focus: CustodyFocus) => void
   onOpenSettlement: () => void
@@ -84,7 +81,6 @@ export function CampDashboard({
   hasExpenses,
   custody,
   settlement,
-  onAddExpense,
   onBack,
   onOpenIncome,
   onOpenReceipts,
@@ -95,16 +91,12 @@ export function CampDashboard({
   const t = useT()
   const format = useFormat()
 
-  // The id, not the pool: looking it up again each render means the open dialog follows a
-  // rename and closes itself if the other leader deletes the pool mid-entry.
-  const [quickAddPoolId, setQuickAddPoolId] = useState<string | null>(null)
-  const quickAddPool =
-    quickAddPoolId === null
-      ? null
-      : (summaries.find((s) => s.pool.id === quickAddPoolId)?.pool ?? null)
-
   // Every camp has an everyday pool, so "nothing here yet" means no *income*, not no pools.
   const funded = summaries.some((summary) => summary.sources.length > 0)
+  // The curve only ever measures the everyday pool, so "left" has to come from that same
+  // pool — the one whose bar further down shows the identical figure.
+  const everydayRemainingCents =
+    summaries.find((summary) => summary.pool.role === 'everyday')?.remainingCents ?? 0
   // A camp with neither money nor receipts has nothing to show on any of the blocks below,
   // and five empty boxes hide the one thing that needs doing. Receipts count too: entering
   // one before the income is unusual, but it must not blank the screen it belongs on.
@@ -112,7 +104,7 @@ export function CampDashboard({
 
   const header = (
     <>
-      <button className="dashboard__back" type="button" onClick={onBack}>
+      <button className="screen-back" type="button" onClick={onBack}>
         {t.dashboard.back}
       </button>
 
@@ -174,7 +166,7 @@ export function CampDashboard({
         <p className="dashboard__slot-title">{t.burn.title}</p>
         {burn.hasCurve ? (
           <>
-            <AllowedToday burn={burn} />
+            <AllowedToday burn={burn} remainingCents={everydayRemainingCents} />
             <BurnChart burn={burn} todayIso={todayIso} />
           </>
         ) : (
@@ -192,12 +184,12 @@ export function CampDashboard({
         <SlotHeader
           title={t.dashboard.spending}
           action={t.dashboard.openReceipts}
-          onOpen={onOpenReceipts}
+          onOpen={() => onOpenReceipts(null)}
         />
         {funded || hasExpenses ? (
           <>
             {!hasExpenses && <p className="dashboard__slot-hint">{t.dashboard.noReceipts}</p>}
-            <PoolBars summaries={summaries} onAdd={setQuickAddPoolId} />
+            <PoolBars summaries={summaries} onOpenPool={onOpenReceipts} />
           </>
         ) : (
           <p className="dashboard__slot-hint">{t.dashboard.noIncome}</p>
@@ -248,16 +240,6 @@ export function CampDashboard({
         />
         <p className="dashboard__to-return">{format.euros(settlement.toReturnCents)}</p>
       </section>
-
-      {/* One dialog for the screen, not one per bar: only one receipt is ever being typed,
-          and a <dialog> per pool would put a draft's worth of state behind every button. */}
-      <QuickExpenseDialog
-        campId={camp.id}
-        pool={quickAddPool}
-        todayIso={todayIso}
-        onSave={onAddExpense}
-        onClose={() => setQuickAddPoolId(null)}
-      />
     </div>
   )
 }

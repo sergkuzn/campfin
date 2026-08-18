@@ -43,6 +43,14 @@ export type Membership = {
 export type PoolRole = 'everyday' | 'earmarked' | 'deposit'
 
 /**
+ * How a pool is told apart at a glance. A *token*, not a hex string: the token says which
+ * pool this is, and the stylesheet decides what it looks like — so every hue gets a
+ * readable value in light and in dark mode, which a colour typed on one phone could not
+ * promise on the other.
+ */
+export type PoolColor = 'blue' | 'teal' | 'green' | 'amber' | 'orange' | 'rose' | 'violet' | 'slate'
+
+/**
  * A pot of money you spend from — the thing a receipt is tagged to. How a pool settles
  * (funded − spent, returned at the end) is the same for all of them; `role` says what
  * it means, not how it computes.
@@ -52,6 +60,9 @@ export type Pool = {
   campId: string
   name: string
   role: PoolRole
+  /** Optional: pools created before colours existed have none, and `poolColorOf` derives
+   *  one from the id instead — so no stored row has to be rewritten. */
+  color?: PoolColor
   createdAt: number
 }
 
@@ -161,6 +172,12 @@ export type Expense = {
   name: string
   amountCents: number
   date: string // ISO
+  /**
+   * The number written on the paper receipt, so a row in the app and a slip in the folder
+   * can be matched by hand. Optional — a receipt is worth entering whether or not it has
+   * been filed yet — and a positive integer, unique within the camp, when present.
+   */
+  number?: number
   note?: string
   enteredBy?: string
   createdAt: number

@@ -1,6 +1,7 @@
 import { useFormat, useT } from '../i18n'
 import { isDepositMovement, sortMovements } from '../lib/movements'
 import type { Movement, Pool } from '../lib/types'
+import { RowMenu } from './RowMenu'
 
 type Props = {
   movements: Movement[]
@@ -61,26 +62,12 @@ export function MovementList({
 
             <span className="movement__amount">{format.euros(movement.amountCents)}</span>
 
-            <div className="movement__actions">
-              <button
-                className="receipt__action"
-                type="button"
-                disabled={locked}
-                aria-label={t.movements.editAction(movement.name)}
-                onClick={() => onEdit(movement.id)}
-              >
-                {t.movements.edit}
-              </button>
-              <button
-                className="receipt__action receipt__action--danger"
-                type="button"
-                disabled={locked}
-                aria-label={t.movements.deleteAction(movement.name)}
-                onClick={() => onDelete(movement.id)}
-              >
-                {t.movements.delete}
-              </button>
-            </div>
+            <RowMenu
+              label={movement.name}
+              disabled={locked}
+              onEdit={() => onEdit(movement.id)}
+              onDelete={() => onDelete(movement.id)}
+            />
           </li>
         ),
       )}

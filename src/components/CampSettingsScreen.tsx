@@ -60,7 +60,7 @@ export function CampSettingsScreen({
 
   return (
     <div className="camp-settings">
-      <button className="dashboard__back" type="button" onClick={onBack}>
+      <button className="screen-back" type="button" onClick={onBack}>
         {t.campSettings.back}
       </button>
 

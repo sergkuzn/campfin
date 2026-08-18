@@ -9,7 +9,7 @@
  */
 
 import { type CampWindow, campWindow, realityBlocks } from './camps'
-import { eachDay, isWithin } from './dates'
+import { dayCount, eachDay, isWithin } from './dates'
 import type { Expense, IncomeSource, PerDiemBlock } from './types'
 
 /** One calendar day of the chart. Both series live on the same row because that is
@@ -58,9 +58,15 @@ export type Burn = {
    */
   allowedTodayCents: number
   spentTodayCents: number
-  /** "A normal day here costs €X": today's allowance, or the window's average day when
-   *  today falls outside the camp — €0 before the camp starts would say nothing. */
-  normalDayCents: number
+  /**
+   * The typical day's allowance. The *median* rather than the mean, because the edges of a
+   * camp are thin: two leaders arriving a day early make one day worth a twentieth of the
+   * others, which drags a mean well below any day the camp actually has.
+   */
+  medianDayCents: number
+  /** Camp days from today to the end, today included. The whole camp before it starts,
+   *  zero once it is over — what "left" is measured against. */
+  remainingDays: number
 }
 
 /** The reading for "no camp open". Spelled out once so callers that have to produce a
@@ -71,7 +77,8 @@ export const emptyBurn: Burn = {
   points: [],
   allowedTodayCents: 0,
   spentTodayCents: 0,
-  normalDayCents: 0,
+  medianDayCents: 0,
+  remainingDays: 0,
 }
 
 /** Σ people on blocks covering this day. Advisory only: two blocks covering the same
@@ -143,6 +150,32 @@ function spentUpTo(day: string, expenses: Expense[]): number {
   return expenses.reduce((sum, e) => (e.date <= day ? sum + e.amountCents : sum), 0)
 }
 
+/**
+ * The middle value of a list, averaging the middle pair when the count is even. Empty
+ * list → 0: a camp with no days has no typical day.
+ *
+ * `toSorted` copies rather than sorting in place, so the caller's array keeps its
+ * chronological order — the points are drawn from it.
+ */
+function median(values: number[]): number {
+  if (values.length === 0) return 0
+
+  const sorted = values.toSorted((a, b) => a - b)
+  const middle = Math.floor(sorted.length / 2)
+  if (sorted.length % 2 === 1) return sorted[middle] ?? 0
+
+  return Math.round(((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2)
+}
+
+/** Camp days from today to the end, today included: the whole camp before it starts, 0
+ *  once it is over or while nothing dates the camp. */
+function daysLeft(window: CampWindow | null, todayIso: string): number {
+  if (window === null || todayIso > window.endIso) return 0
+
+  const from = todayIso < window.startIso ? window.startIso : todayIso
+  return dayCount(from, window.endIso)
+}
+
 /** One row per calendar day of the camp, both series on it. Empty when the camp has no
  *  window yet. */
 export function burnSeries(input: BurnInput): BurnPoint[] {
@@ -186,10 +219,6 @@ export function computeBurn(input: BurnInput): Burn {
   // day at all, and the allowance is honestly zero.
   const accruedCents = points.findLast((p) => p.date <= input.todayIso)?.theoreticalCents ?? 0
 
-  const totalAllowanceCents = points.reduce((sum, p) => sum + p.allowanceCents, 0)
-  const todayPoint = points.find((p) => p.date === input.todayIso)
-  const averageDayCents = points.length === 0 ? 0 : Math.round(totalAllowanceCents / points.length)
-
   return {
     hasCurve: points.length > 0,
     window,
@@ -199,6 +228,7 @@ export function computeBurn(input: BurnInput): Burn {
       (sum, e) => (e.date === input.todayIso ? sum + e.amountCents : sum),
       0,
     ),
-    normalDayCents: todayPoint?.allowanceCents ?? averageDayCents,
+    medianDayCents: median(points.map((p) => p.allowanceCents)),
+    remainingDays: daysLeft(window, input.todayIso),
   }
 }

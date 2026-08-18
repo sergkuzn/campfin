@@ -202,7 +202,7 @@ export function sortMovements(movements: Movement[]): Movement[] {
  *
  * The reconciliation that matters: a forfeited Kaution is booked *once*, as an expense on
  * the deposit pool. Subtracting it from what is still out is what stops "€30 kept for
- * damage" from also reading as "€30 the shop still owes you" — the risk named in plan §8.
+ * damage" from also reading as "€30 the shop still owes you".
  */
 export function depositStatus(summary: PoolSummary, movements: Movement[]): DepositStatus {
   let handedOverCents = 0

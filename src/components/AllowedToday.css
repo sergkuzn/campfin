@@ -1,8 +1,18 @@
+/* Headline and figures sit side by side, filling the space the big number leaves free, so
+   the burn card costs two lines less height. The gaps are small on purpose: the pair only
+   fits beside each other on a phone if neither block is padded generously. */
 .allowed {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
   margin-top: var(--space-2);
+}
+
+/* Never shrinks below its content: the headline is the one figure that must stay legible,
+   so a long amount pushes the figures onto their own line instead of squeezing itself. */
+.allowed__headline {
+  flex: 0 0 auto;
 }
 
 .allowed__label {
@@ -17,7 +27,7 @@
    jitter as digits change, and green until it isn't. */
 .allowed__amount {
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.625rem;
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
@@ -28,12 +38,33 @@
   color: var(--danger);
 }
 
-.allowed__companions {
+/* A 2×2 table filled top-to-bottom then left-to-right, which is what pairs "spent today"
+   with "median day" in one column and the two remainders in the other. `auto` columns
+   never shrink below their text, so on a screen too narrow for both blocks the whole table
+   wraps under the headline rather than overlapping it. */
+.allowed__stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, auto);
+  gap: var(--space-1) var(--space-2);
+}
+
+/* Label left, value right: the grid stretches each cell to its column's width, so the
+   values in a column line up under each other without a fixed width anywhere. */
+.allowed__stat {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
-  margin: 0;
-  font-size: 0.75rem;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  white-space: nowrap;
+  font-size: 0.6875rem;
+}
+
+.allowed__stat-label {
   color: var(--muted);
+}
+
+.allowed__stat-value {
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }

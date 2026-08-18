@@ -30,10 +30,11 @@
   gap: var(--space-2);
 }
 
-/* Sticky day heading: scrolling a long list keeps the day you are looking at named. */
+/* Sticky day heading: scrolling a long list keeps the day you are looking at named.
+   Parks below the back bar rather than at the very top, which is already taken. */
 .day__header {
   position: sticky;
-  top: 0;
+  top: var(--screen-back-height);
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -66,30 +67,51 @@
   gap: var(--space-2);
 }
 
-/* Name and note grow, the amount stays put: a phone-width row that wraps its actions
-   under the amount rather than squeezing the name to nothing. */
+/* Three items on one line that never wraps: the name and note grow, the amount and the ⋮
+   keep their width. Wrapping was what made these cards tall on a phone. */
 .receipt {
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-2) var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background-color: var(--surface);
 }
 
 .receipt__main {
-  flex: 1 1 8rem;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0; /* lets a long name wrap instead of pushing the amount off the row */
 }
 
+/* The number and the name share a line, with the number keeping its width so a run of
+   numbered rows lines up down the list. */
+.receipt__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.receipt__number {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .receipt__name {
   font-size: 0.9375rem;
   overflow-wrap: anywhere;
+}
+
+/* A pool tag is an inline pill, so the row that holds it needs a start alignment —
+   otherwise it stretches to the column's full width. */
+.receipt__main > .pool-tag {
+  align-self: flex-start;
 }
 
 .receipt__pool,
@@ -99,32 +121,7 @@
 }
 
 .receipt__amount {
+  flex: 0 0 auto;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-}
-
-.receipt__actions {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.receipt__action {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-.receipt__action:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.receipt__action--danger {
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
 }

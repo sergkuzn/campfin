@@ -1,0 +1,63 @@
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+
+.filters__sort {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.filters__label {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.filters__pools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Wrapping rather than scrolling sideways: a camp has a handful of pools, and a chip that
+   has scrolled out of view is a filter nobody remembers switching on. */
+.filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.filters__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  /* Tall enough for a thumb without making a row of chips two lines high. */
+  min-height: 2rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: var(--bg);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+/* A pressed chip fills with its pool's tint and outlines in its ink, so "this filter is
+   on" is carried by shape as well as by colour. */
+.filters__chip[aria-pressed="true"] {
+  border-color: var(--pool-ink, var(--accent));
+  background-color: color-mix(in srgb, var(--pool-tint, var(--accent)) 60%, transparent);
+  color: var(--pool-ink, var(--accent));
+  font-weight: 600;
+}

@@ -26,12 +26,29 @@ export const en = {
     cancel: 'Cancel',
   },
 
+  /** The ⋮ menu carrying a list row's actions. Shared by the receipt and custody rows —
+   *  the words are the same on both, so they are written once. */
+  rowMenu: {
+    open: (name: string) => `Actions for ${name}`,
+    edit: 'Edit',
+    delete: 'Delete',
+  },
+
   app: {
     title: 'campfin',
     subtitle: 'Camp budget tracker',
     loading: 'Loading…',
     /** Names the version line for screen readers — the string itself is not prose. */
     versionLabel: 'App version',
+  },
+
+  /** The toast shown once a new build has downloaded and is waiting to take over. */
+  update: {
+    available: 'New version available',
+    reload: 'Reload',
+    dismiss: 'Later',
+    /** Names the toast for screen readers; it announces itself as it appears. */
+    label: 'App update',
   },
 
   auth: {
@@ -146,7 +163,9 @@ export const en = {
   },
 
   income: {
-    back: '← Back to camp',
+    // Reachable from both the dashboard and camp settings, and ← returns to whichever it
+    // was — so the label cannot name a destination the way the other screens' do.
+    back: '← Back',
     title: 'Set up income',
     add: '＋ Add income',
     empty: 'No income yet — tap ＋ Add income.',
@@ -192,6 +211,21 @@ export const en = {
     actions: (name: string) => `Actions for ${name}`,
     rename: 'Rename pool',
     renamePrompt: 'Rename pool',
+    /** Colours are how a pool is recognised in a list of receipts, so every pool gets one
+     *  at creation and this is where it is changed. */
+    color: 'Colour',
+    colorTitle: (name: string) => `Colour for ${name}`,
+    colorNames: {
+      blue: 'Blue',
+      teal: 'Teal',
+      green: 'Green',
+      amber: 'Amber',
+      orange: 'Orange',
+      rose: 'Rose',
+      violet: 'Violet',
+      slate: 'Slate',
+    },
+    colorDone: 'Done',
     delete: 'Delete pool',
     confirmDelete: 'Delete',
     deleteTitle: (name: string) => `Delete the ${name} pool?`,
@@ -250,9 +284,9 @@ export const en = {
     left: (amount: string) => `${amount} left`,
     over: (amount: string) => `${amount} over budget`,
     unfunded: 'Nothing granted to this pool yet.',
-    /** The ＋ beside each bar. Names the pool, so the buttons are told apart by anyone
-     *  hearing them read out one after another. */
-    addTo: (pool: string) => `Add a receipt to ${pool}`,
+    /** Not drawn: the whole bar is the button into that pool's receipts, and this is the
+     *  hidden word that says so — the figures on the row are read out first. */
+    openPool: 'Open its receipts',
   },
 
   /** The day-by-day allowance: the headline number and the chart under it. */
@@ -262,9 +296,13 @@ export const en = {
     /** The headline goes red rather than negative-with-a-minus: "you are €40 over" is
      *  what a leader needs to read, not "−40 allowed". */
     overspentBy: (amount: string) => `${amount} over`,
-    spentToday: (amount: string) => `${amount} spent today`,
-    normalDay: (amount: string) => `A normal day here costs ${amount}`,
-    chartTitle: 'Allowance vs spending',
+    /** The four figures beside the headline are labelled, not spelled out in sentences:
+     *  a leader reads this table at a till, and a label next to a number is quicker than
+     *  prose around it. Kept short so two of them fit across a phone. */
+    spentToday: 'Spent today',
+    medianDay: 'Median day',
+    daysLeft: 'Days left',
+    moneyLeft: 'Total left',
     theoretical: 'Allowed',
     actual: 'Spent',
     today: 'Today',
@@ -284,21 +322,37 @@ export const en = {
     amountLabel: 'Amount',
     amountPlaceholder: '€ e.g. 8,00',
     poolLabel: 'Paid from',
-    /** The quick-add dialog names the pool in its title instead of offering a picker —
-     *  which pool was decided by the ＋ that opened it. */
-    quickTitle: (pool: string) => `Add to ${pool}`,
+    /** The number written on the paper slip, so the folder and the app can be matched
+     *  row by row. Optional — a receipt is worth entering before it is filed. */
+    numberLabel: 'Receipt no. (optional)',
+    numberPlaceholder: 'e.g. 12',
+    /** Fills the field with the next free number, which is the whole point of the button:
+     *  nobody should have to remember where the folder got to. */
+    numberSuggest: (n: number) => `Next: #${n}`,
+    numberTag: (n: number) => `#${n}`,
     noteLabel: 'Note (optional)',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
     cancel: 'Cancel',
-    edit: 'Edit',
-    delete: 'Delete',
-    editAction: (name: string) => `Edit ${name}`,
-    deleteAction: (name: string) => `Delete ${name}`,
     spentTotal: 'Spent total',
     dayTotal: (amount: string) => `${amount} that day`,
     count: (n: number) => `${n} ${n === 1 ? 'receipt' : 'receipts'}`,
     unknownPool: 'Unknown pool',
+    /** Sorting and filtering the list. The totals below the list follow the filter, so the
+     *  wording says which receipts are being counted. */
+    sortLabel: 'Sort by',
+    sorts: {
+      date_desc: 'Date — newest first',
+      date_asc: 'Date — oldest first',
+      number_asc: 'Number — 1 upwards',
+      number_desc: 'Number — highest first',
+    },
+    filterLabel: 'Show pools',
+    /** Tapping every chip off is the same as tapping every chip on: both mean "no filter",
+     *  which is what makes the chips safe to switch off one at a time. */
+    filterAll: 'All',
+    filterCount: (shown: number, total: number) => `${shown} of ${total} receipts shown`,
+    emptyFiltered: 'No receipts in the pools you picked.',
     deleteTitle: (name: string) => `Delete "${name}"?`,
     deleteLine: (amount: string, pool: string) => `${amount} goes back into ${pool}.`,
     confirmDelete: 'Delete',
@@ -307,6 +361,8 @@ export const en = {
       amount: 'Enter an amount in euros, e.g. 8,00.',
       date: 'Pick the date on the receipt.',
       pool: 'Choose which pool paid for it.',
+      number: 'A receipt number is a whole number: 1, 2, 3 — or leave it empty.',
+      numberTaken: 'Another receipt already has that number.',
     },
   },
 
@@ -347,10 +403,6 @@ export const en = {
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
     cancel: 'Cancel',
-    edit: 'Edit',
-    delete: 'Delete',
-    editAction: (name: string) => `Edit ${name}`,
-    deleteAction: (name: string) => `Delete ${name}`,
     count: (n: number) => `${n} ${n === 1 ? 'movement' : 'movements'}`,
     unknownPool: 'Unknown deposit',
     deleteTitle: (name: string) => `Delete "${name}"?`,
@@ -441,6 +493,8 @@ export const en = {
       amount: 'Amount (EUR)',
       why: 'Why',
       receiptsTitle: 'Receipts',
+      /** First column, so a printed sheet can be read against the numbered paper folder. */
+      number: 'No.',
       date: 'Date',
       pool: 'Pool',
       name: 'What',

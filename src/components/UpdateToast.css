@@ -1,0 +1,49 @@
+/* Pinned to the bottom of the viewport rather than placed in the flow: the toast can
+   arrive while any screen is scrolled anywhere, and it must not shift what is under a
+   thumb mid-tap. The container outlives the toast (it is the live region), so it stays
+   transparent to pointer events and only the visible box takes them back. */
+.update-toast {
+  position: fixed;
+  inset-inline: var(--space-4);
+  /* env(safe-area-inset-bottom) clears the iOS home indicator in a standalone PWA;
+     it resolves to 0 everywhere else. */
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  margin-inline: auto;
+  max-width: 28rem; /* matches .app, so it lines up with the content on a wide screen */
+  z-index: 10; /* above the row menus (5) and the sticky day headers (1) */
+  pointer-events: none;
+}
+
+.update-toast__box {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 15%);
+  font-size: 0.875rem;
+}
+
+/* Takes the slack so both buttons sit against the right edge. */
+.update-toast__message {
+  flex: 1;
+}
+
+.update-toast__button {
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.update-toast__button--primary {
+  color: var(--surface);
+  background-color: var(--accent);
+  font-weight: 600;
+}

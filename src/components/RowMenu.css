@@ -1,0 +1,75 @@
+/* The anchor the menu is positioned against — the ⋮ itself, not the whole row, so the
+   panel lines up with the corner it came from. align-self pins it to the top of a row
+   whose other items align on their text baseline. */
+.row-menu {
+  position: relative;
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+.row-menu__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* A square big enough for a thumb, pulled back into the card's padding so claiming the
+     target costs the row no extra height or width. */
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.row-menu__trigger:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* z-index lifts the open panel over the rows that follow it and over the sticky day
+   heading, both of which would otherwise paint on top of a menu opening upwards. */
+.row-menu__items {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  inset-inline-end: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 9rem;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+}
+
+.row-menu__items--up {
+  top: auto;
+  bottom: calc(100% + var(--space-1));
+}
+
+.row-menu__item {
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  /* Inset by the panel's own padding, so the highlight's corners follow the panel's. */
+  border-radius: calc(var(--radius) - var(--space-1));
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.row-menu__item:hover {
+  background-color: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.row-menu__item--danger {
+  color: var(--danger);
+}

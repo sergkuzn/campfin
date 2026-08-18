@@ -18,7 +18,7 @@ import schema from '../../instant.schema'
 // runtime surprise on a phone at camp — say so loudly and immediately.
 const appId = import.meta.env.VITE_INSTANT_APP_ID
 if (typeof appId !== 'string' || appId === '') {
-  throw new Error('VITE_INSTANT_APP_ID is not set — copy .env.example to .env.local')
+  throw new Error('VITE_INSTANT_APP_ID is not set — copy .env.example to .env.dev.local')
 }
 
 /**

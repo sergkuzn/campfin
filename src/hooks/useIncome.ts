@@ -14,7 +14,7 @@ import { useT } from '../i18n'
 import type { SaveBlocksInput, SaveSourceInput } from '../lib/drafts'
 import type { IncomeState } from '../lib/income'
 import { mapRows, toBlock, toPool, toSource } from '../lib/rows'
-import type { IncomeSource, PerDiemBlock, Pool } from '../lib/types'
+import type { IncomeSource, PerDiemBlock, Pool, PoolColor } from '../lib/types'
 
 export type UseIncome = IncomeState & {
   isLoading: boolean
@@ -24,6 +24,7 @@ export type UseIncome = IncomeState & {
   saveBlocks: (input: SaveBlocksInput) => void
   deleteSource: (sourceId: string) => void
   renamePool: (poolId: string, name: string) => void
+  setPoolColor: (poolId: string, color: PoolColor) => void
   deletePool: (poolId: string) => void
 }
 
@@ -104,6 +105,14 @@ export function useIncome(campId: string): UseIncome {
     [t],
   )
 
+  const setPoolColor = useCallback(
+    (poolId: string, color: PoolColor): void => {
+      setError(null)
+      void incomeDb.setPoolColor(poolId, color).catch(() => setError(t.sync.writeFailed))
+    },
+    [t],
+  )
+
   const deletePool = useCallback(
     (poolId: string): void => {
       setError(null)
@@ -120,6 +129,7 @@ export function useIncome(campId: string): UseIncome {
     saveBlocks,
     deleteSource,
     renamePool,
+    setPoolColor,
     deletePool,
   }
 }

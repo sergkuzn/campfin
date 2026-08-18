@@ -12,11 +12,13 @@ import {
   sourceAmountCents,
   summarisePools,
 } from '../lib/pools'
-import type { IncomeKind, IncomeSource, PerDiemBlock } from '../lib/types'
+import type { IncomeKind, IncomeSource, PerDiemBlock, PoolColor } from '../lib/types'
 import { ActualBlocksForm } from './ActualBlocksForm'
 import { ConfirmDialog } from './ConfirmDialog'
 import { IncomeSourceCard } from './IncomeSourceCard'
 import { IncomeSourceForm } from './IncomeSourceForm'
+import { PoolColorDialog } from './PoolColorDialog'
+import { PoolTag } from './PoolTag'
 
 type Props = {
   campId: string
@@ -45,8 +47,8 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   // there is nothing left to filter here.
   const { pools, sources, blocks } = income
 
-  // No expenses until stage 08; an empty array is the honest input, and received money is
-  // independent of spending anyway.
+  // This screen is about money that arrived, which is independent of spending — so the
+  // summaries are built with no expenses at all.
   const summaries = useMemo(
     () => summarisePools(pools, sources, blocks, []),
     [pools, sources, blocks],
@@ -55,6 +57,10 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   const [editing, setEditing] = useState<Editing | null>(null)
   const [picking, setPicking] = useState(false)
   const [pending, setPending] = useState<Pending | null>(null)
+  // The pool whose colour is being picked, by id — looked up fresh on every render, so a
+  // pool renamed or deleted by the other leader mid-sync retitles or closes the dialog.
+  const [coloringPoolId, setColoringPoolId] = useState<string | null>(null)
+  const coloringPool = pools.find((pool) => pool.id === coloringPoolId) ?? null
 
   // One card open at a time: every other Edit, Delete and ＋ Add income goes inert.
   // This single flag replaces every "you have unsaved changes" dialog.
@@ -79,6 +85,13 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
     const next = window.prompt(t.pools.renamePrompt, currentName)
     // `prompt` returns null on cancel — an empty string means "cleared it", also a no-op.
     if (next !== null && next.trim() !== '') income.renamePool(poolId, next.trim())
+  }
+
+  // The dialog can outlive its pool by a moment — the other leader deleted it mid-sync —
+  // so the write is guarded rather than aimed at whatever id is left over.
+  const handlePickColor = (color: PoolColor) => {
+    if (coloringPool === null) return
+    income.setPoolColor(coloringPool.id, color)
   }
 
   const handleConfirm = () => {
@@ -166,7 +179,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
 
   return (
     <div className="income">
-      <button className="dashboard__back" type="button" onClick={onBack}>
+      <button className="screen-back" type="button" onClick={onBack}>
         {t.income.back}
       </button>
 
@@ -218,6 +231,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
           summary={summary}
           locked={locked}
           onRenamePool={() => handleRenamePool(summary.pool.id, summary.pool.name)}
+          onColorPool={() => setColoringPoolId(summary.pool.id)}
           onDeletePool={() => setPending({ target: 'pool', poolId: summary.pool.id })}
           renderSource={(source) => renderSource(source, summary)}
         />
@@ -246,6 +260,12 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
           <strong>{format.euros(receivedTotalCents(summaries))}</strong>
         </p>
       </footer>
+
+      <PoolColorDialog
+        pool={coloringPool}
+        onPick={handlePickColor}
+        onClose={() => setColoringPoolId(null)}
+      />
 
       <ConfirmDialog
         open={pending !== null}
@@ -302,6 +322,7 @@ type PoolSectionProps = {
   summary: PoolSummary
   locked: boolean
   onRenamePool: () => void
+  onColorPool: () => void
   onDeletePool: () => void
   /** A render prop: the parent owns `editing` and every card's props, this section owns the
    *  pool header and layout, so it stays ignorant of drafts, blocks and saving. */
@@ -312,6 +333,7 @@ function PoolSection({
   summary,
   locked,
   onRenamePool,
+  onColorPool,
   onDeletePool,
   renderSource,
 }: PoolSectionProps) {
@@ -330,7 +352,10 @@ function PoolSection({
   return (
     <section className="pool">
       <header className="pool__header">
-        <h3 className="pool__name">{summary.pool.name}</h3>
+        <h3 className="pool__name">
+          <PoolTag pool={summary.pool} variant="dot" />
+          {summary.pool.name}
+        </h3>
         <span className="pool__total">{format.euros(summary.fundedCents)}</span>
         <details className="pool__menu" ref={menuRef}>
           <summary className="pool__menu-button" aria-label={t.pools.actions(summary.pool.name)}>
@@ -346,6 +371,16 @@ function PoolSection({
               }}
             >
               {t.pools.rename}
+            </button>
+            <button
+              type="button"
+              disabled={locked}
+              onClick={() => {
+                closeMenu()
+                onColorPool()
+              }}
+            >
+              {t.pools.color}
             </button>
             {deletable && (
               <button

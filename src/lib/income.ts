@@ -66,6 +66,10 @@ export function isPool(value: unknown): value is Pool {
     typeof p.campId === 'string' &&
     typeof p.name === 'string' &&
     typeof p.createdAt === 'number' &&
+    // Deliberately *any* string, not just a known hue: a colour a newer build invented is
+    // not worth losing the whole pool over. `toPool` keeps it only if this build can draw
+    // it, and the pool falls back to its id-derived hue if not.
+    (p.color === undefined || typeof p.color === 'string') &&
     isPoolRole(p.role)
   )
 }

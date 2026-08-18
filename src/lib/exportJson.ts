@@ -6,7 +6,8 @@
  * Pure, and versioned: a later build reading an old dump needs to know which shape it is
  * looking at. `version` tracks the row shapes (v3 = pools have roles, blocks have
  * variants; v4 = the dump carries the camp's expenses too; v5 = and its custody
- * movements; v6 = a handover can be marked as completing its deposit).
+ * movements; v6 = a handover can be marked as completing its deposit; v7 = pools carry a
+ * colour and receipts an optional number).
  */
 
 import type { IncomeState } from './income'
@@ -14,7 +15,7 @@ import type { Camp, Expense, IncomeSource, Movement, PerDiemBlock, Pool } from '
 
 export type CampExport = {
   format: 'campfin.camp'
-  version: 6
+  version: 7
   /** ISO timestamp, passed in — a pure function does not read the clock. */
   exportedAt: string
   camp: Camp
@@ -34,7 +35,7 @@ export function buildCampExport(
 ): CampExport {
   return {
     format: 'campfin.camp',
-    version: 6,
+    version: 7,
     exportedAt,
     camp,
     pools: state.pools,

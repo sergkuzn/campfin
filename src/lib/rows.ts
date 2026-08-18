@@ -14,6 +14,7 @@ import { isCamp } from './camps'
 import { isExpense } from './expenses'
 import { isIncomeSource, isMovement, isPerDiemBlock, isPool } from './income'
 import { isMembership } from './members'
+import { isPoolColor } from './poolColors'
 import type { Camp, Expense, IncomeSource, Membership, Movement, PerDiemBlock, Pool } from './types'
 
 /**
@@ -57,8 +58,10 @@ export function toMembership(row: unknown): Membership | null {
 export function toPool(row: unknown): Pool | null {
   const value = withoutNulls(row)
   if (!isPool(value)) return null
-  const { id, campId, name, role, createdAt } = value
-  return { id, campId, name, role, createdAt }
+  const { id, campId, name, role, color, createdAt } = value
+  // A hue this build has no value for is dropped rather than carried: `poolColorOf` then
+  // derives one from the id, which is better than a pool drawn in nothing at all.
+  return { id, campId, name, role, color: isPoolColor(color) ? color : undefined, createdAt }
 }
 
 export function toSource(row: unknown): IncomeSource | null {
@@ -110,6 +113,6 @@ export function toMovement(row: unknown): Movement | null {
 export function toExpense(row: unknown): Expense | null {
   const value = withoutNulls(row)
   if (!isExpense(value)) return null
-  const { id, campId, poolId, name, amountCents, date, note, enteredBy, createdAt } = value
-  return { id, campId, poolId, name, amountCents, date, note, enteredBy, createdAt }
+  const { id, campId, poolId, name, amountCents, date, number, note, enteredBy, createdAt } = value
+  return { id, campId, poolId, name, amountCents, date, number, note, enteredBy, createdAt }
 }

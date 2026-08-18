@@ -21,7 +21,8 @@ import {
   poolCascade,
   sourceBlockIds,
 } from '../lib/income'
-import type { IncomeSource } from '../lib/types'
+import { nextPoolColor } from '../lib/poolColors'
+import type { IncomeSource, PoolColor } from '../lib/types'
 import { chunk, db } from './instant'
 
 /** Upsert one block row. A row without an id is new, so it gets one minted here. */
@@ -66,6 +67,9 @@ export function saveSource(input: SaveSourceInput, current: IncomeState): Promis
               campId,
               name: input.pool.name,
               role: input.kind === 'deposit' ? 'deposit' : 'earmarked',
+              // The first hue none of the camp's pools is wearing, so a new pool is
+              // distinguishable from its neighbours without anyone choosing.
+              color: nextPoolColor(current.pools),
               createdAt: now,
             })
             .link({ camp: campId }),
@@ -152,6 +156,10 @@ export function deleteSource(sourceId: string, current: IncomeState): Promise<un
 
 export function renamePool(poolId: string, name: string): Promise<unknown> {
   return db.transact(chunk(db.tx.pools[poolId]).update({ name }))
+}
+
+export function setPoolColor(poolId: string, color: PoolColor): Promise<unknown> {
+  return db.transact(chunk(db.tx.pools[poolId]).update({ color }))
 }
 
 /**
