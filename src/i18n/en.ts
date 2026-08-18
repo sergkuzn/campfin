@@ -294,9 +294,9 @@ export const en = {
     /** The headline goes red rather than negative-with-a-minus: "you are €40 over" is
      *  what a leader needs to read, not "−40 allowed". */
     overspentBy: (amount: string) => `${amount} over`,
-    /** The four figures under the headline are labelled, not spelled out in sentences:
-     *  a leader reads this row at a till, and a label above a number is quicker than
-     *  prose around it. */
+    /** The four figures beside the headline are labelled, not spelled out in sentences:
+     *  a leader reads this table at a till, and a label next to a number is quicker than
+     *  prose around it. Kept short so two of them fit across a phone. */
     spentToday: 'Spent today',
     medianDay: 'Median day',
     daysLeft: 'Days left',
