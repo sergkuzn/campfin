@@ -179,7 +179,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
 
   return (
     <div className="income">
-      <button className="dashboard__back" type="button" onClick={onBack}>
+      <button className="screen-back" type="button" onClick={onBack}>
         {t.income.back}
       </button>
 

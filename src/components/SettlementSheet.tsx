@@ -116,7 +116,7 @@ export function SettlementSheet({
 
   return (
     <div className="settlement">
-      <button className="dashboard__back settlement__hide-print" type="button" onClick={onBack}>
+      <button className="screen-back settlement__hide-print" type="button" onClick={onBack}>
         {t.settlement.back}
       </button>
 

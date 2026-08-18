@@ -101,7 +101,7 @@ export function ReceiptsScreen({ campId, expenses, summaries, focusPoolId, onBac
 
   return (
     <div className="receipts">
-      <button className="dashboard__back" type="button" onClick={onBack}>
+      <button className="screen-back" type="button" onClick={onBack}>
         {t.receipts.back}
       </button>
 

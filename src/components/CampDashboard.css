@@ -5,21 +5,6 @@
   width: 100%;
 }
 
-.dashboard__back {
-  align-self: flex-start;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.dashboard__back:hover {
-  color: var(--fg);
-}
-
 .dashboard__header {
   display: flex;
   align-items: center;

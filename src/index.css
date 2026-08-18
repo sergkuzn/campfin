@@ -12,6 +12,9 @@
   --space-6: 1.5rem;
 
   --radius: 1rem;
+  /* Height of the sticky back bar. Anything else that sticks to the top of a screen
+     offsets by this, so the two never overlap. 44px is the usual minimum touch target. */
+  --screen-back-height: 44px;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* Light theme (default). Dark overrides these same names in the media query. */
@@ -73,4 +76,38 @@ body {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* The way back out of a sub-screen. Six screens use it, so it lives with the shell
+   rather than in any one screen's stylesheet.
+
+   Pinned to the top of the viewport: the app header scrolls away first, and on a long
+   receipts list the way out would otherwise be a scroll back up. The negative inline
+   margin cancels `.app`'s padding so the bar spans the full width — anything narrower
+   lets rows scroll visibly through the gap beside it.
+
+   `min-height` rather than font size alone: the label is one small line, but the target
+   has to be a thumb. */
+.screen-back {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  min-height: var(--screen-back-height);
+  margin-inline: calc(-1 * var(--space-6));
+  padding: var(--space-2) var(--space-6);
+  border: 0;
+  /* Lifted off the page background and closed with a rule, so the bar reads as a bar:
+     `--bg` here would make a 44px target look like a bare line of text, and the edge
+     where pinned bar meets scrolling content would be invisible. The border counts
+     inside the height (`box-sizing: border-box`), so the bar stays exactly
+     `--screen-back-height` tall and the receipts day headings still clear it. */
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--accent); /* reads as a control, not as caption text */
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
 }

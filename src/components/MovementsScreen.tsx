@@ -67,7 +67,7 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
 
   return (
     <div className="movements">
-      <button className="dashboard__back" type="button" onClick={onBack}>
+      <button className="screen-back" type="button" onClick={onBack}>
         {t.movements.back}
       </button>
 

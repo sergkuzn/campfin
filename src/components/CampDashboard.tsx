@@ -104,7 +104,7 @@ export function CampDashboard({
 
   const header = (
     <>
-      <button className="dashboard__back" type="button" onClick={onBack}>
+      <button className="screen-back" type="button" onClick={onBack}>
         {t.dashboard.back}
       </button>
 
