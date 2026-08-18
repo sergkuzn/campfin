@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './RowMenu.css'
+import { useBackDismiss } from '../hooks/useBackDismiss'
 import { useT } from '../i18n'
 
 type Props = {
@@ -30,6 +31,11 @@ export function RowMenu({ label, disabled, onEdit, onDelete }: Props) {
   const [dropUp, setDropUp] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
+
+  // An open menu is a layer over the screen, so the back gesture should take it away
+  // rather than the whole screen — the touch equivalent of the Escape handler below.
+  const close = useCallback(() => setOpen(false), [])
+  useBackDismiss(open, close)
 
   // An open menu must close when anything outside it is touched. Those listeners live on
   // the document, outside React's tree, so they need attaching and removing by hand —

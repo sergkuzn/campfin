@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { downloadCsv, downloadJson } from '../db/download'
 import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
@@ -6,6 +6,7 @@ import { useIncome } from '../hooks/useIncome'
 import { useMovements } from '../hooks/useMovements'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import type { Session } from '../hooks/useSession'
+import { useViewHistory } from '../hooks/useViewHistory'
 import { computeBurn, emptyBurn } from '../lib/burn'
 import { todayIso } from '../lib/dates'
 import { buildCampExport, exportFileName } from '../lib/exportJson'
@@ -60,7 +61,11 @@ export function SignedInApp({ session }: Props) {
     deleteCamp,
     clearError,
   } = useCamps(session.userId)
-  const [view, setView] = useState<View>({ screen: 'list' })
+  // Backed by session history, so the phone's own back gesture steps up a screen exactly
+  // as the ← buttons do. `navigate` replaces `setView` and takes the same values; the
+  // callback clears any pending error whichever way the screen was left, so a rejected
+  // create or rename cannot linger on the next one.
+  const [view, navigate, goBack] = useViewHistory<View>({ screen: 'list' }, clearError)
 
   // No router means no automatic scroll reset: without this, opening a pool's receipts from
   // a bar low on the dashboard would show that screen already scrolled down.
@@ -133,25 +138,19 @@ export function SignedInApp({ session }: Props) {
   const handleCreate = (name: string): boolean => {
     const camp = createCamp(name)
     if (camp === null) return false
-    setView({ screen: 'dashboard', campId: camp.id }) // jump straight into the new camp
+    navigate({ screen: 'dashboard', campId: camp.id }) // jump straight into the new camp
     return true
   }
 
-  // Clear any pending error when switching screens, so a rejected create or rename on one
-  // screen doesn't linger on the next.
   const handleOpen = (campId: string) => {
-    clearError()
-    setView({ screen: 'dashboard', campId })
-  }
-
-  const handleBackToList = () => {
-    clearError()
-    setView({ screen: 'list' })
+    navigate({ screen: 'dashboard', campId })
   }
 
   const handleDelete = (campId: string) => {
     deleteCamp(campId)
-    setView({ screen: 'list' })
+    // 'replace', not a push: the camp is gone, so its screen must not stay in the history
+    // stack for a back press to return to.
+    navigate({ screen: 'list' }, 'replace')
   }
 
   const handleExportJson = () => {
@@ -178,7 +177,7 @@ export function SignedInApp({ session }: Props) {
     const camp = importCamp(text)
     // Null means the file was refused; the reason is already in `error` on the list.
     if (camp === null) return false
-    setView({ screen: 'dashboard', campId: camp.id })
+    navigate({ screen: 'dashboard', campId: camp.id })
     return true
   }
 
@@ -204,7 +203,7 @@ export function SignedInApp({ session }: Props) {
         expenses={expenses}
         summaries={summaries}
         focusPoolId={view.poolId}
-        onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
+        onBack={goBack}
       />
     )
   }
@@ -217,7 +216,7 @@ export function SignedInApp({ session }: Props) {
         movements={movements}
         deposits={deposits}
         custody={custody}
-        onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
+        onBack={goBack}
       />
     )
   }
@@ -229,7 +228,7 @@ export function SignedInApp({ session }: Props) {
         settlement={settlement}
         expenses={expenses.expenses}
         summaries={summaries}
-        onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
+        onBack={goBack}
         onExportJson={handleExportJson}
         onExportCsv={handleExportCsv}
       />
@@ -245,8 +244,8 @@ export function SignedInApp({ session }: Props) {
         isAdmin={isCampAdmin(memberships, openCamp.id, session.userId)}
         isLoading={income.isLoading}
         error={error ?? income.error}
-        onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
-        onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
+        onBack={goBack}
+        onOpenIncome={() => navigate({ screen: 'income', campId: openCamp.id })}
         onRename={(name) => renameCamp(openCamp.id, name)}
         onDelete={() => handleDelete(openCamp.id)}
       />
@@ -254,13 +253,7 @@ export function SignedInApp({ session }: Props) {
   }
 
   if (view.screen === 'income') {
-    return (
-      <IncomeSetup
-        campId={openCamp.id}
-        income={income}
-        onBack={() => setView({ screen: 'dashboard', campId: openCamp.id })}
-      />
-    )
+    return <IncomeSetup campId={openCamp.id} income={income} onBack={goBack} />
   }
 
   return (
@@ -274,12 +267,12 @@ export function SignedInApp({ session }: Props) {
       hasExpenses={expenses.expenses.length > 0}
       custody={custody}
       settlement={settlement}
-      onBack={handleBackToList}
-      onOpenIncome={() => setView({ screen: 'income', campId: openCamp.id })}
-      onOpenReceipts={(poolId) => setView({ screen: 'receipts', campId: openCamp.id, poolId })}
-      onOpenMovements={(focus) => setView({ screen: 'movements', campId: openCamp.id, focus })}
-      onOpenSettlement={() => setView({ screen: 'settlement', campId: openCamp.id })}
-      onOpenSettings={() => setView({ screen: 'settings', campId: openCamp.id })}
+      onBack={goBack}
+      onOpenIncome={() => navigate({ screen: 'income', campId: openCamp.id })}
+      onOpenReceipts={(poolId) => navigate({ screen: 'receipts', campId: openCamp.id, poolId })}
+      onOpenMovements={(focus) => navigate({ screen: 'movements', campId: openCamp.id, focus })}
+      onOpenSettlement={() => navigate({ screen: 'settlement', campId: openCamp.id })}
+      onOpenSettings={() => navigate({ screen: 'settings', campId: openCamp.id })}
     />
   )
 }

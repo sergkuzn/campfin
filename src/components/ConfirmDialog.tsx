@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import './ConfirmDialog.css'
+import { useBackDismiss } from '../hooks/useBackDismiss'
 import { useT } from '../i18n'
 
 type Props = {
@@ -23,6 +24,10 @@ export function ConfirmDialog({ open, title, lines, confirmLabel, onConfirm, onC
   // useRef holds a mutable box that survives re-renders without causing one. Passing it
   // as ref={} makes React put the real DOM node in .current after mount.
   const ref = useRef<HTMLDialogElement>(null)
+
+  // The phone's back gesture answers the question the same way Esc does — by declining it.
+  // Android has no Esc key, so without this the only ways out are the backdrop and Cancel.
+  useBackDismiss(open, onCancel)
 
   // A <dialog> keeps its open/closed state in the DOM, not in React, so React state has
   // to be pushed into it imperatively — synchronising with an external system.

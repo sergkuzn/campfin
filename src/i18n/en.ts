@@ -163,7 +163,9 @@ export const en = {
   },
 
   income: {
-    back: '← Back to camp',
+    // Reachable from both the dashboard and camp settings, and ← returns to whichever it
+    // was — so the label cannot name a destination the way the other screens' do.
+    back: '← Back',
     title: 'Set up income',
     add: '＋ Add income',
     empty: 'No income yet — tap ＋ Add income.',
