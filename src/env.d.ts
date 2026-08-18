@@ -1,3 +1,5 @@
+/// <reference types="vite-plugin-pwa/react" />
+
 /**
  * Build-time constants substituted by Vite's `define` (see `vite.config.ts`). They are
  * not real variables — nothing declares them at runtime — so TypeScript only learns

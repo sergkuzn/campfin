@@ -42,10 +42,12 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        // 'autoUpdate' silently installs new versions and auto-injects SW registration,
-        // so there's no register code to write for the MVP. Revisit in milestone 5 if you
-        // want a "new version available — reload" prompt (virtual:pwa-register/react).
-        registerType: 'autoUpdate',
+        // 'prompt' keeps a newly downloaded service worker in its waiting state until the
+        // user taps Reload (see `ReloadPrompt`). Under 'autoUpdate' the new worker takes
+        // over immediately and swaps the cached assets beneath a page that is still
+        // running — enough to break a lazy chunk the open page asks for later. Deferring
+        // that to a tap also means a half-typed receipt is never reloaded away.
+        registerType: 'prompt',
         manifest: {
           // A dev build installs as its own home-screen icon, under its own name and
           // colour: the two apps sit side by side on the same phone and must not be
