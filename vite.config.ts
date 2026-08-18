@@ -53,8 +53,8 @@ export default defineConfig(({ mode }) => {
           name: isProd ? 'campfin — Camp Budget Tracker' : 'campfin DEV — Camp Budget Tracker',
           short_name: isProd ? 'campfin' : 'campfin DEV',
           description: isProd
-            ? 'Local-first camp budget tracker for two group leaders.'
-            : 'Dev build of campfin — writes to the dev database, not the real camp.',
+            ? 'Local-first camp budget tracker.'
+            : 'Dev build of campfin — writes to the dev database.',
           theme_color: isProd ? '#0f172a' : '#78350f',
           background_color: '#ffffff',
           display: 'standalone',

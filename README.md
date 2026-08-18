@@ -41,7 +41,7 @@ src/i18n/        the dictionary; no user-facing string lives in a component
 ```bash
 pnpm install
 cp .env.example .env.dev.local    # then fill in the DEV app id
-pnpm dev
+pnpm vite:dev
 ```
 
 `VITE_INSTANT_APP_ID` comes from the InstantDB dashboard. It is inlined at build time, so a
@@ -53,8 +53,8 @@ memory.
 
 | Command | What it does |
 |---|---|
-| `pnpm dev` | dev server with HMR, against the **dev** database |
-| `pnpm dev:prod` | same, against the **production** database |
+| `pnpm vite:dev` | dev server with HMR, against the **dev** database |
+| `pnpm vite:prod` | same, against the **production** database |
 | `pnpm db:push:dev` | push `instant.schema.ts` + `instant.perms.ts` to the **dev** app |
 | `pnpm db:push:prod` | push the same to **production** |
 | `pnpm build` | typecheck + build into `dist/` — the host's build command, env from the host |
@@ -80,11 +80,11 @@ by `VITE_INSTANT_APP_ID`; `VITE_APP_ENV` only labels it.
 |---|---|---|---|
 | Vercel Production (`campfin-web.vercel.app`) | `main` | production app | `v0.3.0 · 1a2b3c4 · …` |
 | Vercel Preview (`campfin-web-dev.vercel.app`) | `develop` (and any branch) | dev app | `dev · v0.3.0 · …` in amber |
-| Local | `pnpm dev` → `.env.dev.local` | dev app | `dev · …` |
-| Local | `pnpm dev:prod` → `.env.prod.local` | production app | `v0.3.0 · …` |
+| Local | `pnpm vite:dev` → `.env.dev.local` | dev app | `dev · …` |
+| Local | `pnpm vite:prod` → `.env.prod.local` | production app | `v0.3.0 · …` |
 
 Locally the app id comes from `.env.dev.local` or `.env.prod.local`, and Vite reads
-`.env.[mode].local` only in that mode — so `pnpm dev` sees the dev file and `pnpm dev:prod`
+`.env.[mode].local` only in that mode — so `pnpm vite:dev` sees the dev file and `pnpm vite:prod`
 the production one, with no always-loaded `.env.local` underneath either. That is why there
 is no mode-less local command: `pnpm build` alone (mode `production`) finds neither file and
 would build a bundle with no app id. Use `pnpm build:dev` or `pnpm build:prod`, then
