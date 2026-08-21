@@ -58,6 +58,7 @@ export function SignedInApp({ session }: Props) {
     createCamp,
     importCamp,
     renameCamp,
+    setMoneyHolder,
     deleteCamp,
     clearError,
   } = useCamps(session.userId)
@@ -107,8 +108,9 @@ export function SignedInApp({ session }: Props) {
         blocks,
         expenses: expenses.expenses,
         movements: movements.movements,
+        moneyHolder: openCamp?.moneyHolder,
       }),
-    [summaries, blocks, expenses.expenses, movements.movements],
+    [summaries, blocks, expenses.expenses, movements.movements, openCamp],
   )
 
   // One clock read per render, shared by the status pill, the burn math and the chart's
@@ -200,6 +202,7 @@ export function SignedInApp({ session }: Props) {
     return (
       <ReceiptsScreen
         campId={openCamp.id}
+        moneyHolder={openCamp.moneyHolder}
         expenses={expenses}
         summaries={summaries}
         focusPoolId={view.poolId}
@@ -246,7 +249,9 @@ export function SignedInApp({ session }: Props) {
         error={error ?? income.error}
         onBack={goBack}
         onOpenIncome={() => navigate({ screen: 'income', campId: openCamp.id })}
+        expenses={expenses.expenses}
         onRename={(name) => renameCamp(openCamp.id, name)}
+        onChangeHolder={(name: string | null) => setMoneyHolder(openCamp.id, name)}
         onDelete={() => handleDelete(openCamp.id)}
       />
     )

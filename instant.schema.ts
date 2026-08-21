@@ -40,6 +40,10 @@ const _schema = i.schema({
       // The human-typable code a co-leader enters to join. Unique so two camps can never
       // answer the same code; indexed because the join screen queries by it.
       joinCode: i.string().unique().indexed(),
+      // The leader holding the camp's cash, by name. One field rather than a flag on each
+      // payer, so "exactly one holder" cannot be broken by two phones promoting two people
+      // while offline. Optional: nobody holds the money until somebody is named.
+      moneyHolder: i.string().optional(),
       createdAt: i.number().indexed(),
       // No dates: a camp's window is the span of its per-diem blocks, derived on read.
     }),
@@ -94,6 +98,15 @@ const _schema = i.schema({
       // uniqueness is enforced on the client, since it holds per camp rather than globally.
       number: i.number().optional().indexed(),
       note: i.string().optional(),
+      // Whose wallet the money came from, as typed — free text rather than a link, so a
+      // payer needs no namespace of its own, no permission rule and no id to remap on
+      // import. Names are compared through `payerKey`, so case and spacing never split
+      // one person in two.
+      paidBy: i.string().optional(),
+      // When the money holder paid it back, epoch ms. Absent = still owed. A flag rather
+      // than a second row: the budget was consumed when the receipt was paid, so booking
+      // the payback as a movement would spend the pool twice.
+      reimbursedAt: i.number().optional(),
       enteredBy: i.string().optional(),
       createdAt: i.number(),
     }),

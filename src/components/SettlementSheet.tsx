@@ -1,6 +1,8 @@
 import './SettlementSheet.css'
 import { useFormat, useT } from '../i18n'
 import { csvAmount, toCsv } from '../lib/csv'
+import { toIsoDate } from '../lib/dates'
+import { isSamePayer } from '../lib/payers'
 import type { PoolSummary } from '../lib/pools'
 import type { Settlement, SettlementRow, SettlementWarning } from '../lib/settlement'
 import type { Camp, Expense } from '../lib/types'
@@ -64,8 +66,14 @@ export function SettlementSheet({
   }
 
   const warningText = (warning: SettlementWarning): string => {
-    const pool = warning.pool?.name ?? ''
     const amount = format.euros(warning.amountCents)
+    // Narrowing on `kind` is what makes the right fields visible in each branch: the payer
+    // warning has a name and no pool, the other three have a pool and no name.
+    if (warning.kind === 'owed_to_payer') {
+      return t.settlement.warnings.owedToPayer(warning.payerName, amount)
+    }
+
+    const pool = warning.pool?.name ?? ''
     switch (warning.kind) {
       case 'deposit_at_vendor':
         return t.settlement.warnings.depositAtVendor(pool, amount)
@@ -74,6 +82,26 @@ export function SettlementSheet({
       case 'over_attended':
         return t.settlement.warnings.overAttended(pool, amount)
     }
+  }
+
+  /** A key that tells two warnings of the same kind apart — by pool, or by person. */
+  const warningKey = (warning: SettlementWarning): string =>
+    warning.kind === 'owed_to_payer'
+      ? `owed_to_payer-${warning.payerName}`
+      : `${warning.kind}-${warning.pool?.id ?? 'none'}`
+
+  /**
+   * The Repaid column, in the three states a reader needs to tell apart: the day the money
+   * came back, "no" while it is still owed, and blank when there was nothing to pay back —
+   * either nobody was tracked, or the money holder paid it out of their own cash anyway.
+   *
+   * `toIsoDate` rather than `toISOString()`: the timestamp is a moment, and cutting it up
+   * in UTC would file a late-evening repayment under the next day.
+   */
+  const repaidCell = (expense: Expense): string => {
+    if (expense.paidBy === undefined || isSamePayer(expense.paidBy, camp.moneyHolder)) return ''
+    if (expense.reimbursedAt === undefined) return t.settlement.csv.repaidNo
+    return toIsoDate(new Date(expense.reimbursedAt))
   }
 
   const handleExportCsv = () => {
@@ -96,6 +124,8 @@ export function SettlementSheet({
           t.settlement.csv.name,
           t.settlement.csv.amount,
           t.settlement.csv.note,
+          t.settlement.csv.paidBy,
+          t.settlement.csv.repaid,
         ],
         // Oldest first, and ISO dates rather than a formatted day: a spreadsheet in any
         // locale reads "2026-07-02" the same way.
@@ -109,6 +139,10 @@ export function SettlementSheet({
             expense.name,
             csvAmount(expense.amountCents),
             expense.note ?? '',
+            expense.paidBy ?? '',
+            // Three answers in one column: the date it came back, "no" while it is still
+            // owed, and empty when nobody was tracked as having fronted it.
+            repaidCell(expense),
           ]),
       ]),
     )
@@ -175,7 +209,7 @@ export function SettlementSheet({
           <h3 className="settlement__warnings-title">{t.settlement.warningsTitle}</h3>
           <ul className="settlement__warning-list">
             {settlement.warnings.map((warning) => (
-              <li key={`${warning.kind}-${warning.pool?.id ?? 'none'}`}>{warningText(warning)}</li>
+              <li key={warningKey(warning)}>{warningText(warning)}</li>
             ))}
           </ul>
         </section>

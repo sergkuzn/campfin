@@ -145,6 +145,31 @@ export const en = {
     save: 'Save',
     shareSection: 'Join code',
     incomeSection: 'Income',
+    /** Who carries the cash. Camp-wide, and the thing every "owed" marker is measured
+     *  against — so it lives with the camp's other once-per-camp settings. */
+    holderSection: 'Money holder',
+    holderHint:
+      'The leader carrying the camp cash. Receipts anyone else pays show as owed until they are paid back.',
+    holderLabel: 'Who holds the money',
+    holderNone: 'Nobody yet',
+    holderNewOption: '＋ Someone else…',
+    holderNewNameLabel: 'Name',
+    holderNewNamePlaceholder: 'e.g. Anna',
+    holderSave: 'Save',
+    /** Handing the wallet over rewrites no receipt, but it does flip who owes whom — so
+     *  the question says how many rows change, in both directions. */
+    holderChangeTitle: (name: string) => `Make ${name} the money holder?`,
+    holderClearTitle: 'Nobody holds the money?',
+    holderReplaces: (current: string) => `${current} holds it now.`,
+    holderStopOwing: (n: number) =>
+      `${n} ${n === 1 ? 'receipt stops' : 'receipts stop'} showing as owed.`,
+    holderStartOwing: (n: number) =>
+      `${n} ${n === 1 ? 'receipt starts' : 'receipts start'} showing as owed.`,
+    holderNoChange: 'No receipt changes.',
+    holderConfirm: 'Change holder',
+    holderOwedTitle: 'Still to pay back',
+    holderOwedRow: (name: string, count: number) =>
+      `${name} — ${count} ${count === 1 ? 'receipt' : 'receipts'}`,
     dangerSection: 'Danger zone',
     delete: 'Delete camp',
     deleteTitle: 'Delete camp',
@@ -326,6 +351,43 @@ export const en = {
     save: 'Save',
     cancel: 'Cancel',
     spentTotal: 'Spent total',
+    /** Whose wallet the money came out of, and what the holder still owes them. */
+    payer: {
+      label: 'Paid by',
+      /** The two answers. Nothing is picked to begin with — a receipt has to say whose
+       *  money it was, so the choice is made rather than defaulted into. */
+      holderOption: (name: string) => `${name} (holds the camp money)`,
+      otherOption: 'Someone else',
+      newNameLabel: 'Their name',
+      newNamePlaceholder: 'e.g. Ben',
+      /** Shown instead of the first option when no holder has been named yet. */
+      noHolder: 'No money holder yet — name one in camp settings, then this becomes a choice.',
+      /** In the editor, for a receipt somebody else paid: it may already have been settled
+       *  before it was ever typed in. */
+      returnedLabel: 'Already paid back',
+      returnedHint: 'Tick if the money holder has already returned this money.',
+      /** On the row itself. Only ever shown when someone other than the holder paid, so
+       *  the common case costs no words at all. */
+      paidByRow: (name: string) => `Paid by ${name}`,
+      returnButton: 'Return',
+      returnedButton: 'Returned',
+      /** Both directions ask first: the button sits in a list you scroll past. */
+      confirmReturnTitle: (name: string) => `Return the money to ${name}?`,
+      confirmReturnLine: (amount: string) => `${amount} goes back out of the camp cash.`,
+      confirmReturnLabel: 'Yes, returned',
+      confirmUndoTitle: (name: string) => `Undo the return to ${name}?`,
+      confirmUndoLine: (amount: string) => `${amount} goes back to being owed.`,
+      confirmUndoLabel: 'Undo',
+      /** Under the list, beside the spent total. */
+      owedTotal: 'Owed to others',
+      filterUnpaid: 'Not repaid',
+      filterPayerLabel: 'Paid by',
+      filterPayerAll: 'Anyone',
+      /** The worklist while filling the field in on a camp that predates it. */
+      filterPayerUntracked: 'No payer set',
+      emptyUntracked: 'Every receipt says who paid.',
+      emptyUnpaid: 'Nothing is waiting to be paid back.',
+    },
     dayTotal: (amount: string) => `${amount} that day`,
     count: (n: number) => `${n} ${n === 1 ? 'receipt' : 'receipts'}`,
     unknownPool: 'Unknown pool',
@@ -343,7 +405,7 @@ export const en = {
      *  which is what makes the chips safe to switch off one at a time. */
     filterAll: 'All',
     filterCount: (shown: number, total: number) => `${shown} of ${total} receipts shown`,
-    emptyFiltered: 'No receipts in the pools you picked.',
+    emptyFiltered: 'No receipts match the filters you picked.',
     deleteTitle: (name: string) => `Delete "${name}"?`,
     deleteLine: (amount: string, pool: string) => `${amount} goes back into ${pool}.`,
     confirmDelete: 'Delete',
@@ -354,6 +416,7 @@ export const en = {
       pool: 'Choose which pool paid for it.',
       number: 'A receipt number is a whole number: 1, 2, 3 — or leave it empty.',
       numberTaken: 'Another receipt already has that number.',
+      paidBy: 'Say whose money paid for this — the money holder, or somebody else by name.',
     },
   },
 
@@ -474,6 +537,10 @@ export const en = {
       poolOverspent: (pool: string, amount: string) => `${pool} is ${amount} over budget.`,
       overAttended: (pool: string, amount: string) =>
         `${pool}: ${amount} more was used than granted — more people came than were funded.`,
+      /** Not money for the organisation — an IOU between the leaders. It still belongs on
+       *  the sheet: until it is settled, the cash box holds somebody else's money. */
+      owedToPayer: (name: string, amount: string) =>
+        `${name} is still owed ${amount} for receipts they paid themselves.`,
     },
     exportJson: '⤓ Export JSON',
     exportCsv: '⤓ Export CSV',
@@ -490,6 +557,11 @@ export const en = {
       pool: 'Pool',
       name: 'What',
       note: 'Note',
+      paidBy: 'Paid by',
+      /** One column, three answers: a date, "no" while it is owed, empty when nobody
+       *  fronted the money. */
+      repaid: 'Repaid',
+      repaidNo: 'no',
     },
   },
 

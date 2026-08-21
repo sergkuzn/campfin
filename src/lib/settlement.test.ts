@@ -114,6 +114,7 @@ const settle = (over: Partial<SettlementInput> & { pools?: Pool[] } = {}) => {
     blocks,
     expenses,
     movements: over.movements ?? [],
+    moneyHolder: over.moneyHolder,
   })
 }
 
@@ -218,6 +219,42 @@ describe('computeSettlement', () => {
 
     expect(s.warnings).toContainEqual({ kind: 'over_attended', pool: everyday, amountCents: 6000 })
     expect(s.rows).toContainEqual({ kind: 'pool_unspent', pool: everyday, amountCents: 62_000 })
+  })
+
+  it('warns about money the holder still owes a co-leader, one line per person', () => {
+    const s = settle({
+      expenses: [
+        exp({ id: 'e1', amountCents: 800, paidBy: 'Ben' }),
+        exp({ id: 'e2', amountCents: 1200, paidBy: 'ben' }), // same person, other spelling
+        exp({ id: 'e3', amountCents: 500, paidBy: 'Anna' }), // the holder's own money
+        exp({ id: 'e4', amountCents: 900, paidBy: 'Chris', reimbursedAt: 5 }), // settled
+      ],
+      moneyHolder: 'Anna',
+    })
+
+    expect(s.warnings).toContainEqual({
+      kind: 'owed_to_payer',
+      payerName: 'Ben',
+      amountCents: 2000,
+    })
+    expect(s.warnings.filter((w) => w.kind === 'owed_to_payer')).toHaveLength(1)
+  })
+
+  it("does not touch the money that goes back — an IOU between leaders is not the org's", () => {
+    const withDebt = settle({
+      expenses: [exp({ amountCents: 30_000, paidBy: 'Ben' })],
+      moneyHolder: 'Anna',
+    })
+    const withoutDebt = settle({ expenses: [exp({ amountCents: 30_000 })] })
+
+    expect(withDebt.toReturnCents).toBe(withoutDebt.toReturnCents)
+    expect(withDebt.spentTotalCents).toBe(withoutDebt.spentTotalCents)
+  })
+
+  it('names no debt while the camp has no money holder', () => {
+    const s = settle({ expenses: [exp({ amountCents: 800, paidBy: 'Ben' })] })
+
+    expect(s.warnings.some((w) => w.kind === 'owed_to_payer')).toBe(false)
   })
 
   it('an empty camp settles to zeros with no rows', () => {

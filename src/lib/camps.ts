@@ -32,7 +32,7 @@ export function isCamp(value: unknown): value is Camp {
   ) {
     return false
   }
-  return true
+  return c.moneyHolder === undefined || typeof c.moneyHolder === 'string'
 }
 
 /** True if another camp already has this name. Pass `excludeCampId` when renaming, so a camp doesn't collide with itself. */

@@ -183,6 +183,16 @@ export function renameCamp(campId: string, name: string): Promise<unknown> {
 }
 
 /**
+ * Name the leader who holds the camp's cash, or pass null so nobody does.
+ *
+ * No receipt is rewritten: who owes whom is derived from this name at render time, which
+ * is what lets one write flip every debt in the camp at once.
+ */
+export function setMoneyHolder(campId: string, name: string | null): Promise<unknown> {
+  return db.transact(chunk(db.tx.camps[campId]).update({ moneyHolder: name }))
+}
+
+/**
  * Deletes the camp and, through `onDelete: 'cascade'` on every row's `camp` link, its
  * pools, income, blocks, receipts, movements and memberships — server-side, in one step,
  * rather than the client walking six namespaces and hoping it finishes.

@@ -90,3 +90,47 @@
 .camp-settings__section .received {
   margin-top: var(--space-2);
 }
+
+/* The money-holder block. `.camp-settings__input` is a flex child in the rename row, so
+   the bare <select> here needs its own full width — flex: 1 does nothing outside a flex
+   parent. */
+.camp-settings__hint {
+  margin: 0 0 var(--space-2);
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+select.camp-settings__input {
+  width: 100%;
+}
+
+.camp-settings__debts {
+  margin-top: var(--space-3);
+}
+
+.camp-settings__subheading {
+  margin: 0 0 var(--space-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.camp-settings__debt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Amber, matching the row buttons: the money is spent, but it is not yet back where it
+   belongs. */
+.camp-settings__debt {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--warn) 80%, var(--fg));
+  font-variant-numeric: tabular-nums;
+}

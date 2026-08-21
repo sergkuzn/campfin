@@ -60,10 +60,10 @@ describe('buildCampExport', () => {
     expect(dump.expenses).toEqual([expense])
   })
 
-  it('the dump is version 7 and carries the camp’s movements', () => {
+  it('the dump is version 8 and carries the camp’s movements', () => {
     const dump = buildCampExport(camp, state, [], [movement], '2026-07-29T10:00:00.000Z')
     expect(dump.format).toBe('campfin.camp')
-    expect(dump.version).toBe(7)
+    expect(dump.version).toBe(8)
     expect(dump.exportedAt).toBe('2026-07-29T10:00:00.000Z')
     expect(dump.movements).toEqual([movement])
   })

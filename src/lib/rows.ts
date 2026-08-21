@@ -44,8 +44,8 @@ export function mapRows<T>(
 export function toCamp(row: unknown): Camp | null {
   const value = withoutNulls(row)
   if (!isCamp(value)) return null
-  const { id, name, joinCode, createdAt } = value
-  return { id, name, joinCode, createdAt }
+  const { id, name, joinCode, moneyHolder, createdAt } = value
+  return { id, name, joinCode, moneyHolder, createdAt }
 }
 
 export function toMembership(row: unknown): Membership | null {
@@ -113,6 +113,20 @@ export function toMovement(row: unknown): Movement | null {
 export function toExpense(row: unknown): Expense | null {
   const value = withoutNulls(row)
   if (!isExpense(value)) return null
-  const { id, campId, poolId, name, amountCents, date, number, note, enteredBy, createdAt } = value
-  return { id, campId, poolId, name, amountCents, date, number, note, enteredBy, createdAt }
+  const { id, campId, poolId, name, amountCents, date, number, note, createdAt } = value
+  const { paidBy, reimbursedAt, enteredBy } = value
+  return {
+    id,
+    campId,
+    poolId,
+    name,
+    amountCents,
+    date,
+    number,
+    note,
+    paidBy,
+    reimbursedAt,
+    enteredBy,
+    createdAt,
+  }
 }

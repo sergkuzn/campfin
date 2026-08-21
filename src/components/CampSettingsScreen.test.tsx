@@ -53,9 +53,11 @@ function renderScreen(props: Partial<React.ComponentProps<typeof CampSettingsScr
         isAdmin
         isLoading={false}
         error={null}
+        expenses={[]}
         onBack={onBack}
         onOpenIncome={onOpenIncome}
         onRename={onRename}
+        onChangeHolder={vi.fn()}
         onDelete={onDelete}
         {...props}
       />

@@ -10,6 +10,7 @@ import {
 } from '../lib/expenses'
 import type { PoolSummary } from '../lib/pools'
 import type { Expense } from '../lib/types'
+import { PayerSelect } from './PayerSelect'
 import { ReceiptNumberField } from './ReceiptNumberField'
 
 type Props = {
@@ -25,6 +26,9 @@ type Props = {
   takenNumbers: ReadonlySet<number>
   /** What the "next number" button fills in: one past the highest in the camp. */
   suggestedNumber: number
+  /** Who holds the camp cash, so "paid out of the camp cash" can name them. Set in camp
+   *  settings — this form only reads it. */
+  moneyHolder: string | undefined
   onSave: (input: SaveExpenseInput) => void
   onCancel: () => void
 }
@@ -37,6 +41,7 @@ export function ExpenseForm({
   todayIso,
   takenNumbers,
   suggestedNumber,
+  moneyHolder,
   onSave,
   onCancel,
 }: Props) {
@@ -58,7 +63,9 @@ export function ExpenseForm({
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const input = expenseDraftToInput(draft, campId, expense, takenNumbers)
+    // The clock is read here, at the edge, and handed to the pure builder — a repayment
+    // ticked in this form is stamped with the moment Save was pressed.
+    const input = expenseDraftToInput(draft, campId, expense, takenNumbers, Date.now())
     // null means invalid; the check narrows the type as a side effect, so validation
     // lives in exactly one place.
     if (input === null) return
@@ -127,6 +134,14 @@ export function ExpenseForm({
         value={draft.number}
         suggestion={suggestedNumber}
         onChange={(number) => patch({ number })}
+      />
+
+      <PayerSelect
+        value={draft.paidBy}
+        moneyHolder={moneyHolder}
+        reimbursed={draft.reimbursed}
+        onChange={(paidBy) => patch({ paidBy })}
+        onReimbursedChange={(reimbursed) => patch({ reimbursed })}
       />
 
       <label className="field">

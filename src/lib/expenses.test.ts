@@ -18,6 +18,9 @@ import type { Expense } from './types'
 /** No receipt number is in use — the case most of these tests are not about. */
 const NONE: ReadonlySet<number> = new Set()
 
+/** A fixed "now", so a stamped repayment is an assertable value rather than the clock. */
+const NOW = 1_700_000_000_000
+
 /** A complete draft; each test overrides the one field it is about. */
 function draft(fields: Partial<ExpenseDraft> = {}): ExpenseDraft {
   return {
@@ -27,6 +30,8 @@ function draft(fields: Partial<ExpenseDraft> = {}): ExpenseDraft {
     poolId: 'pool-1',
     number: '',
     note: '',
+    paidBy: 'Anna',
+    reimbursed: false,
     ...fields,
   }
 }
@@ -39,6 +44,7 @@ function expense(fields: Partial<Expense> = {}): Expense {
     name: 'Bread',
     amountCents: 1250,
     date: '2026-07-14',
+    paidBy: 'Anna',
     createdAt: 1000,
     ...fields,
   }
@@ -78,35 +84,37 @@ describe('expenseIssues', () => {
 
 describe('expenseDraftToInput', () => {
   it('returns null for an invalid draft', () => {
-    expect(expenseDraftToInput(draft({ amount: '' }), 'c1', null, NONE)).toBeNull()
+    expect(expenseDraftToInput(draft({ amount: '' }), 'c1', null, NONE, NOW)).toBeNull()
   })
 
   it('parses euros as typed into integer cents', () => {
-    expect(expenseDraftToInput(draft({ amount: '12,50' }), 'c1', null, NONE)?.amountCents).toBe(
-      1250,
-    )
-    expect(expenseDraftToInput(draft({ amount: '19.99' }), 'c1', null, NONE)?.amountCents).toBe(
-      1999,
-    )
+    expect(
+      expenseDraftToInput(draft({ amount: '12,50' }), 'c1', null, NONE, NOW)?.amountCents,
+    ).toBe(1250)
+    expect(
+      expenseDraftToInput(draft({ amount: '19.99' }), 'c1', null, NONE, NOW)?.amountCents,
+    ).toBe(1999)
   })
 
   it('trims the name', () => {
-    expect(expenseDraftToInput(draft({ name: '  Bread  ' }), 'c1', null, NONE)?.name).toBe('Bread')
+    expect(expenseDraftToInput(draft({ name: '  Bread  ' }), 'c1', null, NONE, NOW)?.name).toBe(
+      'Bread',
+    )
   })
 
   it('drops an empty note rather than storing one', () => {
-    expect(expenseDraftToInput(draft({ note: '  ' }), 'c1', null, NONE)?.note).toBeUndefined()
-    expect(expenseDraftToInput(draft({ note: ' rain ' }), 'c1', null, NONE)?.note).toBe('rain')
+    expect(expenseDraftToInput(draft({ note: '  ' }), 'c1', null, NONE, NOW)?.note).toBeUndefined()
+    expect(expenseDraftToInput(draft({ note: ' rain ' }), 'c1', null, NONE, NOW)?.note).toBe('rain')
   })
 
   it('carries the row being edited forward', () => {
     const existing = expense()
-    expect(expenseDraftToInput(draft(), 'c1', existing, NONE)?.existing).toBe(existing)
+    expect(expenseDraftToInput(draft(), 'c1', existing, NONE, NOW)?.existing).toBe(existing)
   })
 
   it('round-trips a persisted row through the draft unchanged', () => {
     const row = expense({ note: 'market', number: 7 })
-    const input = expenseDraftToInput(draftFromExpense(row), row.campId, row, NONE)
+    const input = expenseDraftToInput(draftFromExpense(row), row.campId, row, NONE, NOW)
     expect(input).toEqual({
       existing: row,
       campId: row.campId,
@@ -116,6 +124,8 @@ describe('expenseDraftToInput', () => {
       date: row.date,
       number: 7,
       note: 'market',
+      paidBy: 'Anna',
+      reimbursedAt: undefined,
     })
   })
 })
@@ -123,6 +133,8 @@ describe('expenseDraftToInput', () => {
 describe('blankExpenseDraft', () => {
   it('defaults the date to today and pre-selects the pool', () => {
     expect(blankExpenseDraft('2026-07-30', 'pool-2')).toEqual({
+      paidBy: '',
+      reimbursed: false,
       date: '2026-07-30',
       name: '',
       amount: '',
@@ -130,6 +142,105 @@ describe('blankExpenseDraft', () => {
       number: '',
       note: '',
     })
+  })
+})
+
+describe('the payer on a draft', () => {
+  it('a new receipt picks nobody — whose money it was is a choice, not a default', () => {
+    expect(blankExpenseDraft('2026-07-30', 'pool-2').paidBy).toBe('')
+    expect(blankExpenseDraft('2026-07-30', 'pool-2').reimbursed).toBe(false)
+  })
+
+  it('stores the name trimmed, and an empty field as no payer at all', () => {
+    expect(expenseDraftToInput(draft({ paidBy: '  Ben ' }), 'c1', null, NONE, NOW)?.paidBy).toBe(
+      'Ben',
+    )
+    // A blank name is not "no payer" any more — it is an unanswered question, so there is
+    // no payload at all.
+    expect(expenseDraftToInput(draft({ paidBy: '   ' }), 'c1', null, NONE, NOW)).toBeNull()
+  })
+
+  it('a ticked repayment keeps the date it was originally settled on', () => {
+    const repaid: Expense = {
+      id: 'e1',
+      campId: 'c1',
+      poolId: 'pool-1',
+      name: 'Bread',
+      amountCents: 1250,
+      date: '2026-07-14',
+      paidBy: 'Ben',
+      reimbursedAt: 1234,
+      createdAt: 1,
+    }
+    const input = expenseDraftToInput(
+      draft({ paidBy: 'Ben', reimbursed: true }),
+      'c1',
+      repaid,
+      NONE,
+      NOW,
+    )
+    expect(input?.reimbursedAt).toBe(1234)
+  })
+
+  it('re-assigning a settled receipt to somebody else re-stamps the repayment', () => {
+    const repaid: Expense = {
+      id: 'e1',
+      campId: 'c1',
+      poolId: 'pool-1',
+      name: 'Bread',
+      amountCents: 1250,
+      date: '2026-07-14',
+      paidBy: 'Ben',
+      reimbursedAt: 1234,
+      createdAt: 1,
+    }
+    const input = expenseDraftToInput(
+      draft({ paidBy: 'Chris', reimbursed: true }),
+      'c1',
+      repaid,
+      NONE,
+      NOW,
+    )
+    // Still ticked, but it is a repayment to somebody else now, so it is stamped afresh.
+    expect(input?.reimbursedAt).toBe(NOW)
+  })
+
+  it('a brand-new receipt is not repaid', () => {
+    const input = expenseDraftToInput(draft({ paidBy: 'Ben' }), 'c1', null, NONE, NOW)
+    expect(input?.reimbursedAt).toBeUndefined()
+  })
+
+  it('ticking "already paid back" on a fresh receipt stamps it now', () => {
+    const input = expenseDraftToInput(
+      draft({ paidBy: 'Ben', reimbursed: true }),
+      'c1',
+      null,
+      NONE,
+      NOW,
+    )
+    expect(input?.reimbursedAt).toBe(NOW)
+  })
+
+  it('un-ticking it on a settled receipt puts the money back to owed', () => {
+    const repaid: Expense = {
+      id: 'e1',
+      campId: 'c1',
+      poolId: 'pool-1',
+      name: 'Bread',
+      amountCents: 1250,
+      date: '2026-07-14',
+      paidBy: 'Ben',
+      reimbursedAt: 1234,
+      createdAt: 1,
+    }
+    const input = expenseDraftToInput(draft({ paidBy: 'Ben' }), 'c1', repaid, NONE, NOW)
+    expect(input?.reimbursedAt).toBeUndefined()
+  })
+
+  it('blocks the save until somebody is named — the field is compulsory', () => {
+    expect(expenseIssues(draft({ paidBy: '' }), NONE)).toContain('paidBy')
+    expect(expenseIssues(draft({ paidBy: '   ' }), NONE)).toContain('paidBy')
+    expect(expenseIssues(draft({ paidBy: 'Ben' }), NONE)).not.toContain('paidBy')
   })
 })
 

@@ -7,6 +7,19 @@ export type Camp = {
    * exactly one camp.
    */
   joinCode: string
+  /**
+   * Who holds the camp's cash — the leader with the wallet. A name as typed, not an id:
+   * payers are free text on the receipt, so this is the same kind of value, compared
+   * through `payerKey` so spelling and case never split one person into two.
+   *
+   * It lives on the camp rather than as a flag per person because "exactly one holder" is
+   * an invariant, and a boolean per person cannot express it: two phones offline, each
+   * promoting someone different, would merge into two holders with no rule to settle it.
+   * One field merges to one winner.
+   *
+   * Absent until someone is named, and then no receipt owes anybody anything.
+   */
+  moneyHolder?: string
   createdAt: number
   // No dates of its own: the camp's window is the span of its per-diem blocks, which is
   // the only place camp days are ever entered. One source, so the two cannot disagree.
@@ -179,6 +192,26 @@ export type Expense = {
    */
   number?: number
   note?: string
+  /**
+   * Whose wallet the money came out of, as typed. Absent means "not tracked" — which is
+   * every receipt written before this field existed, and the reason nothing had to be
+   * backfilled: an untracked receipt owes nobody.
+   *
+   * Not to be confused with `enteredBy`, which is about who typed the row into the app.
+   */
+  paidBy?: string
+  /**
+   * When the money holder paid this back, in epoch milliseconds. Absent = still owed.
+   *
+   * A timestamp rather than a boolean: it reads the same in a condition, it records *when*
+   * for free, and two phones settling the same receipt merge to the later write instead of
+   * to an arbitrary `true`.
+   *
+   * Deliberately *not* a `Movement`: the budget was consumed when the receipt was paid,
+   * whoever's wallet it came from. Booking the payback as a second row would spend the
+   * pool twice and bend the burn curve.
+   */
+  reimbursedAt?: number
   enteredBy?: string
   createdAt: number
 }

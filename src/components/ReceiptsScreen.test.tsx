@@ -52,15 +52,22 @@ const rows = [
 ]
 
 function renderScreen(
-  options: { expenses?: Expense[]; pools?: Pool[]; focusPoolId?: string | null } = {},
+  options: {
+    expenses?: Expense[]
+    pools?: Pool[]
+    focusPoolId?: string | null
+    moneyHolder?: string
+  } = {},
 ) {
-  const { expenses = rows, pools = [food, tools], focusPoolId = null } = options
+  const { expenses = rows, pools = [food, tools], focusPoolId = null, moneyHolder } = options
   const saveExpense = vi.fn()
+  const setReimbursed = vi.fn()
   const stub: UseExpenses = {
     expenses,
     isLoading: false,
     error: null,
     saveExpense,
+    setReimbursed,
     deleteExpense: vi.fn(),
   }
   const user = userEvent.setup()
@@ -68,6 +75,7 @@ function renderScreen(
     <I18nProvider>
       <ReceiptsScreen
         campId="c1"
+        moneyHolder={moneyHolder}
         expenses={stub}
         summaries={pools.map(summary)}
         focusPoolId={focusPoolId}
@@ -75,7 +83,7 @@ function renderScreen(
       />
     </I18nProvider>,
   )
-  return { user, saveExpense }
+  return { user, saveExpense, setReimbursed }
 }
 
 /** The receipt names in the order they are rendered — the one thing a sort changes. */
@@ -203,5 +211,204 @@ describe('ReceiptsScreen — how a row wears its pool', () => {
     const row = rowFor('Bakery')
     expect(row.className).not.toMatch(/pool-tag--/)
     expect(within(row).getByText(t.unknownPool)).toBeInTheDocument()
+  })
+})
+
+describe('ReceiptsScreen — what the money holder owes', () => {
+  /** The receipt card carrying the given name. */
+  function rowFor(name: string): HTMLElement {
+    return screen.getByText(name).closest('li') as HTMLElement
+  }
+
+  const owed = expense({ id: 'a', name: 'Bakery', amountCents: 800, paidBy: 'Ben' })
+  const holderPaid = expense({ id: 'b', name: 'Rope', paidBy: 'Anna' })
+
+  it('names only the receipts somebody else paid — the holder’s own cost no words', () => {
+    renderScreen({ expenses: [owed, holderPaid], moneyHolder: 'Anna' })
+
+    expect(within(rowFor('Bakery')).getByText(t.payer.paidByRow('Ben'))).toBeInTheDocument()
+    expect(within(rowFor('Rope')).queryByText(/Paid by/)).not.toBeInTheDocument()
+  })
+
+  it('names nobody at all while no holder is set: there is no one to return the money', () => {
+    renderScreen({ expenses: [owed] })
+    expect(screen.queryByText(t.payer.paidByRow('Ben'))).not.toBeInTheDocument()
+  })
+
+  it('returning the money asks first, then writes it — from the list, not the editor', async () => {
+    const { user, setReimbursed } = renderScreen({ expenses: [owed], moneyHolder: 'Anna' })
+
+    await user.click(screen.getByRole('button', { name: t.payer.returnButton }))
+    expect(setReimbursed).not.toHaveBeenCalled() // the tap alone must not settle anything
+
+    await user.click(screen.getByRole('button', { name: t.payer.confirmReturnLabel }))
+
+    // The timestamp is `Date.now()`, so the assertion is about its shape rather than its
+    // value: the row is marked repaid *now*, and only the row that was tapped.
+    expect(setReimbursed).toHaveBeenCalledWith('a', expect.any(Number))
+  })
+
+  it('backing out of that question leaves the receipt owed', async () => {
+    const { user, setReimbursed } = renderScreen({ expenses: [owed], moneyHolder: 'Anna' })
+
+    await user.click(screen.getByRole('button', { name: t.payer.returnButton }))
+    await user.click(screen.getByRole('button', { name: en.confirm.cancel }))
+
+    expect(setReimbursed).not.toHaveBeenCalled()
+  })
+
+  it('undoing a return asks in the same way', async () => {
+    const repaid = expense({ id: 'a', name: 'Bakery', paidBy: 'Ben', reimbursedAt: 5 })
+    const { user, setReimbursed } = renderScreen({ expenses: [repaid], moneyHolder: 'Anna' })
+
+    await user.click(screen.getByRole('button', { name: t.payer.returnedButton }))
+    await user.click(screen.getByRole('button', { name: t.payer.confirmUndoLabel }))
+
+    expect(setReimbursed).toHaveBeenCalledWith('a', null)
+  })
+
+  it('totals what is still owed under the list', () => {
+    renderScreen({ expenses: [owed, holderPaid], moneyHolder: 'Anna' })
+    expect(screen.getByText(t.payer.owedTotal)).toBeInTheDocument()
+  })
+
+  it('drops that line once nothing is outstanding — "owed 0,00" every day is noise', () => {
+    renderScreen({ expenses: [holderPaid], moneyHolder: 'Anna' })
+    expect(screen.queryByText(t.payer.owedTotal)).not.toBeInTheDocument()
+  })
+
+  it('leaves a receipt with no payer unmarked — an existing camp reads exactly as before', () => {
+    renderScreen({ expenses: [expense({ id: 'a', name: 'Bakery' })], moneyHolder: 'Anna' })
+
+    expect(within(rowFor('Bakery')).queryByText(/Paid by/)).not.toBeInTheDocument()
+    expect(screen.queryByText(t.payer.owedTotal)).not.toBeInTheDocument()
+  })
+
+  it('filters down to the receipts still missing a payer', async () => {
+    const { user } = renderScreen({
+      expenses: [owed, holderPaid, expense({ id: 'c', name: 'Ferry' })],
+      moneyHolder: 'Anna',
+    })
+
+    await user.selectOptions(
+      screen.getByLabelText(t.payer.filterPayerLabel),
+      t.payer.filterPayerUntracked,
+    )
+
+    expect(renderedNames()).toEqual(['Ferry'])
+  })
+
+  it('filters down to what is not repaid yet', async () => {
+    const settled = expense({ id: 'c', name: 'Ferry', paidBy: 'Ben', reimbursedAt: 5 })
+    const { user } = renderScreen({
+      expenses: [owed, holderPaid, settled],
+      moneyHolder: 'Anna',
+    })
+
+    await user.click(screen.getByRole('button', { name: t.payer.filterUnpaid }))
+
+    expect(renderedNames()).toEqual(['Bakery'])
+  })
+})
+
+describe('ReceiptsScreen — saying whose money it was', () => {
+  /** Fill the two fields that are compulsory for reasons other than the payer. */
+  async function startReceipt(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole('button', { name: t.add }))
+    await user.type(screen.getByLabelText(t.nameLabel), 'Milk')
+    await user.type(screen.getByLabelText(t.amountLabel), '3,00')
+  }
+
+  it('starts with neither option picked, and will not save until one is', async () => {
+    const { user, saveExpense } = renderScreen({ moneyHolder: 'Anna' })
+    await startReceipt(user)
+
+    expect(screen.getByRole('radio', { name: t.payer.holderOption('Anna') })).not.toBeChecked()
+    expect(screen.getByRole('radio', { name: t.payer.otherOption })).not.toBeChecked()
+    expect(screen.getByText(t.issues.paidBy)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: t.save })).toBeDisabled()
+    expect(saveExpense).not.toHaveBeenCalled()
+  })
+
+  it('picking the money holder answers it', async () => {
+    const { user, saveExpense } = renderScreen({ moneyHolder: 'Anna' })
+    await startReceipt(user)
+
+    await user.click(screen.getByRole('radio', { name: t.payer.holderOption('Anna') }))
+    await user.click(screen.getByRole('button', { name: t.save }))
+
+    expect(saveExpense).toHaveBeenCalledWith(expect.objectContaining({ paidBy: 'Anna' }))
+  })
+
+  it('"someone else" is not an answer until the name is typed', async () => {
+    const { user, saveExpense } = renderScreen({ moneyHolder: 'Anna' })
+    await startReceipt(user)
+
+    await user.click(screen.getByRole('radio', { name: t.payer.otherOption }))
+    expect(screen.getByRole('button', { name: t.save })).toBeDisabled()
+
+    await user.type(screen.getByLabelText(t.payer.newNameLabel), 'Ben')
+    await user.click(screen.getByRole('button', { name: t.save }))
+
+    expect(saveExpense).toHaveBeenCalledWith(expect.objectContaining({ paidBy: 'Ben' }))
+  })
+
+  it('offers "already paid back" only once somebody else is named, and saves it settled', async () => {
+    const { user, saveExpense } = renderScreen({ moneyHolder: 'Anna' })
+    await startReceipt(user)
+
+    // The label wraps its hint, so the checkbox's accessible name is the whole phrase.
+    const returnedTick = () => screen.queryByRole('checkbox', { name: /Already paid back/ })
+
+    await user.click(screen.getByRole('radio', { name: t.payer.holderOption('Anna') }))
+    expect(returnedTick()).not.toBeInTheDocument() // the holder cannot owe themselves
+
+    await user.click(screen.getByRole('radio', { name: t.payer.otherOption }))
+    await user.type(screen.getByLabelText(t.payer.newNameLabel), 'Ben')
+
+    const tick = returnedTick()
+    expect(tick).toBeInTheDocument()
+    if (tick !== null) await user.click(tick)
+    await user.click(screen.getByRole('button', { name: t.save }))
+
+    expect(saveExpense).toHaveBeenCalledWith(
+      expect.objectContaining({ paidBy: 'Ben', reimbursedAt: expect.any(Number) }),
+    )
+  })
+
+  it('no money holder set means the only answer is a name', async () => {
+    const { user } = renderScreen()
+    await startReceipt(user)
+
+    expect(screen.getByText(t.payer.noHolder)).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: /holds the camp money/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('PayerSelect — the two radios stay exclusive', () => {
+  it('typing the holder’s own name under "someone else" does not light both', async () => {
+    const { user } = renderScreen({ moneyHolder: 'Anna' })
+    await user.click(screen.getByRole('button', { name: t.add }))
+
+    await user.click(screen.getByRole('radio', { name: t.payer.otherOption }))
+    await user.type(screen.getByLabelText(t.payer.newNameLabel), 'Anna')
+
+    expect(screen.getByRole('radio', { name: t.payer.otherOption })).toBeChecked()
+    expect(screen.getByRole('radio', { name: t.payer.holderOption('Anna') })).not.toBeChecked()
+    // Nobody can owe themselves, so the settle-up tick stays away.
+    expect(screen.queryByRole('checkbox', { name: /Already paid back/ })).not.toBeInTheDocument()
+  })
+
+  it('an edited receipt selects the radio its stored payer implies', async () => {
+    const { user } = renderScreen({
+      expenses: [expense({ id: 'a', name: 'Bakery', paidBy: 'Ben' })],
+      moneyHolder: 'Anna',
+    })
+
+    await user.click(screen.getByRole('button', { name: en.rowMenu.open('Bakery') }))
+    await user.click(screen.getByRole('button', { name: en.rowMenu.edit }))
+
+    expect(screen.getByRole('radio', { name: t.payer.otherOption })).toBeChecked()
+    expect(screen.getByLabelText(t.payer.newNameLabel)).toHaveValue('Ben')
   })
 })

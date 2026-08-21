@@ -9,6 +9,7 @@
  */
 
 import { parseEurosToCents } from './money'
+import { isSamePayer } from './payers'
 import type { Expense } from './types'
 
 /** The form's editable shape: everything a string, euros still euros. */
@@ -20,6 +21,12 @@ export type ExpenseDraft = {
   /** The receipt number as typed. Empty means "not filed yet", which is allowed. */
   number: string
   note: string
+  /** Whose wallet it came out of, as typed. Empty means nothing has been picked yet, which
+   *  is what the form starts at and what blocks the save until it is answered. */
+  paidBy: string
+  /** Whether that person has already been paid back. Only meaningful when somebody other
+   *  than the money holder paid; the form hides it otherwise. */
+  reimbursed: boolean
 }
 
 /** What the hook needs to write a row. Ids and timestamps are minted in `src/db/`. */
@@ -33,13 +40,17 @@ export type SaveExpenseInput = {
   date: string
   number?: number
   note?: string
+  paidBy?: string
+  /** Carried through the save so editing a receipt does not silently un-repay it — unless
+   *  the payer changed, in which case the old repayment was to somebody else. */
+  reimbursedAt?: number
 }
 
 /**
  * What is wrong with the draft, as *codes* rather than sentences — `lib/` must not know
  * which language the UI speaks, so the dictionary turns each code into text.
  */
-export type ExpenseIssue = 'name' | 'amount' | 'date' | 'pool' | 'number' | 'numberTaken'
+export type ExpenseIssue = 'name' | 'amount' | 'date' | 'pool' | 'number' | 'numberTaken' | 'paidBy'
 
 /**
  * How the list is ordered. Date order groups by day and totals each day; number order is
@@ -125,6 +136,8 @@ export function isExpense(value: unknown): value is Expense {
     typeof e.date === 'string' &&
     (e.number === undefined || isReceiptNumber(e.number)) &&
     (e.note === undefined || typeof e.note === 'string') &&
+    (e.paidBy === undefined || typeof e.paidBy === 'string') &&
+    (e.reimbursedAt === undefined || typeof e.reimbursedAt === 'number') &&
     (e.enteredBy === undefined || typeof e.enteredBy === 'string') &&
     typeof e.createdAt === 'number'
   )
@@ -135,7 +148,18 @@ export function isExpense(value: unknown): value is Expense {
  * on the day it was paid, and the clock stays at the edge so this is testable.
  */
 export function blankExpenseDraft(todayIso: string, poolId: string): ExpenseDraft {
-  return { date: todayIso, name: '', amount: '', poolId, number: '', note: '' }
+  // `paidBy` starts empty on purpose: nothing is pre-picked, so recording whose money it
+  // was is a decision the user makes rather than a default they can save without noticing.
+  return {
+    date: todayIso,
+    name: '',
+    amount: '',
+    poolId,
+    number: '',
+    note: '',
+    paidBy: '',
+    reimbursed: false,
+  }
 }
 
 /** Seed the editor from a persisted row. */
@@ -148,6 +172,8 @@ export function draftFromExpense(expense: Expense): ExpenseDraft {
     poolId: expense.poolId,
     number: expense.number === undefined ? '' : String(expense.number),
     note: expense.note ?? '',
+    paidBy: expense.paidBy ?? '',
+    reimbursed: expense.reimbursedAt !== undefined,
   }
 }
 
@@ -169,6 +195,9 @@ export function expenseIssues(draft: ExpenseDraft, taken: ReadonlySet<number>): 
 
   if (draft.date === '') issues.push('date')
   if (draft.poolId === '') issues.push('pool')
+  // One blank covers both ways of not answering: no option picked, and "someone else"
+  // picked with no name typed. Neither is a receipt that says whose money it was.
+  if (draft.paidBy.trim() === '') issues.push('paidBy')
 
   const number = readReceiptNumber(draft.number)
   if (number.kind === 'invalid') issues.push('number')
@@ -185,6 +214,9 @@ export function expenseDraftToInput(
   campId: string,
   existing: Expense | null,
   taken: ReadonlySet<number>,
+  /** Now, in epoch ms — the stamp a newly ticked repayment carries. Passed in rather than
+   *  read, so this stays a pure function of its arguments. */
+  nowMs: number,
 ): SaveExpenseInput | null {
   // One gate, so a caller cannot smuggle an invalid draft past validation by calling
   // this instead of checking the issues first.
@@ -195,6 +227,7 @@ export function expenseDraftToInput(
 
   const number = readReceiptNumber(draft.number)
   const note = draft.note.trim()
+  const paidBy = draft.paidBy.trim()
   return {
     existing,
     campId,
@@ -204,7 +237,24 @@ export function expenseDraftToInput(
     date: draft.date,
     number: number.kind === 'value' ? number.value : undefined,
     note: note === '' ? undefined : note, // an omitted optional field is undefined, not ''
+    paidBy: paidBy === '' ? undefined : paidBy,
+    // The tick decides *whether*; the stamp already on the row decides *when*, so re-saving
+    // a settled receipt does not move the date it was settled on. Re-assigning it to
+    // somebody else starts the clock again: that repayment was to a different person.
+    reimbursedAt: reimbursedStamp(draft, existing, paidBy, nowMs),
   }
+}
+
+/** When this receipt was paid back, or undefined if it has not been. */
+function reimbursedStamp(
+  draft: ExpenseDraft,
+  existing: Expense | null,
+  paidBy: string,
+  nowMs: number,
+): number | undefined {
+  if (!draft.reimbursed) return undefined
+  const samePerson = isSamePayer(existing?.paidBy, paidBy)
+  return samePerson && existing?.reimbursedAt !== undefined ? existing.reimbursedAt : nowMs
 }
 
 /**

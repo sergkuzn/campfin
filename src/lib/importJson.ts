@@ -14,7 +14,7 @@ import { mapRows, toBlock, toCamp, toExpense, toMovement, toPool, toSource } fro
 import type { Camp, Expense, IncomeSource, Movement, PerDiemBlock, Pool } from './types'
 
 /** The dump version this build writes and the newest it can read. */
-const CURRENT_VERSION = 7
+const CURRENT_VERSION = 8
 
 /** Why a file was refused. Codes, not sentences — the dictionary phrases them. */
 export type ImportIssue =
@@ -58,7 +58,7 @@ export function parseCampExport(text: string): ImportResult {
   if (dump.format !== 'campfin.camp') return { ok: false, issue: 'format' }
   if (typeof dump.version !== 'number') return { ok: false, issue: 'format' }
   // Older dumps are readable — v3 has no expenses, v4 no movements, v6 no pool colours or
-  // receipt numbers, and a missing array or attribute simply reads as none. Camp `startDate`/`endDate` from an older dump are dropped by
+  // receipt numbers, v7 no payers, and a missing array or attribute simply reads as none. Camp `startDate`/`endDate` from an older dump are dropped by
   // `toCamp`: the window comes from the blocks now, and those travel in the dump too, so
   // nothing is lost. A *newer* dump is not readable: its rows may carry meaning this
   // build would silently drop.

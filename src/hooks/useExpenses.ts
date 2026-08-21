@@ -20,6 +20,8 @@ export type UseExpenses = {
   isLoading: boolean
   error: string | null
   saveExpense: (input: SaveExpenseInput) => void
+  /** Tick a receipt off as paid back, or un-tick it. `at` is epoch ms, null to clear. */
+  setReimbursed: (expenseId: string, at: number | null) => void
   deleteExpense: (expenseId: string) => void
 }
 
@@ -54,6 +56,14 @@ export function useExpenses(campId: string): UseExpenses {
     [t],
   )
 
+  const setReimbursed = useCallback(
+    (expenseId: string, at: number | null): void => {
+      setError(null)
+      void expensesDb.setExpenseReimbursed(expenseId, at).catch(() => setError(t.sync.writeFailed))
+    },
+    [t],
+  )
+
   const deleteExpense = useCallback(
     (expenseId: string): void => {
       setError(null)
@@ -67,6 +77,7 @@ export function useExpenses(campId: string): UseExpenses {
     isLoading,
     error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
     saveExpense,
+    setReimbursed,
     deleteExpense,
   }
 }
