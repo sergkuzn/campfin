@@ -75,6 +75,10 @@
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
+  /* The pool, as a stripe down the card's edge. It costs no line of its own, so the run of
+     rows from the everyday pot reads as one quiet colour and a receipt from another pool
+     breaks it. Falls back to the plain border when the row's pool is gone. */
+  border-left: 3px solid var(--pool-ink, var(--border));
   border-radius: var(--radius);
   background-color: var(--surface);
 }
@@ -106,12 +110,6 @@
 .receipt__name {
   font-size: 0.9375rem;
   overflow-wrap: anywhere;
-}
-
-/* A pool tag is an inline pill, so the row that holds it needs a start alignment —
-   otherwise it stretches to the column's full width. */
-.receipt__main > .pool-tag {
-  align-self: flex-start;
 }
 
 .receipt__pool,

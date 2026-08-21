@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { UseExpenses } from '../hooks/useExpenses'
 import { en } from '../i18n/en'
 import { I18nProvider } from '../i18n/I18nProvider'
+import { poolColorOf } from '../lib/poolColors'
 import type { PoolSummary } from '../lib/pools'
 import type { Expense, Pool } from '../lib/types'
 import { ReceiptsScreen } from './ReceiptsScreen'
@@ -176,5 +177,31 @@ describe('ReceiptsScreen — deposits stay out', () => {
   it('offers no deposit chip in the filter', () => {
     renderScreen({ pools: [food, tools, busDeposit] })
     expect(screen.queryByRole('button', { name: busDeposit.name })).not.toBeInTheDocument()
+  })
+})
+
+describe('ReceiptsScreen — how a row wears its pool', () => {
+  /** The receipt card carrying the given name, rather than the filter chip of the same name. */
+  function rowFor(name: string): HTMLElement {
+    return screen.getByText(name).closest('li') as HTMLElement
+  }
+
+  it('marks the row with its pool’s colour instead of a named pill', () => {
+    renderScreen()
+    expect(rowFor('Bakery')).toHaveClass(`pool-tag--${poolColorOf(food)}`)
+    expect(rowFor('Rope')).toHaveClass(`pool-tag--${poolColorOf(tools)}`)
+  })
+
+  it('keeps the pool name for a screen reader but off the screen', () => {
+    renderScreen()
+    expect(within(rowFor('Bakery')).getByText(food.name)).toHaveClass('visually-hidden')
+  })
+
+  it('spells out a pool that is gone, having no colour left to show it in', () => {
+    renderScreen({ expenses: [expense({ id: 'x', name: 'Bakery', poolId: 'pool-deleted' })] })
+
+    const row = rowFor('Bakery')
+    expect(row.className).not.toMatch(/pool-tag--/)
+    expect(within(row).getByText(t.unknownPool)).toBeInTheDocument()
   })
 })

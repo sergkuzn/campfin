@@ -1,7 +1,10 @@
+// The card's edge is painted with the palette classes, so the stylesheet that defines them
+// has to be loaded even though no PoolTag is rendered here.
+import './PoolTag.css'
 import { useFormat, useT } from '../i18n'
 import type { ExpenseView } from '../lib/expenses'
+import { poolColorOf } from '../lib/poolColors'
 import type { Expense, Pool } from '../lib/types'
-import { PoolTag } from './PoolTag'
 import { RowMenu } from './RowMenu'
 
 type Props = {
@@ -92,7 +95,11 @@ function ReceiptRow({ expense, pool, locked, onEdit, onDelete }: RowProps) {
   const format = useFormat()
 
   return (
-    <li className="receipt">
+    // The pool is worn as a coloured left edge rather than a named pill on a line of its
+    // own: nearly every receipt comes out of the everyday pot, so spelling that out cost a
+    // line per row to repeat what the reader already knew. The hue class only carries the
+    // palette's custom properties — the border in the stylesheet is what draws them.
+    <li className={pool === undefined ? 'receipt' : `receipt pool-tag--${poolColorOf(pool)}`}>
       <div className="receipt__main">
         <span className="receipt__title">
           {/* Ahead of the name, because a numbered list is read down its numbers — that is
@@ -101,13 +108,14 @@ function ReceiptRow({ expense, pool, locked, onEdit, onDelete }: RowProps) {
             <span className="receipt__number">{t.receipts.numberTag(expense.number)}</span>
           )}
           <span className="receipt__name">{expense.name}</span>
+          {/* Colour cannot be heard, so the pool is still named for a screen reader. It sits
+              inside the title so the row is announced as one phrase. */}
+          {pool !== undefined && <span className="visually-hidden">{pool.name}</span>}
         </span>
 
-        {pool === undefined ? (
-          <span className="receipt__pool">{t.receipts.unknownPool}</span>
-        ) : (
-          <PoolTag pool={pool} />
-        )}
+        {/* A pool deleted by the other leader mid-sync leaves no hue to colour the edge
+            with, so this one case keeps words — silence would drop the fact entirely. */}
+        {pool === undefined && <span className="receipt__pool">{t.receipts.unknownPool}</span>}
 
         {expense.note !== undefined && <span className="receipt__note">{expense.note}</span>}
       </div>
