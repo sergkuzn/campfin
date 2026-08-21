@@ -68,3 +68,29 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
+
+/* Narrow phones don't have room for the full-size headline beside the 2×2 table, so the
+   table wraps underneath it (see .allowed's comment). Shrinking the headline here buys back
+   just enough width to keep both on one row instead. */
+@media (max-width: 400px) {
+  .allowed {
+    gap: var(--space-1);
+  }
+
+  .allowed__amount {
+    font-size: 1.3rem;
+  }
+
+  .allowed__label {
+    font-size: 0.6875rem;
+  }
+
+  .allowed__stats {
+    gap: 0 var(--space-1);
+  }
+
+  .allowed__stat {
+    gap: var(--space-1);
+    font-size: 0.625rem;
+  }
+}
