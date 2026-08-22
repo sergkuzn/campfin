@@ -1,5 +1,4 @@
 import './CampDashboard.css'
-import type { ReactNode } from 'react'
 import { useFormat, useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus } from '../lib/camps'
@@ -12,6 +11,7 @@ import { BurnChart } from './BurnChart'
 import { CashStrip } from './CashStrip'
 import { DepositsStrip } from './DepositsStrip'
 import { PoolBars } from './PoolBars'
+import { SlotCard } from './SlotCard'
 import { StatusPill } from './StatusPill'
 
 type Props = {
@@ -41,49 +41,6 @@ type Props = {
   onOpenMovements: (focus: CustodyFocus) => void
   onOpenSettlement: () => void
   onOpenSettings: () => void
-}
-
-/**
- * A dashboard card that is, as a whole, the way into its own screen. The entire card is
- * the button — nothing inside it is interactive, so a thumb aiming anywhere on it hits the
- * destination. `action` is never drawn: it is what a screen reader reads after the title,
- * since the chevron alone says nothing about where the card leads.
- *
- * A <button> may contain this much layout because none of its children is itself a control;
- * that is what keeps one focusable element per card.
- */
-function SlotCard({
-  title,
-  action,
-  onOpen,
-  /** Solid border and surface once the card holds real content rather than a placeholder. */
-  filled,
-  children,
-}: {
-  title: string
-  action: string
-  onOpen: () => void
-  filled: boolean
-  children: ReactNode
-}) {
-  return (
-    <button
-      className={filled ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'}
-      type="button"
-      onClick={onOpen}
-    >
-      {/* Not a control of its own — the band is the visual cue that the card leads
-          somewhere, drawn where the eye looks for a title. */}
-      <div className="dashboard__slot-head">
-        <span className="dashboard__slot-title">{title}</span>
-        <span className="visually-hidden">{action}</span>
-        <span className="dashboard__slot-chevron" aria-hidden="true">
-          ›
-        </span>
-      </div>
-      {children}
-    </button>
-  )
 }
 
 /**
@@ -154,7 +111,7 @@ export function CampDashboard({
     return (
       <div className="dashboard">
         {header}
-        <p className="dashboard__slot-hint">{t.app.loading}</p>
+        <p className="slot-card__hint">{t.app.loading}</p>
       </div>
     )
   }
@@ -164,7 +121,7 @@ export function CampDashboard({
       <div className="dashboard">
         {header}
         <section className="dashboard__first-step">
-          <p className="dashboard__slot-title">{t.dashboard.firstStepTitle}</p>
+          <p className="slot-card__title">{t.dashboard.firstStepTitle}</p>
           <button className="dashboard__first-step-button" type="button" onClick={onOpenIncome}>
             {t.dashboard.firstStep}
           </button>
@@ -178,10 +135,8 @@ export function CampDashboard({
     <div className="dashboard">
       {header}
 
-      <section
-        className={burn.hasCurve ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'}
-      >
-        <p className="dashboard__slot-title">{t.burn.title}</p>
+      <section className={burn.hasCurve ? 'slot-card slot-card--filled' : 'slot-card'}>
+        <p className="slot-card__title">{t.burn.title}</p>
         {burn.hasCurve ? (
           <>
             <AllowedToday burn={burn} remainingCents={everydayRemainingCents} />
@@ -202,11 +157,11 @@ export function CampDashboard({
       >
         {funded || hasExpenses ? (
           <>
-            {!hasExpenses && <p className="dashboard__slot-hint">{t.dashboard.noReceipts}</p>}
+            {!hasExpenses && <p className="slot-card__hint">{t.dashboard.noReceipts}</p>}
             <PoolBars summaries={summaries} />
           </>
         ) : (
-          <p className="dashboard__slot-hint">{t.dashboard.noIncome}</p>
+          <p className="slot-card__hint">{t.dashboard.noIncome}</p>
         )}
       </SlotCard>
 

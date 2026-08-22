@@ -14,7 +14,7 @@ export function ReceivedTotals({ summaries }: Props) {
   // The everyday pool exists from the camp's first second, so an empty *pool* list no
   // longer means an empty camp — an unfunded one does.
   if (summaries.every((summary) => summary.sources.length === 0)) {
-    return <p className="dashboard__slot-hint">{t.dashboard.noIncome}</p>
+    return <p className="slot-card__hint">{t.dashboard.noIncome}</p>
   }
 
   return (

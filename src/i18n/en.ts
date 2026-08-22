@@ -75,8 +75,8 @@ export const en = {
   },
 
   share: {
-    hint: 'The other leader types this code into their phone.',
-    members: (count: number) => `${count} ${count === 1 ? 'leader' : 'leaders'} share this camp.`,
+    members: (count: number) =>
+      `${count} ${count === 1 ? 'person shares' : 'people share'} this camp.`,
     /** On the join-code button itself, under the code — it has to say what the tap does. */
     copy: '⧉ Tap to copy join code',
     copied: '✓ Copied',
@@ -148,14 +148,19 @@ export const en = {
     /** Who carries the cash. Camp-wide, and the thing every "owed" marker is measured
      *  against — so it lives with the camp's other once-per-camp settings. */
     holderSection: 'Money holder',
-    holderHint:
-      'The leader carrying the camp cash. Receipts anyone else pays show as owed until they are paid back.',
-    holderLabel: 'Who holds the money',
-    holderNone: 'Nobody yet',
-    holderNewOption: '＋ Someone else…',
+    holderHint: 'The leader carrying the camp cash.',
+    /** Who has the wallet, stated rather than picked from a list: it changes once a camp
+     *  at most, so the screen offers only the two things you would ever do to it. The name
+     *  is drawn separately, so this is only what follows it. */
+    holderHolds: 'holds the money.',
+    holderNone: 'Nobody holds the money yet.',
+    holderSet: 'Set money holder',
+    holderChange: 'Change holder',
+    holderRemove: 'Remove holder',
+    holderCancel: 'Cancel',
     holderNewNameLabel: 'Name',
     holderNewNamePlaceholder: 'e.g. Anna',
-    holderSave: 'Save',
+    holderSave: 'Save holder',
     /** Handing the wallet over rewrites no receipt, but it does flip who owes whom — so
      *  the question says how many rows change, in both directions. */
     holderChangeTitle: (name: string) => `Make ${name} the money holder?`,
@@ -166,10 +171,9 @@ export const en = {
     holderStartOwing: (n: number) =>
       `${n} ${n === 1 ? 'receipt starts' : 'receipts start'} showing as owed.`,
     holderNoChange: 'No receipt changes.',
-    holderConfirm: 'Change holder',
-    holderOwedTitle: 'Still to pay back',
-    holderOwedRow: (name: string, count: number) =>
-      `${name} — ${count} ${count === 1 ? 'receipt' : 'receipts'}`,
+    /** Distinct from the button that opens the name field, so the dialog's own action is
+     *  never the same words as the control behind it. */
+    holderConfirm: 'Confirm change',
     dangerSection: 'Danger zone',
     delete: 'Delete camp',
     deleteTitle: 'Delete camp',

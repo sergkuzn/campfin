@@ -17,7 +17,7 @@ export function CashStrip({ heldCents, count }: Props) {
   const format = useFormat()
 
   if (heldCents === 0) {
-    return <p className="dashboard__slot-hint">{t.custody.cash.empty}</p>
+    return <p className="slot-card__hint">{t.custody.cash.empty}</p>
   }
 
   return (

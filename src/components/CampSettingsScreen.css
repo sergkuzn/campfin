@@ -11,30 +11,10 @@
   letter-spacing: -0.02em;
 }
 
-.camp-settings__section {
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background-color: var(--surface);
-}
-
-.camp-settings__heading {
-  margin: 0 0 var(--space-2);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-}
-
-/* Red border, not a red button in a plain box: the frame is what makes it read as a
-   place you have arrived at rather than a control you might brush past. */
-.camp-settings__section--danger {
-  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
-}
-
-.camp-settings__rename {
+/* A field with its buttons beside it. Wraps, because the holder row carries two. */
+.camp-settings__row {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
@@ -81,56 +61,57 @@
   background-color: color-mix(in srgb, var(--danger) 10%, transparent);
 }
 
-/* The copy button is `--surface` by default, which is also this section's background —
+/* Red border, not a red button in a plain box: the frame is what makes it read as a
+   place you have arrived at rather than a control you might brush past. */
+.camp-settings__danger {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+/* The copy button is `--surface` by default, which is also the card's background —
    inside here it needs the page colour to stay visibly a button. */
-.camp-settings__section .join-code__button {
+.camp-settings .join-code__button {
   background-color: var(--bg);
 }
 
-.camp-settings__section .received {
-  margin-top: var(--space-2);
-}
-
-/* The money-holder block. `.camp-settings__input` is a flex child in the rename row, so
-   the bare <select> here needs its own full width — flex: 1 does nothing outside a flex
-   parent. */
 .camp-settings__hint {
   margin: 0 0 var(--space-2);
   color: var(--muted);
   font-size: 0.8125rem;
 }
 
-select.camp-settings__input {
-  width: 100%;
+/* Who has the wallet, as a sentence rather than a form field — muted, so the name inside
+   it carries the line. */
+.camp-settings__holder {
+  margin: 0 0 var(--space-3);
+  font-size: 0.9375rem;
+  color: var(--muted);
 }
 
-.camp-settings__debts {
-  margin-top: var(--space-3);
+.camp-settings__holder-name {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--fg);
 }
 
-.camp-settings__subheading {
-  margin: 0 0 var(--space-2);
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.camp-settings__debt-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.camp-settings__holder-actions {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
-/* Amber, matching the row buttons: the money is spent, but it is not yet back where it
-   belongs. */
-.camp-settings__debt {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
+/* Outlined rather than accent-filled: these sit next to each other, and two solid buttons
+   would both claim to be the main one. */
+.camp-settings__ghost {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background: none;
+  color: inherit;
+  font: inherit;
   font-size: 0.875rem;
-  color: color-mix(in srgb, var(--warn) 80%, var(--fg));
-  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.camp-settings__ghost:hover {
+  border-color: var(--accent);
 }

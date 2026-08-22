@@ -99,7 +99,7 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
 
       {/* Without a deposit source there is no Kaution to hand over, so say what is missing
           rather than offering a form whose pool picker would be empty. */}
-      {missingDeposits && <p className="dashboard__slot-hint">{t.movements.deposits.noDeposits}</p>}
+      {missingDeposits && <p className="slot-card__hint">{t.movements.deposits.noDeposits}</p>}
 
       {editing?.mode === 'new' && (
         <MovementForm

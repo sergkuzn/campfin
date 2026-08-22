@@ -1,0 +1,103 @@
+/* The shared card shape: SlotCard (a <button>) and SlotPanel (a <section>) both wear it. */
+
+.slot-card {
+  /* The card's own background, named so the hover tint below can be mixed *over* it
+     instead of replacing it. */
+  --slot-bg: transparent;
+  display: block;
+  width: 100%;
+  padding: var(--space-4);
+  border: 1px dashed var(--border); /* dashed = deliberately empty, not broken */
+  border-radius: var(--radius);
+  background-color: var(--slot-bg);
+}
+
+/* Solid border once the slot holds real content rather than a placeholder. */
+.slot-card--filled {
+  --slot-bg: var(--surface);
+  border-style: solid;
+}
+
+/* Every card that leads somewhere is itself the button, so a thumb aiming anywhere on it
+   hits the destination. The button defaults are reset to look like the card it is —
+   including `display: block`, since a <button> is inline-block and shrink-wraps. The
+   burn-chart card has no destination and stays a plain <section>. */
+button.slot-card {
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.slot-card:hover {
+  background-color: color-mix(in srgb, var(--accent) 7%, var(--slot-bg));
+}
+
+/* A phone has no hover, so the press itself is the only chance to show the card reacted. */
+button.slot-card:active {
+  background-color: color-mix(in srgb, var(--accent) 12%, var(--slot-bg));
+}
+
+.slot-card__title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+/* The title band. Not a control of its own — the card around it is — but drawn as a tinted
+   strip with its own bottom edge so the card reads as something to press: a card with no
+   banding looks like a panel, and nothing else on the dashboard is banded.
+
+   Pulled out to the card's own edges by negative margins so it reaches the top corners. */
+.slot-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  /* 2.75rem ≈ 44px, the smallest comfortable touch target; the title alone is half that. */
+  min-height: 2.75rem;
+  border-bottom: 1px solid var(--border);
+  /* One pixel inside the card's own radius, so the band's curve sits on the card's border
+     instead of cutting across it. */
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
+  background-color: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+/* Full-strength text in the band: muted grey reads as a caption, and this names the card. */
+.slot-card__head .slot-card__title {
+  color: var(--fg);
+}
+
+/* The band darkens with the card, so the press reads as one gesture on one target. */
+button.slot-card:hover .slot-card__head {
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+button.slot-card:active .slot-card__head {
+  background-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* Accent-coloured and larger than the title: at 0.75rem the glyph reads as punctuation. */
+.slot-card__chevron {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.slot-card__hint {
+  margin: var(--space-2) 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* A panel's title is an <h3>, which brings its own margins and weight; inside the band it
+   has to sit exactly where the button's <span> title does. */
+h3.slot-card__title {
+  margin: 0;
+}

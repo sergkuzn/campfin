@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import './CampSettingsScreen.css'
-import { useFormat, useT } from '../i18n'
-import { holderChangeImpact, isSamePayer, knownPayers, payerDebts } from '../lib/payers'
+import { useT } from '../i18n'
+import { holderChangeImpact, isSamePayer } from '../lib/payers'
 import type { PoolSummary } from '../lib/pools'
 import type { Camp, Expense } from '../lib/types'
 import { ConfirmDialog } from './ConfirmDialog'
 import { JoinCodeCard } from './JoinCodeCard'
 import { ReceivedTotals } from './ReceivedTotals'
+import { SlotCard, SlotPanel } from './SlotCard'
 
 type Props = {
   camp: Camp
@@ -18,8 +19,8 @@ type Props = {
   isAdmin: boolean
   isLoading: boolean
   error: string | null
-  /** This camp's receipts. The holder block reads them for three things: the names to
-   *  offer, what is still owed, and how many rows a change of holder would flip. */
+  /** This camp's receipts. The holder block reads them only to count how many rows a
+   *  change of holder would flip. */
   expenses: Expense[]
   onBack: () => void
   onOpenIncome: () => void
@@ -30,15 +31,8 @@ type Props = {
 }
 
 /**
- * The `<select>` value meaning "I want to type a name that is not on the list". A sentinel
- * rather than the empty string, which already means "nobody holds the money". Prefixed with
- * a control character so no typed name can equal it.
- */
-const NEW_HOLDER = '\u0001new-holder'
-
-/**
  * Everything about the camp itself rather than today's money: its name, its join code,
- * what it was granted, and deleting it.
+ * who carries the cash, what it was granted, and deleting it.
  *
  * It is a screen and not a dropdown because these are the things you do once, at the
  * start or the end — keeping them off the dashboard means a destructive button is never
@@ -59,12 +53,11 @@ export function CampSettingsScreen({
   onDelete,
 }: Props) {
   const t = useT()
-  const format = useFormat()
   const [name, setName] = useState(camp.name)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
-  // Typing a name nobody has used yet. UI mode, not data: "nobody holds it" and "I am about
-  // to type someone new" are both an empty picker, and only the user knows which.
-  const [addingHolder, setAddingHolder] = useState(false)
+  // Whether the name field is on screen. UI mode, not data: the stored holder says who it
+  // is, never whether you are in the middle of typing a replacement.
+  const [changingHolder, setChangingHolder] = useState(false)
   const [newHolder, setNewHolder] = useState('')
   // Held only while the question is on screen. Null is a real answer ("nobody"), so
   // `undefined` is what means "nothing pending".
@@ -81,18 +74,10 @@ export function CampSettingsScreen({
     onRename(trimmed)
   }
 
-  // Both derived from the receipts, so a name typed on the receipts screen is offered here
-  // with no second source of truth to keep in step.
-  const payers = useMemo(
-    () => knownPayers(expenses, camp.moneyHolder),
-    [expenses, camp.moneyHolder],
-  )
-  const debts = useMemo(() => payerDebts(expenses, camp.moneyHolder), [expenses, camp.moneyHolder])
-
-  // The picker's own value, matched by person rather than by string so a holder stored as
-  // "anna" still selects the list's "Anna".
-  const holderOption = payers.find((payer) => isSamePayer(payer, camp.moneyHolder)) ?? ''
   const trimmedNewHolder = newHolder.trim()
+
+  // A card with no income yet keeps the dashed placeholder border, same as on the hub.
+  const funded = summaries.some((summary) => summary.sources.length > 0)
 
   // Counted at render time, so the dialog reports the rows as they are now.
   const holderImpact =
@@ -101,10 +86,10 @@ export function CampSettingsScreen({
       : holderChangeImpact(expenses, camp.moneyHolder, pendingHolder)
 
   const askHolder = (next: string | null) => {
-    // Choosing the person who already holds it is not a change, so it asks nothing.
-    if (isSamePayer(next ?? '', camp.moneyHolder)) return
-    if (camp.moneyHolder === undefined && next !== null) {
-      onChangeHolder(next)
+    // Naming the person who already holds it is not a change, so it asks nothing.
+    if (isSamePayer(next ?? '', camp.moneyHolder)) {
+      setChangingHolder(false)
+      setNewHolder('')
       return
     }
     setPendingHolder(next)
@@ -113,7 +98,7 @@ export function CampSettingsScreen({
   const confirmHolder = () => {
     if (pendingHolder !== undefined) onChangeHolder(pendingHolder)
     setPendingHolder(undefined)
-    setAddingHolder(false)
+    setChangingHolder(false)
     setNewHolder('')
   }
 
@@ -131,11 +116,10 @@ export function CampSettingsScreen({
         </p>
       )}
 
-      <section className="camp-settings__section">
-        <h3 className="camp-settings__heading">{t.campSettings.nameSection}</h3>
-        <form className="camp-settings__rename" onSubmit={handleSubmit}>
-          {/* The section heading above already names the field, so a visible label would
-              say it twice; the accessible name still has to be spelled out. */}
+      <SlotPanel title={t.campSettings.nameSection}>
+        <form className="camp-settings__row" onSubmit={handleSubmit}>
+          {/* The panel title above already names the field, so a visible label would say
+              it twice; the accessible name still has to be spelled out. */}
           <input
             className="camp-settings__input"
             aria-label={t.campSettings.nameLabel}
@@ -147,44 +131,33 @@ export function CampSettingsScreen({
             {t.campSettings.save}
           </button>
         </form>
-      </section>
+      </SlotPanel>
 
-      <section className="camp-settings__section">
-        <h3 className="camp-settings__heading">{t.campSettings.shareSection}</h3>
+      <SlotPanel title={t.campSettings.shareSection}>
         <JoinCodeCard joinCode={camp.joinCode} memberCount={memberCount} />
-      </section>
+      </SlotPanel>
 
-      <section className="camp-settings__section">
-        <h3 className="camp-settings__heading">{t.campSettings.holderSection}</h3>
+      {/* No list of everyone the receipts name: the wallet changes hands once a camp at
+          most, so the screen states who has it and offers the two things you might do. */}
+      <SlotPanel title={t.campSettings.holderSection}>
         <p className="camp-settings__hint">{t.campSettings.holderHint}</p>
 
-        <select
-          className="camp-settings__input"
-          aria-label={t.campSettings.holderLabel}
-          value={addingHolder ? NEW_HOLDER : holderOption}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
-            const next = event.target.value
-            if (next === NEW_HOLDER) {
-              setAddingHolder(true)
-              return
-            }
-            setAddingHolder(false)
-            // The empty option is "nobody", which is a real answer rather than a blank.
-            askHolder(next === '' ? null : next)
-          }}
-        >
-          <option value="">{t.campSettings.holderNone}</option>
-          {payers.map((payer) => (
-            <option key={payer} value={payer}>
-              {payer}
-            </option>
-          ))}
-          <option value={NEW_HOLDER}>{t.campSettings.holderNewOption}</option>
-        </select>
+        <p className="camp-settings__holder">
+          {camp.moneyHolder === undefined ? (
+            t.campSettings.holderNone
+          ) : (
+            <>
+              {/* The name stands out from the sentence around it — it is the one word on
+                  this card that differs from camp to camp. */}
+              <strong className="camp-settings__holder-name">{camp.moneyHolder}</strong>{' '}
+              {t.campSettings.holderHolds}
+            </>
+          )}
+        </p>
 
-        {addingHolder && (
+        {changingHolder ? (
           <form
-            className="camp-settings__rename"
+            className="camp-settings__row"
             onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
               event.preventDefault()
               if (trimmedNewHolder !== '') askHolder(trimmedNewHolder)
@@ -196,6 +169,8 @@ export function CampSettingsScreen({
               type="text"
               value={newHolder}
               placeholder={t.campSettings.holderNewNamePlaceholder}
+              // biome-ignore lint/a11y/noAutofocus: the tap revealed this one field, so focusing it saves a second tap
+              autoFocus
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setNewHolder(event.target.value)
               }
@@ -207,41 +182,56 @@ export function CampSettingsScreen({
             >
               {t.campSettings.holderSave}
             </button>
+            <button
+              className="camp-settings__ghost"
+              type="button"
+              onClick={() => {
+                setChangingHolder(false)
+                setNewHolder('')
+              }}
+            >
+              {t.campSettings.holderCancel}
+            </button>
           </form>
-        )}
-
-        {/* Only while something is outstanding — and it is the list you read when settling
-            up at the end of camp, so it names the person and the size of the debt. */}
-        {debts.length > 0 && (
-          <div className="camp-settings__debts">
-            <h4 className="camp-settings__subheading">{t.campSettings.holderOwedTitle}</h4>
-            <ul className="camp-settings__debt-list">
-              {debts.map((debt) => (
-                <li className="camp-settings__debt" key={debt.name}>
-                  <span>{t.campSettings.holderOwedRow(debt.name, debt.receiptCount)}</span>
-                  <strong>{format.euros(debt.owedCents)}</strong>
-                </li>
-              ))}
-            </ul>
+        ) : (
+          <div className="camp-settings__holder-actions">
+            <button
+              className="camp-settings__ghost"
+              type="button"
+              onClick={() => setChangingHolder(true)}
+            >
+              {camp.moneyHolder === undefined
+                ? t.campSettings.holderSet
+                : t.campSettings.holderChange}
+            </button>
+            {camp.moneyHolder !== undefined && (
+              <button
+                className="camp-settings__ghost"
+                type="button"
+                onClick={() => askHolder(null)}
+              >
+                {t.campSettings.holderRemove}
+              </button>
+            )}
           </div>
         )}
-      </section>
+      </SlotPanel>
 
-      <section className="camp-settings__section">
-        <h3 className="camp-settings__heading">{t.campSettings.incomeSection}</h3>
+      <SlotCard
+        title={t.campSettings.incomeSection}
+        action={t.dashboard.setUpIncome}
+        onOpen={onOpenIncome}
+        filled={funded}
+      >
         {isLoading ? (
-          <p className="dashboard__slot-hint">{t.app.loading}</p>
+          <p className="slot-card__hint">{t.app.loading}</p>
         ) : (
           <ReceivedTotals summaries={summaries} />
         )}
-        <button className="dashboard__slot-link" type="button" onClick={onOpenIncome}>
-          {t.dashboard.setUpIncome}
-        </button>
-      </section>
+      </SlotCard>
 
       {isAdmin && (
-        <section className="camp-settings__section camp-settings__section--danger">
-          <h3 className="camp-settings__heading">{t.campSettings.dangerSection}</h3>
+        <SlotPanel title={t.campSettings.dangerSection} className="camp-settings__danger">
           <button
             className="camp-settings__delete"
             type="button"
@@ -249,7 +239,7 @@ export function CampSettingsScreen({
           >
             {t.campSettings.delete}
           </button>
-        </section>
+        </SlotPanel>
       )}
 
       {/* Changing the holder rewrites no receipt — who owes whom is derived — so the

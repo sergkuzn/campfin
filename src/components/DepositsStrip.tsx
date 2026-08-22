@@ -16,7 +16,7 @@ export function DepositsStrip({ statuses }: Props) {
   const t = useT()
 
   if (statuses.length === 0) {
-    return <p className="dashboard__slot-hint">{t.custody.deposits.empty}</p>
+    return <p className="slot-card__hint">{t.custody.deposits.empty}</p>
   }
 
   return (
