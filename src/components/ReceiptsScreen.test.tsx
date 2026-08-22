@@ -132,10 +132,10 @@ describe('ReceiptsScreen — sorting', () => {
     expect(renderedNames()).toEqual(['Rope', 'Bakery', 'Ferry'])
   })
 
-  it('keeps the unnumbered receipt last with the numbers reversed', async () => {
+  it('moves the unnumbered receipt to the top with the numbers reversed', async () => {
     const { user } = renderScreen()
     await user.selectOptions(screen.getByLabelText(t.sortLabel), 'number_desc')
-    expect(renderedNames()).toEqual(['Bakery', 'Rope', 'Ferry'])
+    expect(renderedNames()).toEqual(['Ferry', 'Bakery', 'Rope'])
   })
 })
 
@@ -169,6 +169,18 @@ describe('ReceiptsScreen — pool filter', () => {
     const { user } = renderScreen({ focusPoolId: tools.id })
     await user.click(screen.getByRole('button', { name: tools.name }))
     expect(renderedNames()).toHaveLength(3)
+  })
+
+  it('clears the selection when the last pool is switched on, rather than lighting them all', async () => {
+    const { user } = renderScreen()
+    await user.click(screen.getByRole('button', { name: food.name }))
+    await user.click(screen.getByRole('button', { name: tools.name }))
+
+    // Every pool chosen is the same view as none chosen, so the chips go dark and the
+    // "x of y shown" line disappears with them.
+    expect(renderedNames()).toHaveLength(3)
+    expect(screen.getByRole('button', { name: food.name })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByText(t.count(3))).toBeInTheDocument()
   })
 })
 
@@ -282,20 +294,6 @@ describe('ReceiptsScreen — what the money holder owes', () => {
 
     expect(within(rowFor('Bakery')).queryByText(/Paid by/)).not.toBeInTheDocument()
     expect(screen.queryByText(t.payer.owedTotal)).not.toBeInTheDocument()
-  })
-
-  it('filters down to the receipts still missing a payer', async () => {
-    const { user } = renderScreen({
-      expenses: [owed, holderPaid, expense({ id: 'c', name: 'Ferry' })],
-      moneyHolder: 'Anna',
-    })
-
-    await user.selectOptions(
-      screen.getByLabelText(t.payer.filterPayerLabel),
-      t.payer.filterPayerUntracked,
-    )
-
-    expect(renderedNames()).toEqual(['Ferry'])
   })
 
   it('filters down to what is not repaid yet', async () => {

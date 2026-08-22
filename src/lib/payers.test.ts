@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   filterExpensesByDebt,
-  filterExpensesByPayer,
   holderChangeImpact,
   isSamePayer,
   knownPayers,
@@ -193,32 +192,6 @@ describe('filterExpensesByDebt', () => {
 
   it('switched off, it is not a filter at all', () => {
     expect(filterExpensesByDebt(rows, false, 'Anna')).toBe(rows)
-  })
-})
-
-describe('filterExpensesByPayer', () => {
-  const rows = [
-    expense({ id: 'a', paidBy: 'Ben' }),
-    expense({ id: 'b', paidBy: ' ben ' }),
-    expense({ id: 'c', paidBy: 'Anna' }),
-    expense({ id: 'd' }),
-    expense({ id: 'e', paidBy: '   ' }),
-  ]
-
-  it('keeps every spelling of the chosen person', () => {
-    expect(filterExpensesByPayer(rows, { kind: 'person', name: 'BEN' }).map((e) => e.id)).toEqual([
-      'a',
-      'b',
-    ])
-  })
-
-  it('finds the receipts nobody was recorded for — the worklist for an existing camp', () => {
-    expect(filterExpensesByPayer(rows, { kind: 'untracked' }).map((e) => e.id)).toEqual(['d', 'e'])
-  })
-
-  it('is not a filter at all for everyone, or for a blank name', () => {
-    expect(filterExpensesByPayer(rows, { kind: 'all' })).toBe(rows)
-    expect(filterExpensesByPayer(rows, { kind: 'person', name: '  ' })).toBe(rows)
   })
 })
 

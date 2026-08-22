@@ -308,21 +308,24 @@ export function filterExpensesByPools(
 }
 
 /**
- * Numbered receipts in numeric order, unnumbered ones after them — in *both* directions.
- * A receipt with no number has no place in the sequence, so it goes to the end rather than
- * to whichever end the sort direction happens to point at; those tail rows keep the
- * newest-first order the date view uses.
+ * Numbered receipts in numeric order, with the unnumbered ones stacked past the highest
+ * number. A receipt with no number is the one that has not been filed yet, so it belongs
+ * where the next number would go — which puts it at the end going up and at the top going
+ * down, always beside the big numbers rather than among the small ones. Rows sharing a
+ * position keep the newest-first order the date view uses.
  */
 function sortExpensesByNumber(expenses: Expense[], direction: 'asc' | 'desc'): Expense[] {
   const sign = direction === 'asc' ? 1 : -1
+  // Infinity, not a separate "is it numbered" branch: an unfiled receipt sorts as a number
+  // above every real one, so reversing the direction carries it along with the sequence.
+  const rank = (expense: Expense): number => expense.number ?? Number.POSITIVE_INFINITY
 
   return expenses.toSorted((a, b) => {
-    const aNumbered = a.number !== undefined
-    const bNumbered = b.number !== undefined
-    if (aNumbered !== bNumbered) return aNumbered ? -1 : 1
-    if (a.number !== undefined && b.number !== undefined && a.number !== b.number) {
-      return sign * (a.number - b.number)
-    }
+    const aRank = rank(a)
+    const bRank = rank(b)
+    // Equal ranks are compared first because Infinity - Infinity is NaN, and a NaN
+    // comparator leaves the order undefined.
+    if (aRank !== bRank) return sign * (aRank - bRank)
     return b.date.localeCompare(a.date) || b.createdAt - a.createdAt || a.id.localeCompare(b.id)
   })
 }

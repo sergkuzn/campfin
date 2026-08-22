@@ -358,19 +358,19 @@ describe('arrangeExpenses', () => {
     expect(view.days[0]?.expenses.map((e) => e.id)).toEqual(['a', 'c', 'b'])
   })
 
-  it('sorts by number ascending, unnumbered last', () => {
+  it('sorts by number ascending, unnumbered past the highest', () => {
     const view = arrangeExpenses(rows, 'number_asc')
     if (view.mode !== 'flat') throw new Error('expected a flat list')
     expect(view.expenses.map((e) => e.id)).toEqual(['b', 'a', 'c'])
   })
 
-  it('keeps the unnumbered rows last when the numbers run the other way', () => {
+  it('turns the unnumbered rows round with the numbers — they stay beside the big ones', () => {
     const view = arrangeExpenses(rows, 'number_desc')
     if (view.mode !== 'flat') throw new Error('expected a flat list')
-    expect(view.expenses.map((e) => e.id)).toEqual(['a', 'b', 'c'])
+    expect(view.expenses.map((e) => e.id)).toEqual(['c', 'a', 'b'])
   })
 
-  it('orders the unnumbered tail newest first', () => {
+  it('orders the unnumbered run newest first', () => {
     const unnumbered = [
       expense({ id: 'a', date: '2026-07-12' }),
       expense({ id: 'b', date: '2026-07-15' }),

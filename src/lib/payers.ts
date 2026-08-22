@@ -24,16 +24,6 @@ export type PayerDebt = {
   receiptCount: number
 }
 
-/**
- * Which receipts the list is limited to, by payer. Three states, so a *discriminated
- * union* rather than a nullable name: "everyone", "this person", and "nobody was recorded"
- * are genuinely different questions, and `string | null` could only ever spell two of them.
- *
- * `untracked` is what makes filling the field in on an existing camp practical: it is the
- * worklist of receipts that predate the payer field.
- */
-export type PayerFilter = { kind: 'all' } | { kind: 'person'; name: string } | { kind: 'untracked' }
-
 /** How many receipts change sides when the holder does. */
 export type HolderChange = {
   /** Receipts that owe money today and would stop, because the new holder paid them. */
@@ -166,31 +156,6 @@ export function filterExpensesByDebt(
 ): Expense[] {
   if (!unpaidOnly) return expenses
   return expenses.filter((expense) => owesPayer(expense, moneyHolder))
-}
-
-/** The receipts one person paid for, the ones nobody was recorded for, or all of them. */
-export function filterExpensesByPayer(expenses: Expense[], filter: PayerFilter): Expense[] {
-  switch (filter.kind) {
-    case 'all':
-      return expenses
-    case 'untracked':
-      return expenses.filter((expense) => !isNamed(expense.paidBy))
-    case 'person': {
-      const key = payerKey(filter.name)
-      // A blank name would match nothing and read as a broken filter, so it means "all"
-      // — the same "an empty selection is no selection" rule the pool chips use.
-      if (key === '') return expenses
-      return expenses.filter(
-        (expense) => isNamed(expense.paidBy) && payerKey(expense.paidBy) === key,
-      )
-    }
-    default: {
-      // Exhaustiveness guard: a fourth filter breaks the build here rather than silently
-      // showing every row.
-      const _never: never = filter
-      return _never
-    }
-  }
 }
 
 /**

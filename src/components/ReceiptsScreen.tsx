@@ -12,13 +12,7 @@ import {
   type SaveExpenseInput,
   takenReceiptNumbers,
 } from '../lib/expenses'
-import {
-  filterExpensesByDebt,
-  filterExpensesByPayer,
-  knownPayers,
-  type PayerFilter,
-  unreimbursedTotalCents,
-} from '../lib/payers'
+import { filterExpensesByDebt, unreimbursedTotalCents } from '../lib/payers'
 import { type PoolSummary, spendablePools } from '../lib/pools'
 import { ConfirmDialog } from './ConfirmDialog'
 import { ExpenseDayList } from './ExpenseDayList'
@@ -60,15 +54,14 @@ export function ReceiptsScreen({
   // quote a stale amount.
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [sort, setSort] = useState<ExpenseSort>('date_desc')
-  // Which pools the list is limited to. An empty set means no filter at all, so switching
-  // the last chip off returns to the whole list. The initialiser runs on the first render
-  // only, which is what makes the pool tapped on the dashboard a starting point rather than
-  // a lock the chips below cannot undo.
+  // Which pools the list is limited to. An empty set means no filter at all, so the whole
+  // list is what both switching the last chip off and switching the last chip on land on.
+  // The initialiser runs on the first render only, which is what makes the pool tapped on
+  // the dashboard a starting point rather than a lock the chips below cannot undo.
   const [poolFilter, setPoolFilter] = useState<ReadonlySet<string>>(() =>
     focusPoolId === null ? new Set() : new Set([focusPoolId]),
   )
-  // Two more axes over the same rows: whose money it was, and whether it has come back.
-  const [payerFilter, setPayerFilter] = useState<PayerFilter>({ kind: 'all' })
+  // A second axis over the same rows: whether the money the holder fronted has come back.
   const [unpaidOnly, setUnpaidOnly] = useState(false)
   // The return the user has tapped, held while the question is on screen. An id plus the
   // direction, because the same button undoes as well as confirms.
@@ -89,18 +82,13 @@ export function ReceiptsScreen({
 
   // Filtering and sorting are pure functions of the rows and the settings, so they are
   // memoised together: without it every keystroke in the open form would re-sort the list.
-  // The three filters compose — pool, person, and whether the money is still owed — so
-  // "what do I still owe Ben out of the food pot?" is one view rather than three passes.
+  // The two filters compose — which pools, and whether the money is still owed — so "what
+  // do I still owe out of the food pot?" is one view rather than two passes.
   const shown = useMemo(() => {
     const byPool = filterExpensesByPools(rows, poolFilter)
-    const byPayer = filterExpensesByPayer(byPool, payerFilter)
-    return filterExpensesByDebt(byPayer, unpaidOnly, moneyHolder)
-  }, [rows, poolFilter, payerFilter, unpaidOnly, moneyHolder])
+    return filterExpensesByDebt(byPool, unpaidOnly, moneyHolder)
+  }, [rows, poolFilter, unpaidOnly, moneyHolder])
   const view = useMemo(() => arrangeExpenses(shown, sort), [shown, sort])
-
-  // The picker's options and the filter's options are the same list, so a name typed on one
-  // receipt is offered on the next one without a round trip through the database.
-  const payers = useMemo(() => knownPayers(rows, moneyHolder), [rows, moneyHolder])
   // Follows the filter, exactly as the spent total does: the footer describes what is on
   // screen, and the count line below says how much of the camp that is.
   const owedCents = unreimbursedTotalCents(shown, moneyHolder)
@@ -140,7 +128,10 @@ export function ReceiptsScreen({
       // React would not re-render.
       const next = new Set(current)
       if (!next.delete(poolId)) next.add(poolId)
-      return next
+      // Every chip lit shows exactly the rows no chip lit shows, so the empty set wins:
+      // switching the last pool on returns to the whole list rather than parking the filter
+      // in a lit-up state that filters nothing.
+      return next.size === spendable.length ? new Set() : next
     })
   }
 
@@ -199,10 +190,6 @@ export function ReceiptsScreen({
           onSortChange={setSort}
           selected={poolFilter}
           onToggle={togglePool}
-          onClear={() => setPoolFilter(new Set())}
-          payers={payers}
-          payerFilter={payerFilter}
-          onPayerChange={setPayerFilter}
           canOwe={moneyHolder !== undefined}
           unpaidOnly={unpaidOnly}
           onUnpaidChange={setUnpaidOnly}
@@ -220,11 +207,7 @@ export function ReceiptsScreen({
           good news rather than a filter to loosen. */}
       {rows.length > 0 && shown.length === 0 && (
         <p className="income__empty">
-          {unpaidOnly
-            ? t.receipts.payer.emptyUnpaid
-            : payerFilter.kind === 'untracked'
-              ? t.receipts.payer.emptyUntracked
-              : t.receipts.emptyFiltered}
+          {unpaidOnly ? t.receipts.payer.emptyUnpaid : t.receipts.emptyFiltered}
         </p>
       )}
 

@@ -381,11 +381,6 @@ export const en = {
       /** Under the list, beside the spent total. */
       owedTotal: 'Owed to others',
       filterUnpaid: 'Not repaid',
-      filterPayerLabel: 'Paid by',
-      filterPayerAll: 'Anyone',
-      /** The worklist while filling the field in on a camp that predates it. */
-      filterPayerUntracked: 'No payer set',
-      emptyUntracked: 'Every receipt says who paid.',
       emptyUnpaid: 'Nothing is waiting to be paid back.',
     },
     dayTotal: (amount: string) => `${amount} that day`,
@@ -400,10 +395,9 @@ export const en = {
       number_asc: 'Number — 1 upwards',
       number_desc: 'Number — highest first',
     },
+    /** Tapping every chip on is the same as tapping every chip off, so the chips settle on
+     *  "none lit" for both — there is no all-lit state to explain, and no All chip. */
     filterLabel: 'Show pools',
-    /** Tapping every chip off is the same as tapping every chip on: both mean "no filter",
-     *  which is what makes the chips safe to switch off one at a time. */
-    filterAll: 'All',
     filterCount: (shown: number, total: number) => `${shown} of ${total} receipts shown`,
     emptyFiltered: 'No receipts match the filters you picked.',
     deleteTitle: (name: string) => `Delete "${name}"?`,
