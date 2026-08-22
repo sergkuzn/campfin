@@ -159,13 +159,13 @@ type MovementBase = {
 }
 
 /**
- * Cash changing hands *without* consuming budget — a Kaution left at a shop, or a
- * volunteer's cash you are passing on to the org. It changes what is in your pocket and
+ * Cash changing hands *without* consuming budget — a Kaution left at a shop, or the
+ * participation fees you are passing on to the org. It changes what is in your pocket and
  * what you owe, never what you may spend, which is what keeps the burn curve honest.
  *
  * Written as a union rather than one type with `poolId?`, so "a deposit movement names
  * its pool" is checked by the compiler instead of by a comment: narrowing on `kind`
- * gives you `poolId` for the deposit kinds and hides it for volunteer money.
+ * gives you `poolId` for the deposit kinds and hides it for a fee.
  */
 export type DepositMovement = MovementBase & {
   kind: 'deposit_out' | 'deposit_in'
@@ -178,11 +178,18 @@ export type DepositMovement = MovementBase & {
   completesDeposit?: boolean
 }
 
-export type VolunteerMovement = MovementBase & {
-  kind: 'volunteer_in' // no `volunteer_out`: handing it to the org isn't recorded
+/**
+ * A participation fee collected from a participant and held for the organisation.
+ *
+ * The stored `kind` still reads `volunteer_in`: it is the value written to InstantDB and
+ * to every JSON export, so renaming it would mean migrating live rows and old dumps for
+ * nothing. The name of the concept lives in the type and the dictionary instead.
+ */
+export type FeeMovement = MovementBase & {
+  kind: 'volunteer_in' // no outgoing kind: handing it to the org isn't recorded
 }
 
-export type Movement = DepositMovement | VolunteerMovement
+export type Movement = DepositMovement | FeeMovement
 
 export type MovementKind = Movement['kind']
 

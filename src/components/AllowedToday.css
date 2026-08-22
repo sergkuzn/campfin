@@ -49,13 +49,15 @@
   gap: var(--space-1) var(--space-2);
 }
 
-/* Label left, value right: the grid stretches each cell to its column's width, so the
-   values in a column line up under each other without a fixed width anywhere. */
+/* Label then value, both packed against the cell's left edge: the four figures read as a
+   list of short phrases rather than as a table whose numbers drift to a ragged right
+   margin. `justify-self: start` keeps the cell at its own width instead of being stretched
+   to the column's, so no gap opens between a short label and its number. */
 .allowed__stat {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
+  justify-self: start;
+  gap: var(--space-1);
   white-space: nowrap;
   font-size: 0.6875rem;
 }

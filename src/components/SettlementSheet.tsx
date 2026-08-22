@@ -47,8 +47,8 @@ export function SettlementSheet({
         return t.settlement.rows.poolUnusable(pool)
       case 'deposit_return':
         return t.settlement.rows.depositReturn(pool)
-      case 'volunteer':
-        return t.settlement.rows.volunteer
+      case 'fee':
+        return t.settlement.rows.fee
     }
   }
 
@@ -60,8 +60,8 @@ export function SettlementSheet({
         return t.settlement.why.poolUnusable
       case 'deposit_return':
         return t.settlement.why.depositReturn
-      case 'volunteer':
-        return t.settlement.why.volunteer
+      case 'fee':
+        return t.settlement.why.fee
     }
   }
 

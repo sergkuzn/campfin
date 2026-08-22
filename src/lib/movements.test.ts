@@ -7,16 +7,16 @@ import {
   depositStatuses,
   depositSteps,
   draftFromMovement,
+  feeHeldCents,
   kindsForFocus,
   type MovementDraft,
   movementDraftToInput,
   movementIssues,
   movementsInFocus,
   sortMovements,
-  volunteerHeldCents,
 } from './movements'
 import type { PoolSummary } from './pools'
-import type { DepositMovement, Movement, Pool, VolunteerMovement } from './types'
+import type { DepositMovement, FeeMovement, Movement, Pool } from './types'
 
 const bikePool: Pool = { id: 'pool-b', campId: 'C', name: 'Bikes', role: 'deposit', createdAt: 2 }
 const toolPool: Pool = { id: 'pool-t', campId: 'C', name: 'Tools', role: 'deposit', createdAt: 3 }
@@ -58,12 +58,12 @@ function back(amountCents: number, poolId = bikePool.id, id = 'm-in'): DepositMo
   return { ...out(amountCents, poolId, id), kind: 'deposit_in', date: '2026-08-14', createdAt: 2 }
 }
 
-function volunteer(amountCents: number, id = 'm-v'): VolunteerMovement {
+function fee(amountCents: number, id = 'm-v'): FeeMovement {
   return {
     id,
     campId: 'C',
     kind: 'volunteer_in',
-    name: 'Volunteer cash',
+    name: 'Participation fee',
     amountCents,
     date: '2026-08-03',
     createdAt: 3,
@@ -80,19 +80,14 @@ const validDraft: MovementDraft = {
   note: ' left in cash ',
 }
 
-describe('volunteerHeldCents', () => {
-  it('volunteerHeldCents sums only volunteer_in rows', () => {
-    const movements: Movement[] = [
-      volunteer(5_000),
-      out(20_000),
-      back(20_000),
-      volunteer(2_500, 'm-v2'),
-    ]
-    expect(volunteerHeldCents(movements)).toBe(7_500)
+describe('feeHeldCents', () => {
+  it('feeHeldCents sums only volunteer_in rows', () => {
+    const movements: Movement[] = [fee(5_000), out(20_000), back(20_000), fee(2_500, 'm-v2')]
+    expect(feeHeldCents(movements)).toBe(7_500)
   })
 
-  it('volunteerHeldCents is 0 without movements', () => {
-    expect(volunteerHeldCents([])).toBe(0)
+  it('feeHeldCents is 0 without movements', () => {
+    expect(feeHeldCents([])).toBe(0)
   })
 })
 
@@ -137,7 +132,7 @@ describe('depositStatus', () => {
   })
 
   it('depositStatus ignores movements belonging to another pool', () => {
-    const movements: Movement[] = [out(20_000, toolPool.id), volunteer(5_000)]
+    const movements: Movement[] = [out(20_000, toolPool.id), fee(5_000)]
     expect(depositStatus(summary(bikePool, 20_000), movements).handedOverCents).toBe(0)
   })
 
@@ -261,14 +256,14 @@ describe('custodyOutstandingCents', () => {
 })
 
 describe('custodyReading', () => {
-  it('custodyReading bundles the deposits and the volunteer money', () => {
+  it('custodyReading bundles the deposits and the participation fee', () => {
     const reading = custodyReading(
       [summary(everyday, 100_000), summary(bikePool, 20_000)],
-      [out(20_000), volunteer(5_000), volunteer(2_500, 'm-v2')],
+      [out(20_000), fee(5_000), fee(2_500, 'm-v2')],
     )
     expect(reading.statuses.map((s) => s.pool.id)).toEqual([bikePool.id])
-    expect(reading.volunteerHeldCents).toBe(7_500)
-    expect(reading.volunteerCount).toBe(2)
+    expect(reading.feeHeldCents).toBe(7_500)
+    expect(reading.feeCount).toBe(2)
   })
 })
 
@@ -277,7 +272,7 @@ describe('movementIssues', () => {
     expect(movementIssues({ ...validDraft, poolId: '' })).toEqual(['pool'])
   })
 
-  it('movementIssues allows volunteer money without a pool', () => {
+  it('movementIssues allows a participation fee without a pool', () => {
     expect(movementIssues({ ...validDraft, kind: 'volunteer_in', poolId: '' })).toEqual([])
   })
 
@@ -293,7 +288,7 @@ describe('movementIssues', () => {
 })
 
 describe('movementDraftToInput', () => {
-  it('movementDraftToInput drops the poolId from volunteer money', () => {
+  it('movementDraftToInput drops the poolId from a participation fee', () => {
     const input = movementDraftToInput(
       { ...validDraft, kind: 'volunteer_in', poolId: bikePool.id },
       'C',
@@ -334,11 +329,11 @@ describe('movementDraftToInput', () => {
 })
 
 describe('the custody focus split', () => {
-  const mixed: Movement[] = [out(20_000), volunteer(5_000), back(20_000), volunteer(2_500, 'm-v2')]
+  const mixed: Movement[] = [out(20_000), fee(5_000), back(20_000), fee(2_500, 'm-v2')]
 
   it('movementsInFocus keeps the deposit rows out of the cash list and back', () => {
     expect(movementsInFocus(mixed, 'deposits').map((m) => m.id)).toEqual(['m-out', 'm-in'])
-    expect(movementsInFocus(mixed, 'cash').map((m) => m.id)).toEqual(['m-v', 'm-v2'])
+    expect(movementsInFocus(mixed, 'fee').map((m) => m.id)).toEqual(['m-v', 'm-v2'])
   })
 
   it('movementsInFocus preserves the order it was given', () => {
@@ -348,7 +343,7 @@ describe('the custody focus split', () => {
 
   it('movementsInFocus returns nothing for an empty list', () => {
     expect(movementsInFocus([], 'deposits')).toEqual([])
-    expect(movementsInFocus([], 'cash')).toEqual([])
+    expect(movementsInFocus([], 'fee')).toEqual([])
   })
 
   it('kindsForFocus offers both directions of a deposit, and only those', () => {
@@ -359,9 +354,9 @@ describe('the custody focus split', () => {
     expect(kindsForFocus('deposits', false)).toEqual([])
   })
 
-  it('kindsForFocus offers volunteer money regardless of the deposit pools', () => {
-    expect(kindsForFocus('cash', false)).toEqual(['volunteer_in'])
-    expect(kindsForFocus('cash', true)).toEqual(['volunteer_in'])
+  it('kindsForFocus offers the participation fee regardless of the deposit pools', () => {
+    expect(kindsForFocus('fee', false)).toEqual(['volunteer_in'])
+    expect(kindsForFocus('fee', true)).toEqual(['volunteer_in'])
   })
 })
 

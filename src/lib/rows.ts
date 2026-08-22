@@ -99,7 +99,7 @@ export function toMovement(row: unknown): Movement | null {
   const { id, campId, name, amountCents, date, note, createdAt } = value
   const common = { id, campId, name, amountCents, date, note, createdAt }
   // Narrowing on `kind` is what makes `poolId` visible: copying it unconditionally would
-  // give volunteer money a pool it does not have.
+  // give a participation fee a pool it does not have.
   return value.kind === 'volunteer_in'
     ? { ...common, kind: value.kind }
     : {

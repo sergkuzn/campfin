@@ -9,9 +9,8 @@ type Props = {
   remainingCents: number
 }
 
-/** One labelled figure: the label at the cell's left edge, the value at its right. A local
- *  component because the table is four of the same thing and nothing outside this file
- *  needs the shape. */
+/** One labelled figure: label then value, left-aligned. A local component because the
+ *  table is four of the same thing and nothing outside this file needs the shape. */
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <span className="allowed__stat">

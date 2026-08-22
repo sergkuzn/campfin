@@ -10,9 +10,9 @@ import {
   type SaveMovementInput,
 } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
-import { CashStrip } from './CashStrip'
 import { ConfirmDialog } from './ConfirmDialog'
 import { DepositsStrip } from './DepositsStrip'
+import { FeeStrip } from './FeeStrip'
 import { MovementForm } from './MovementForm'
 import { MovementList } from './MovementList'
 
@@ -43,7 +43,7 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
   const labels = t.movements[focus]
   // Nothing can be recorded here yet: the deposit kinds have no pool to point at.
   const missingDeposits = focus === 'deposits' && deposits.length === 0
-  // Only this half's rows: a screen headed "Deposits" listing volunteer cash would undo
+  // Only this half's rows: a screen headed "Deposits" listing participation fees would undo
   // the split the dashboard makes. The form below is limited to the same half.
   const rows = movementsInFocus(movements.movements, focus)
   const editingRow =
@@ -94,7 +94,7 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
       {focus === 'deposits' ? (
         <DepositsStrip statuses={custody.statuses} />
       ) : (
-        <CashStrip heldCents={custody.volunteerHeldCents} count={custody.volunteerCount} />
+        <FeeStrip heldCents={custody.feeHeldCents} count={custody.feeCount} />
       )}
 
       {/* Without a deposit source there is no Kaution to hand over, so say what is missing

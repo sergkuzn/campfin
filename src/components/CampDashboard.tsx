@@ -9,8 +9,8 @@ import type { Camp } from '../lib/types'
 import { AllowedToday } from './AllowedToday'
 import { BurnChart } from './BurnChart'
 import { CampSetup } from './CampSetup'
-import { CashStrip } from './CashStrip'
 import { DepositsStrip } from './DepositsStrip'
+import { FeeStrip } from './FeeStrip'
 import { PoolBars } from './PoolBars'
 import { SlotCard } from './SlotCard'
 import { StatusPill } from './StatusPill'
@@ -29,7 +29,7 @@ type Props = {
   /** Whether any receipt exists yet — the bars alone cannot say so, since an
    *  untouched pool and a camp with no receipts look the same. */
   hasExpenses: boolean
-  /** Cash held rather than spent: the deposits and the volunteer money. */
+  /** Cash held rather than spent: the deposits and the participation fees. */
   custody: CustodyReading
   /** The end-of-camp reading. Only its total shows here; the sheet explains it. */
   settlement: Settlement
@@ -182,12 +182,16 @@ export function CampDashboard({
       </SlotCard>
 
       <SlotCard
-        title={t.custody.cash.title}
-        action={t.custody.cash.open}
-        onOpen={() => onOpenMovements('cash')}
-        filled={custody.volunteerHeldCents > 0}
+        title={t.custody.fee.title}
+        action={t.custody.fee.open}
+        onOpen={() => onOpenMovements('fee')}
+        filled={custody.feeHeldCents > 0}
       >
-        <CashStrip heldCents={custody.volunteerHeldCents} count={custody.volunteerCount} />
+        {custody.feeHeldCents > 0 ? (
+          <FeeStrip heldCents={custody.feeHeldCents} count={custody.feeCount} />
+        ) : (
+          <p className="slot-card__hint">{t.custody.fee.empty}</p>
+        )}
       </SlotCard>
 
       <SlotCard

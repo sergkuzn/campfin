@@ -47,13 +47,16 @@
   text-align: center;
 }
 
+/* Square and gapless: a highlighted run of days then meets edge to edge and reads as one
+   stripe across the week, which is what a camp span is. Circles would break the same span
+   into a row of separate marks. */
 .calendar__day {
   aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
-  border-radius: 50%;
+  border-radius: 0;
   background: none;
   color: var(--fg);
   font: inherit;
@@ -71,18 +74,35 @@
 }
 
 /* Highlights the camp's span on a receipt's calendar — a plain tint, not a border, so it
-   reads as "these days belong together" rather than competing with the today/selected ring. */
+   reads as "these days belong together" rather than competing with the today outline. */
 .calendar__day[data-allowed="true"] {
   background-color: color-mix(in srgb, var(--ok) 16%, transparent);
-}
-
-.calendar__day[data-today="true"] {
-  border-color: var(--accent);
 }
 
 .calendar__day[data-selected="true"] {
   background-color: var(--accent);
   color: white;
+}
+
+/* Only the two ends of a run are rounded, so the days between stay square and the stripe
+   stays unbroken. A run that spills over a week boundary is capped on the row it ends on,
+   which is the whole reason these are separate attributes rather than one "is an edge". */
+.calendar__day[data-allowed-start="true"],
+.calendar__day[data-selected-start="true"] {
+  border-start-start-radius: var(--radius);
+  border-end-start-radius: var(--radius);
+}
+
+.calendar__day[data-allowed-end="true"],
+.calendar__day[data-selected-end="true"] {
+  border-start-end-radius: var(--radius);
+  border-end-end-radius: var(--radius);
+}
+
+/* An outline rather than a ring, drawn inside the cell so it neither resizes the day nor
+   opens a gap in a stripe running through it. */
+.calendar__day[data-today="true"] {
+  border-color: var(--accent);
 }
 
 .calendar__day:hover {

@@ -4,7 +4,7 @@
  * argument.
  *
  * An expense is the only thing that *consumes* budget. Cash that merely changes hands (a
- * Kaution, a volunteer's money) is a `Movement` and lives elsewhere, which is what keeps
+ * Kaution, a participation fee) is a `Movement` and lives elsewhere, which is what keeps
  * pool arithmetic a plain sum over expenses.
  */
 

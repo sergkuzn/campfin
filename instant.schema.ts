@@ -115,7 +115,7 @@ const _schema = i.schema({
 
     movements: i.entity({
       campId: i.string().indexed(),
-      // Present for the deposit kinds, absent for volunteer money — the union in
+      // Present for the deposit kinds, absent for a participation fee — the union in
       // `src/lib/types.ts` is what makes that check compile-time on the client.
       poolId: i.string().optional().indexed(),
       kind: i.string<MovementKind>().indexed(),

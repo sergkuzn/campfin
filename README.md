@@ -14,7 +14,7 @@ them in step. No personal data is stored — only counts, days, amounts and cate
   people who never turned up is never treated as spendable.
 - **Daily burn** — how much may be spent today, and a day-by-day chart of the allowance
   against real spending.
-- **Deposits & cash** — a deposit handed over and returned, and volunteers' money held for
+- **Deposits & fees** — a deposit handed over and returned, and participation fees held for
   the organisation. Neither consumes budget.
 - **Settle up** — a breakdown table that explains what goes back, exportable as JSON (a
   full backup, restorable) or CSV, and printable for accounting.

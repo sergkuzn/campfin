@@ -145,7 +145,7 @@ export function remapCampExport(dump: CampDump, options: RemapOptions): CampDump
     }),
 
     // The return type is written out because `flatMap` over a union would otherwise infer
-    // "array of deposits *or* array of volunteers" rather than one array of either.
+    // "array of deposits *or* array of fees" rather than one array of either.
     movements: dump.movements.flatMap((movement): Movement[] => {
       if (movement.kind === 'volunteer_in') return [{ ...movement, id: newId(), campId }]
       const poolId = poolIds.get(movement.poolId)

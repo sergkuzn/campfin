@@ -87,7 +87,7 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
         isLoading={false}
         error={null}
         hasExpenses={false}
-        custody={{ statuses: [], volunteerHeldCents: 0, volunteerCount: 0 }}
+        custody={{ statuses: [], feeHeldCents: 0, feeCount: 0 }}
         settlement={settlement}
         onBack={vi.fn()}
         onOpenIncome={onOpenIncome}
@@ -258,8 +258,8 @@ describe('CampDashboard', () => {
     await user.click(slotHeader(en.custody.deposits.open))
     expect(onOpenMovements).toHaveBeenCalledWith('deposits')
 
-    await user.click(slotHeader(en.custody.cash.open))
-    expect(onOpenMovements).toHaveBeenLastCalledWith('cash')
+    await user.click(slotHeader(en.custody.fee.open))
+    expect(onOpenMovements).toHaveBeenLastCalledWith('fee')
 
     await user.click(slotHeader(en.settlement.open))
     expect(onOpenSettlement).toHaveBeenCalledOnce()

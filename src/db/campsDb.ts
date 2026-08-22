@@ -160,7 +160,7 @@ export function importCamp(args: ImportCampArgs): { camp: Camp; done: Promise<un
         .update({
           campId,
           kind: movement.kind,
-          // Volunteer money has no pool at all; the union in `src/lib/types.ts` is what
+          // A participation fee has no pool at all; the union in `src/lib/types.ts` is what
           // makes reading `poolId` here a compile error unless the kind was narrowed.
           poolId: movement.kind === 'volunteer_in' ? undefined : movement.poolId,
           completesDeposit:

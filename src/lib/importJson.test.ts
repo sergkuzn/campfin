@@ -175,7 +175,7 @@ describe('remapCampExport', () => {
     expect(out.movements).toEqual([])
   })
 
-  it('keeps volunteer money, which points at no pool at all', () => {
+  it('keeps a participation fee, which points at no pool at all', () => {
     const out = remapCampExport(
       { camp, pools: [], sources: [], blocks: [], expenses: [], movements: [movement] },
       { ...options, newId: counter() },

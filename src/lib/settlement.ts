@@ -4,7 +4,7 @@
  *
  * Two kinds of line come out of here. **Rows** are money leaving your hands: a pool's
  * leftover, per-diem money for people who never came, a Kaution coming back, the
- * volunteers' cash. **Warnings** are the opposite — situations where a number on the sheet
+ * participation fees. **Warnings** are the opposite — situations where a number on the sheet
  * is not yet the final word (a deposit still at a shop, an overspent pool, more people than
  * were funded). They are rows in the table, not footnotes, because a leader reading the
  * sheet at the end of camp reads it once.
@@ -22,7 +22,7 @@ import type { Expense, Movement, PerDiemBlock, Pool } from './types'
  * What one row of the breakdown is about. A *code*, not a sentence: `src/lib/` never
  * decides how the UI reads, so the dictionary turns each of these into a label.
  */
-export type SettlementRowKind = 'pool_unspent' | 'pool_unusable' | 'deposit_return' | 'volunteer'
+export type SettlementRowKind = 'pool_unspent' | 'pool_unusable' | 'deposit_return' | 'fee'
 
 /** Something that is not wrong yet, but is not settled either. Also codes. */
 export type SettlementWarningKind =
@@ -33,7 +33,7 @@ export type SettlementWarningKind =
 
 export type SettlementRow = {
   kind: SettlementRowKind
-  /** The pool this money sits in; null only for volunteer cash, which belongs to none. */
+  /** The pool this money sits in; null only for the fee, which belongs to none. */
   pool: Pool | null
   /** Always positive — a row that would be zero or negative is not emitted at all. */
   amountCents: number
@@ -63,7 +63,7 @@ export type SettlementWarning =
 export type Settlement = {
   receivedTotalCents: number
   spentTotalCents: number
-  /** Σ `rows`. Deposits and volunteer money included — everything that leaves your hands. */
+  /** Σ `rows`. Deposits and the fee included — everything that leaves your hands. */
   toReturnCents: number
   rows: SettlementRow[]
   warnings: SettlementWarning[]
@@ -107,7 +107,7 @@ export function computeSettlement(input: SettlementInput): Settlement {
     addRow('deposit_return', status.pool, status.toReturnCents)
   }
 
-  addRow('volunteer', null, custody.volunteerHeldCents)
+  addRow('fee', null, custody.feeHeldCents)
 
   return {
     receivedTotalCents: receivedTotalCents(summaries),

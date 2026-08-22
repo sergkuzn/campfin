@@ -28,7 +28,7 @@ export function saveMovement(input: SaveMovementInput): Promise<unknown> {
         amountCents: fields.amountCents,
         date: fields.date,
         // null clears the attribute. Both optionals need it: changing a deposit row into
-        // volunteer money must actually drop its pool, or a stale pool id would survive
+        // a participation fee must actually drop its pool, or a stale pool id would survive
         // the edit and the row would come back through the guard as a deposit.
         // Comparing the discriminant (rather than calling a helper) is what lets
         // TypeScript narrow the union and see `poolId` on the deposit branch.

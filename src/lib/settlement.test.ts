@@ -5,11 +5,11 @@ import type {
   AmountSource,
   DepositMovement,
   Expense,
+  FeeMovement,
   Movement,
   PerDiemBlock,
   PerDiemSource,
   Pool,
-  VolunteerMovement,
 } from './types'
 
 const everyday: Pool = {
@@ -80,7 +80,7 @@ const exp = (over: Partial<Expense>): Expense => ({
 })
 
 // Two builders, not one with an optional pool: a deposit movement always names its pool
-// and volunteer money never does, which is exactly what the union in `types.ts` says.
+// and a participation fee never does, which is exactly what the union in `types.ts` says.
 const deposit = (over: Partial<DepositMovement> = {}): Movement => ({
   id: 'm',
   campId: 'c',
@@ -93,7 +93,7 @@ const deposit = (over: Partial<DepositMovement> = {}): Movement => ({
   ...over,
 })
 
-const volunteer = (over: Partial<VolunteerMovement> = {}): Movement => ({
+const fee = (over: Partial<FeeMovement> = {}): Movement => ({
   id: 'v',
   campId: 'c',
   kind: 'volunteer_in',
@@ -178,22 +178,19 @@ describe('computeSettlement', () => {
     expect(s.warnings).toEqual([])
   })
 
-  it('volunteer money is a row of its own and lands in the total', () => {
+  it('the participation fee is a row of its own and lands in the total', () => {
     const s = settle({
-      movements: [
-        volunteer({ id: 'v1', amountCents: 3000 }),
-        volunteer({ id: 'v2', amountCents: 2000 }),
-      ],
+      movements: [fee({ id: 'v1', amountCents: 3000 }), fee({ id: 'v2', amountCents: 2000 })],
     })
 
-    expect(s.rows).toContainEqual({ kind: 'volunteer', pool: null, amountCents: 5000 })
+    expect(s.rows).toContainEqual({ kind: 'fee', pool: null, amountCents: 5000 })
     expect(s.toReturnCents).toBe(62_000 + 20_000 + 5000)
   })
 
   it('the rows add up to the total', () => {
     const s = settle({
       expenses: [exp({ amountCents: 1234 })],
-      movements: [volunteer({ amountCents: 777 })],
+      movements: [fee({ amountCents: 777 })],
     })
 
     expect(s.rows.reduce((sum, row) => sum + row.amountCents, 0)).toBe(s.toReturnCents)

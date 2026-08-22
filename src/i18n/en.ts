@@ -392,9 +392,11 @@ export const en = {
      *  row by row. Optional — a receipt is worth entering before it is filed. */
     numberLabel: 'Receipt no.',
     numberPlaceholder: 'e.g. 12',
-    /** Shown under the field while it still holds the number the form offered, so a filled
-     *  box reads as a suggestion rather than something already written on a slip. */
-    numberHint: 'next free number',
+    /** Fills the field with the next free number, which is the whole point of the button:
+     *  nobody should have to remember where the folder got to. A trailing dot rather than a
+     *  "#" — the same convention the row tag below uses, so a number reads the same way
+     *  wherever it appears. */
+    numberSuggest: (n: number) => `Next: ${n}.`,
     numberTag: (n: number) => `${n}.`,
     noteLabel: 'Note',
     notePlaceholder: 'e.g. paid in cash',
@@ -474,7 +476,7 @@ export const en = {
   },
 
   /**
-   * Cash that changes hands without being spent: a Kaution and volunteers' money. The
+   * Cash that changes hands without being spent: a Kaution and the participation fees. The
    * wording deliberately avoids "spent" and "budget" — this money is held, not consumed.
    */
   movements: {
@@ -487,20 +489,20 @@ export const en = {
       /** Shown instead of the form: without a deposit source there is no Kaution to move. */
       noDeposits: 'Add a deposit under income first — then you can hand it over here.',
     },
-    cash: {
-      title: 'Volunteer cash',
-      add: '＋ Record cash collected',
-      empty: 'No volunteer money collected yet.',
+    fee: {
+      title: 'Participation fee',
+      add: '＋ Record a fee collected',
+      empty: 'No participation fee collected yet.',
     },
     kindLabel: 'What happened?',
     kinds: {
       deposit_out: 'Deposit handed over',
       deposit_in: 'Deposit came back',
-      volunteer_in: 'Volunteer money collected',
+      volunteer_in: 'Participation fee collected',
     },
     dateLabel: 'Date',
     nameLabel: 'Who?',
-    namePlaceholder: 'e.g. Bike shop',
+    namePlaceholder: 'e.g. Alex',
     amountLabel: 'Amount (€)',
     amountPlaceholder: 'e.g. 200,00',
     poolLabel: 'Which deposit',
@@ -525,8 +527,8 @@ export const en = {
 
   /**
    * The two custody blocks: money passing through your hands, split by where it goes next.
-   * A deposit travels to a counterparty and comes back; volunteers' cash only goes onward
-   * to the organisation.
+   * A deposit travels to a counterparty and comes back; the participation fees only go
+   * onward to the organisation.
    */
   custody: {
     deposits: {
@@ -544,12 +546,12 @@ export const en = {
       stepOverBack: (amount: string) => `${amount} more came back than went out`,
       forfeited: (amount: string) => `${amount} kept for damage`,
     },
-    cash: {
-      title: 'Volunteer cash',
-      empty: 'No volunteer money collected.',
-      open: 'Open volunteer cash',
+    fee: {
+      title: 'Participation fee',
+      empty: 'No participation fee collected yet.',
+      open: 'Open the participation fee',
       held: 'To hand over to the organisation',
-      count: (n: number) => `${n} ${n === 1 ? 'handover' : 'handovers'}`,
+      count: (n: number) => `${n} ${n === 1 ? 'payment' : 'payments'}`,
     },
   },
 
@@ -575,13 +577,13 @@ export const en = {
       poolUnspent: (pool: string) => `${pool} — unspent`,
       poolUnusable: (pool: string) => `${pool} — not ours to spend`,
       depositReturn: (pool: string) => `Deposit ${pool} — coming back`,
-      volunteer: 'Volunteer money to hand over',
+      fee: 'Participation fee to hand over',
     },
     why: {
       poolUnspent: 'What arrived, minus what was spent from it',
       poolUnusable: 'Granted for people who never came',
       depositReturn: 'The deposit, minus what was kept for damage',
-      volunteer: 'Collected from volunteers, passed on to the organisation',
+      fee: 'Collected from participants, passed on to the organisation',
     },
     warningsTitle: 'Check these before you transfer',
     warnings: {

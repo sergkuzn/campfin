@@ -1,6 +1,6 @@
 /**
- * Cash custody: a Kaution handed to a shop and returned by them, and volunteers' money
- * you are holding for the organisation. None of it consumes budget — that is the whole
+ * Cash custody: a Kaution handed to a shop and returned by them, and the participation
+ * fees you are holding for the organisation. None of it consumes budget — that is the whole
  * distinction from an `Expense`, and it is what keeps the burn curve honest.
  *
  * Pure: the row guard lives in `income.ts` (`isMovement`), the clock arrives as an
@@ -16,10 +16,10 @@ export const MOVEMENT_KINDS: readonly MovementKind[] = ['deposit_out', 'deposit_
 
 /**
  * The two halves of the custody money, shown as separate blocks: a Kaution that travels to
- * a counterparty and back, and cash collected from volunteers for the organisation. They
+ * a counterparty and back, and the participation fees collected for the organisation. They
  * behave nothing alike, so every screen shows one of them at a time.
  */
-export type CustodyFocus = 'deposits' | 'cash'
+export type CustodyFocus = 'deposits' | 'fee'
 
 /** Whether a *kind* names a pool — for a draft, where the kind is all there is. */
 export function isDepositKind(kind: MovementKind): kind is 'deposit_out' | 'deposit_in' {
@@ -37,7 +37,7 @@ export function isDepositMovement(movement: Movement): movement is DepositMoveme
 
 /** Which half of the custody money a row belongs to. */
 function focusOfMovement(movement: Movement): CustodyFocus {
-  return isDepositMovement(movement) ? 'deposits' : 'cash'
+  return isDepositMovement(movement) ? 'deposits' : 'fee'
 }
 
 /** One focus's rows only — what its screen lists. */
@@ -46,12 +46,12 @@ export function movementsInFocus(movements: Movement[], focus: CustodyFocus): Mo
 }
 
 /**
- * The kinds a focused form may offer. Cash has exactly one, so its screen can drop the
+ * The kinds a focused form may offer. The fee has exactly one, so its screen can drop the
  * picker entirely; deposits have two, and none at all until a deposit source exists —
  * without a pool to point at, the kinds have nothing to name.
  */
 export function kindsForFocus(focus: CustodyFocus, hasDeposits: boolean): readonly MovementKind[] {
-  if (focus === 'cash') return ['volunteer_in']
+  if (focus === 'fee') return ['volunteer_in']
   return hasDeposits ? MOVEMENT_KINDS.filter(isDepositKind) : []
 }
 
@@ -61,7 +61,7 @@ export type MovementDraft = {
   date: string // ISO "YYYY-MM-DD"
   name: string
   amount: string // euros as typed
-  poolId: string // '' for volunteer money, which belongs to no pool
+  poolId: string // '' for a participation fee, which belongs to no pool
   /** Handovers only: this is the whole Kaution, even if it is less than the deposit. */
   completesDeposit: boolean
   note: string
@@ -71,7 +71,7 @@ export type MovementDraft = {
  * A plain `Omit<Movement, …>` would collapse the union to its shared keys and lose
  * `poolId` entirely. A conditional type over a naked type parameter *distributes* over a
  * union — `T extends unknown ? … : never` applies the Omit to each member separately — so
- * the deposit branch keeps its pool and the volunteer branch still refuses one.
+ * the deposit branch keeps its pool and the fee branch still refuses one.
  */
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
 
@@ -143,7 +143,7 @@ export function movementIssues(draft: MovementDraft): MovementIssue[] {
   if (cents === null || cents <= 0) issues.push('amount')
 
   if (draft.date === '') issues.push('date')
-  // Only the deposit kinds name a pool; volunteer money belongs to no pot at all.
+  // Only the deposit kinds name a pool; a participation fee belongs to no pot at all.
   if (isDepositKind(draft.kind) && draft.poolId === '') issues.push('pool')
 
   return issues
@@ -170,7 +170,7 @@ export function movementDraftToInput(
     note: note === '' ? undefined : note, // an omitted optional field is undefined, not ''
   }
 
-  // Building the two branches separately is what keeps `poolId` off a volunteer row: a
+  // Building the two branches separately is what keeps `poolId` off a fee row: a
   // spread of the whole draft would carry a stale pool id into money that has no pool.
   const fields: NewMovement = isDepositKind(draft.kind)
     ? {
@@ -302,27 +302,27 @@ export function depositStatuses(summaries: PoolSummary[], movements: Movement[])
 }
 
 /**
- * The whole custody picture in one value: every deposit's reading plus the volunteer
+ * The whole custody picture in one value: every deposit's reading plus the fee
  * money. Bundled because the dashboard strip and the movements screen must show the same
  * figures, and passing one computed value beats recomputing three in two places.
  */
 export type CustodyReading = {
   statuses: DepositStatus[]
-  volunteerHeldCents: number
-  /** How many handovers the volunteer total is made of — one row per volunteer. */
-  volunteerCount: number
+  feeHeldCents: number
+  /** How many payments the fee total is made of — one row per handover. */
+  feeCount: number
 }
 
 export function custodyReading(summaries: PoolSummary[], movements: Movement[]): CustodyReading {
   return {
     statuses: depositStatuses(summaries, movements),
-    volunteerHeldCents: volunteerHeldCents(movements),
-    volunteerCount: movements.filter((m) => m.kind === 'volunteer_in').length,
+    feeHeldCents: feeHeldCents(movements),
+    feeCount: movements.filter((m) => m.kind === 'volunteer_in').length,
   }
 }
 
-/** Volunteers' cash you are holding for the organisation. There is no `volunteer_out`. */
-export function volunteerHeldCents(movements: Movement[]): number {
+/** Participation fees you are holding for the organisation. They only ever come in. */
+export function feeHeldCents(movements: Movement[]): number {
   return movements.reduce((sum, m) => (m.kind === 'volunteer_in' ? sum + m.amountCents : sum), 0)
 }
 

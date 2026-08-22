@@ -26,9 +26,10 @@ function monthOf(iso: string): { year: number; month: number } {
 }
 
 /**
- * A month grid: today boxed, weekends red, and either a single pickable day or a two-click
- * range. Dumb by design — it knows nothing about popovers or the "outside camp dates"
- * warning; `DateField` wraps it with those.
+ * A month grid: today outlined, weekends red, and either a single pickable day or a
+ * two-click range. Highlighted days are square and gapless, so a span reads as one stripe.
+ * Dumb by design — it knows nothing about popovers or the "outside camp dates" warning;
+ * `DateField` wraps it with those.
  */
 export function Calendar(props: Props) {
   const t = useT()
@@ -63,6 +64,28 @@ export function Calendar(props: Props) {
   const isAllowed = (day: CalendarDay): boolean => {
     if (props.mode !== 'single' || props.allowedRange === undefined) return false
     return isWithin(day.iso, props.allowedRange.startIso, props.allowedRange.endIso)
+  }
+
+  // The two ends of each highlighted run, so the CSS can round only those and leave the
+  // days between square — a stripe with caps rather than a chain of boxes. A single picked
+  // day is both ends of its own one-day run, which is what gives it a pill of its own.
+  const allowedEdges = (day: CalendarDay): { start: boolean; end: boolean } => {
+    if (props.mode !== 'single' || props.allowedRange === undefined) {
+      return { start: false, end: false }
+    }
+    return {
+      start: day.iso === props.allowedRange.startIso,
+      end: day.iso === props.allowedRange.endIso,
+    }
+  }
+
+  const selectedEdges = (day: CalendarDay): { start: boolean; end: boolean } => {
+    if (props.mode === 'single') {
+      const picked = day.iso === props.value
+      return { start: picked, end: picked }
+    }
+    if (previewRange === null) return { start: false, end: false }
+    return { start: day.iso === previewRange.start, end: day.iso === previewRange.end }
   }
 
   const monthLabel = new Date(shown.year, shown.month, 1).toLocaleDateString(t.dateLocale, {
@@ -122,21 +145,29 @@ export function Calendar(props: Props) {
       </div>
 
       <div className="calendar__grid">
-        {weeks.flat().map((day) => (
-          <button
-            key={day.iso}
-            type="button"
-            className="calendar__day"
-            data-in-month={day.inMonth}
-            data-weekend={day.isWeekend}
-            data-today={day.isToday}
-            data-selected={isSelected(day)}
-            data-allowed={isAllowed(day)}
-            onClick={() => select(day.iso)}
-          >
-            {Number(day.iso.slice(8, 10))}
-          </button>
-        ))}
+        {weeks.flat().map((day) => {
+          const allowed = allowedEdges(day)
+          const selected = selectedEdges(day)
+          return (
+            <button
+              key={day.iso}
+              type="button"
+              className="calendar__day"
+              data-in-month={day.inMonth}
+              data-weekend={day.isWeekend}
+              data-today={day.isToday}
+              data-selected={isSelected(day)}
+              data-selected-start={selected.start}
+              data-selected-end={selected.end}
+              data-allowed={isAllowed(day)}
+              data-allowed-start={allowed.start}
+              data-allowed-end={allowed.end}
+              onClick={() => select(day.iso)}
+            >
+              {Number(day.iso.slice(8, 10))}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
