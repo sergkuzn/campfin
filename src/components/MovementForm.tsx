@@ -13,6 +13,7 @@ import {
 } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
 import type { Movement, MovementKind } from '../lib/types'
+import { RequiredMark } from './RequiredMark'
 
 type Props = {
   campId: string
@@ -97,9 +98,13 @@ export function MovementForm({
 
       {isDepositKind(draft.kind) && (
         <label className="field">
-          <span className="field__label">{t.movements.poolLabel}</span>
+          <span className="field__label">
+            {t.movements.poolLabel}
+            <RequiredMark />
+          </span>
           <select
             className="income-form__input"
+            aria-required="true"
             value={draft.poolId}
             onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
               patch({ poolId: event.target.value })
@@ -115,7 +120,10 @@ export function MovementForm({
       )}
 
       <label className="field">
-        <span className="field__label">{t.movements.dateLabel}</span>
+        <span className="field__label">
+          {t.movements.dateLabel}
+          <RequiredMark />
+        </span>
         <input
           className="income-form__input"
           type="date"
@@ -127,9 +135,13 @@ export function MovementForm({
       </label>
 
       <label className="field">
-        <span className="field__label">{t.movements.nameLabel}</span>
+        <span className="field__label">
+          {t.movements.nameLabel}
+          <RequiredMark />
+        </span>
         <input
           className="income-form__input"
+          aria-required="true"
           value={draft.name}
           placeholder={t.movements.namePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -139,9 +151,13 @@ export function MovementForm({
       </label>
 
       <label className="field">
-        <span className="field__label">{t.movements.amountLabel}</span>
+        <span className="field__label">
+          {t.movements.amountLabel}
+          <RequiredMark />
+        </span>
         <input
           className="income-form__input income-form__input--amount"
+          aria-required="true"
           // inputMode="decimal" so a phone shows a numeric keypad. The value stays a string
           // here; cents happen in `lib/movements.ts`.
           inputMode="decimal"

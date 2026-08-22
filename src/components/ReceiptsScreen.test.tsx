@@ -87,6 +87,11 @@ function renderScreen(
 }
 
 /** The receipt names in the order they are rendered — the one thing a sort changes. */
+/** A required field's label carries a red star, so match the label text as a prefix. */
+function labelled(label: string): HTMLElement {
+  return screen.getByLabelText(label, { exact: false })
+}
+
 function renderedNames(): string[] {
   return screen
     .getAllByRole('listitem')
@@ -110,8 +115,8 @@ describe('ReceiptsScreen — numbers', () => {
     const { user, saveExpense } = renderScreen()
     await user.click(screen.getByRole('button', { name: t.add }))
 
-    await user.type(screen.getByLabelText(t.nameLabel), 'Milk')
-    await user.type(screen.getByLabelText(t.amountLabel), '3,00')
+    await user.type(labelled(t.nameLabel), 'Milk')
+    await user.type(labelled(t.amountLabel), '3,00')
     await user.type(screen.getByLabelText(t.numberLabel), '1')
 
     expect(screen.getByText(t.issues.numberTaken)).toBeInTheDocument()
@@ -313,8 +318,8 @@ describe('ReceiptsScreen — saying whose money it was', () => {
   /** Fill the two fields that are compulsory for reasons other than the payer. */
   async function startReceipt(user: ReturnType<typeof userEvent.setup>) {
     await user.click(screen.getByRole('button', { name: t.add }))
-    await user.type(screen.getByLabelText(t.nameLabel), 'Milk')
-    await user.type(screen.getByLabelText(t.amountLabel), '3,00')
+    await user.type(labelled(t.nameLabel), 'Milk')
+    await user.type(labelled(t.amountLabel), '3,00')
   }
 
   it('starts with neither option picked, and will not save until one is', async () => {

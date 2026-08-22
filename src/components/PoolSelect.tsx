@@ -1,6 +1,7 @@
 import { useT } from '../i18n'
 import { NEW_POOL } from '../lib/drafts'
 import type { Pool } from '../lib/types'
+import { RequiredMark } from './RequiredMark'
 
 type Props = {
   pools: Pool[] // this camp's pools only
@@ -57,9 +58,13 @@ export function PoolSelect({
       {value === NEW_POOL && (
         <div className="pool-select__field">
           <label className="field">
-            <span className="field__label">{t.poolSelect.newNameLabel}</span>
+            <span className="field__label">
+              {t.poolSelect.newNameLabel}
+              <RequiredMark />
+            </span>
             <input
               className="income-form__input"
+              aria-required="true"
               value={newPoolName}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 onNewPoolNameChange(event.target.value)

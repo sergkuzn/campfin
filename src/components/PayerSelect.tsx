@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useT } from '../i18n'
 import { isSamePayer } from '../lib/payers'
+import { RequiredMark } from './RequiredMark'
 
 type Props = {
   /** The name on the draft, as typed. Empty means nothing has been picked yet. */
@@ -63,7 +64,10 @@ export function PayerSelect({
 
   return (
     <fieldset className="payer">
-      <legend className="field__label">{t.receipts.payer.label}</legend>
+      <legend className="field__label">
+        {t.receipts.payer.label}
+        <RequiredMark />
+      </legend>
 
       {moneyHolder === undefined ? (
         <p className="field__hint">{t.receipts.payer.noHolder}</p>

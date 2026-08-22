@@ -16,6 +16,7 @@ import './PoolTag.css'
 import './ReceiptFilters.css'
 import { PayerSelect } from './PayerSelect'
 import { ReceiptNumberField } from './ReceiptNumberField'
+import { RequiredMark } from './RequiredMark'
 
 type Props = {
   campId: string
@@ -80,7 +81,10 @@ export function ExpenseForm({
     <form className="card card--editing" onSubmit={handleSubmit}>
       <div className="block__row">
         <label className="field">
-          <span className="field__label">{t.receipts.dateLabel}</span>
+          <span className="field__label">
+            {t.receipts.dateLabel}
+            <RequiredMark />
+          </span>
           <input
             className="income-form__input"
             type="date"
@@ -99,9 +103,13 @@ export function ExpenseForm({
       </div>
 
       <label className="field">
-        <span className="field__label">{t.receipts.nameLabel}</span>
+        <span className="field__label">
+          {t.receipts.nameLabel}
+          <RequiredMark />
+        </span>
         <input
           className="income-form__input"
+          aria-required="true"
           value={draft.name}
           placeholder={t.receipts.namePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -111,9 +119,13 @@ export function ExpenseForm({
       </label>
 
       <label className="field">
-        <span className="field__label">{t.receipts.amountLabel}</span>
+        <span className="field__label">
+          {t.receipts.amountLabel}
+          <RequiredMark />
+        </span>
         <input
           className="income-form__input income-form__input--amount"
+          aria-required="true"
           // inputMode="decimal" so a phone shows a numeric keypad. The value stays a
           // string here; cents happen in `lib/expenses.ts`.
           inputMode="decimal"
@@ -126,7 +138,10 @@ export function ExpenseForm({
       </label>
 
       <div className="field">
-        <span className="field__label">{t.receipts.poolLabel}</span>
+        <span className="field__label">
+          {t.receipts.poolLabel}
+          <RequiredMark />
+        </span>
         <div className="filters__chips">
           {pools.map((summary) => (
             <button

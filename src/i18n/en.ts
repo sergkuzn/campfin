@@ -348,7 +348,7 @@ export const en = {
      *  wherever it appears. */
     numberSuggest: (n: number) => `Next: ${n}.`,
     numberTag: (n: number) => `${n}.`,
-    noteLabel: 'Note (optional)',
+    noteLabel: 'Note',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
     cancel: 'Cancel',
@@ -458,7 +458,7 @@ export const en = {
     poolLabel: 'Which deposit',
     completesLabel: 'This is the full deposit',
     completesHint: 'Tick when the counterparty asked for less than the deposit you were given.',
-    noteLabel: 'Note (optional)',
+    noteLabel: 'Note',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
     cancel: 'Cancel',

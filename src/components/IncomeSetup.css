@@ -71,6 +71,13 @@
   font-size: 0.75rem;
 }
 
+/* Marks a field whose value blocks Save. Red because it is the same "you must deal with
+   this" colour as the issues under the form. */
+.field__required {
+  margin-left: 0.15rem;
+  color: var(--danger);
+}
+
 /* A checkbox reads left-to-right, not label-above-input like the rest of the fields. */
 .field--check {
   flex-direction: row;

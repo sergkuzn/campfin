@@ -13,6 +13,7 @@ import { poolPolicyFor } from '../lib/income'
 import type { IncomeKind, IncomeSource, PerDiemBlock, Pool } from '../lib/types'
 import { PerDiemBlocksEditor } from './PerDiemBlocksEditor'
 import { PoolSelect } from './PoolSelect'
+import { RequiredMark } from './RequiredMark'
 
 type Props = {
   campId: string
@@ -73,9 +74,13 @@ export function IncomeSourceForm({
       <p className="card__kind">{t.income.kinds[kind].label}</p>
 
       <label className="field">
-        <span className="field__label">{t.income.nameLabel}</span>
+        <span className="field__label">
+          {t.income.nameLabel}
+          <RequiredMark />
+        </span>
         <input
           className="income-form__input"
+          aria-required="true"
           value={draft.name}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             patch({ name: event.target.value })
@@ -98,9 +103,13 @@ export function IncomeSourceForm({
         </>
       ) : (
         <label className="field">
-          <span className="field__label">{t.income.amountLabel}</span>
+          <span className="field__label">
+            {t.income.amountLabel}
+            <RequiredMark />
+          </span>
           <input
             className="income-form__input income-form__input--amount"
+            aria-required="true"
             // inputMode="decimal" so a phone shows a numeric keypad. The value stays a
             // string here: cents happen in drafts.ts.
             inputMode="decimal"

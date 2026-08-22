@@ -5,6 +5,7 @@ import {
   blockDraftCents,
   blockDraftPersonDays,
 } from '../lib/drafts'
+import { RequiredMark } from './RequiredMark'
 
 type Props = {
   blocks: BlockDraft[]
@@ -72,7 +73,10 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
 
             <div className="block__row">
               <label className="field">
-                <span className="field__label">{t.blocks.peopleLabel}</span>
+                <span className="field__label">
+                  {t.blocks.peopleLabel}
+                  <RequiredMark />
+                </span>
                 <input
                   className="income-form__input"
                   type="number"
@@ -87,9 +91,13 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
               </label>
 
               <label className="field">
-                <span className="field__label">{t.blocks.rateLabel}</span>
+                <span className="field__label">
+                  {t.blocks.rateLabel}
+                  <RequiredMark />
+                </span>
                 <input
                   className="income-form__input"
+                  aria-required="true"
                   // inputMode="decimal" so a phone shows a numeric keypad. The value stays
                   // a string here: cents happen in drafts.ts.
                   inputMode="decimal"
@@ -104,7 +112,10 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
 
             <div className="block__row">
               <label className="field">
-                <span className="field__label">{t.blocks.startLabel}</span>
+                <span className="field__label">
+                  {t.blocks.startLabel}
+                  <RequiredMark />
+                </span>
                 <input
                   className="income-form__input"
                   type="date"
@@ -116,7 +127,10 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
               </label>
 
               <label className="field">
-                <span className="field__label">{t.blocks.endLabel}</span>
+                <span className="field__label">
+                  {t.blocks.endLabel}
+                  <RequiredMark />
+                </span>
                 <input
                   className="income-form__input"
                   type="date"
