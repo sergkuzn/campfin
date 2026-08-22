@@ -76,6 +76,7 @@ function renderScreen(
       <ReceiptsScreen
         campId="c1"
         moneyHolder={moneyHolder}
+        campWindow={null}
         expenses={stub}
         summaries={pools.map(summary)}
         focusPoolId={focusPoolId}

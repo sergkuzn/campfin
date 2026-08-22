@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useT } from '../i18n'
+import type { CampWindow } from '../lib/camps'
 import {
   blankExpenseDraft,
   draftFromExpense,
@@ -14,6 +15,7 @@ import type { Expense } from '../lib/types'
 import './IncomeSetup.css'
 import './PoolTag.css'
 import './ReceiptFilters.css'
+import { DateField } from './DateField'
 import { PayerSelect } from './PayerSelect'
 import { ReceiptNumberField } from './ReceiptNumberField'
 import { RequiredMark } from './RequiredMark'
@@ -34,6 +36,10 @@ type Props = {
   /** Who holds the camp cash, so "paid out of the camp cash" can name them. Set in camp
    *  settings — this form only reads it. */
   moneyHolder: string | undefined
+  /** The camp's known span, derived from its per-diem blocks. Highlights those days on the
+   *  date picker and asks for confirmation before saving a date outside them. `null` when
+   *  the camp has no per-diem income yet, so nothing dates it. */
+  campWindow: CampWindow | null
   onSave: (input: SaveExpenseInput) => void
   onCancel: () => void
 }
@@ -47,6 +53,7 @@ export function ExpenseForm({
   takenNumbers,
   suggestedNumber,
   moneyHolder,
+  campWindow,
   onSave,
   onCancel,
 }: Props) {
@@ -80,20 +87,23 @@ export function ExpenseForm({
   return (
     <form className="card card--editing" onSubmit={handleSubmit}>
       <div className="block__row">
-        <label className="field">
-          <span className="field__label">
+        <div className="field">
+          <label className="field__label" htmlFor="expense-date">
             {t.receipts.dateLabel}
             <RequiredMark />
-          </span>
-          <input
-            className="income-form__input"
-            type="date"
+          </label>
+          <DateField
+            id="expense-date"
+            mode="single"
             value={draft.date}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              patch({ date: event.target.value })
+            allowedRange={
+              campWindow === null
+                ? undefined
+                : { startIso: campWindow.startIso, endIso: campWindow.endIso }
             }
+            onChange={(date) => patch({ date })}
           />
-        </label>
+        </div>
 
         <ReceiptNumberField
           value={draft.number}

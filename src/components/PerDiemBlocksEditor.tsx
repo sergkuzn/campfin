@@ -6,6 +6,7 @@ import {
   blockDraftPersonDays,
   copyBlockDraft,
 } from '../lib/drafts'
+import { DateField } from './DateField'
 import { RequiredMark } from './RequiredMark'
 
 type Props = {
@@ -117,36 +118,26 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
               </label>
             </div>
 
-            <div className="block__row">
-              <label className="field">
-                <span className="field__label">
-                  {t.blocks.startLabel}
-                  <RequiredMark />
-                </span>
-                <input
-                  className="income-form__input"
-                  type="date"
-                  value={block.startDate}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    patchRow(block.key, { startDate: event.target.value })
-                  }
-                />
+            <div className="field">
+              {/* The button trigger must sit outside the <label> — a label wrapping a
+                  button steals its taps — so it is tied to its text by id instead. */}
+              <label className="field__label" htmlFor={`${block.key}-dates`}>
+                {t.blocks.datesLabel}
+                <RequiredMark />
               </label>
-
-              <label className="field">
-                <span className="field__label">
-                  {t.blocks.endLabel}
-                  <RequiredMark />
-                </span>
-                <input
-                  className="income-form__input"
-                  type="date"
-                  value={block.endDate}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    patchRow(block.key, { endDate: event.target.value })
-                  }
-                />
-              </label>
+              <DateField
+                id={`${block.key}-dates`}
+                mode="range"
+                placeholder={t.blocks.datesPlaceholder}
+                value={
+                  block.startDate !== '' && block.endDate !== ''
+                    ? { start: block.startDate, end: block.endDate }
+                    : null
+                }
+                onChange={({ start, end }) =>
+                  patchRow(block.key, { startDate: start, endDate: end })
+                }
+              />
             </div>
 
             <p className="block__summary">

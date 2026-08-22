@@ -13,6 +13,7 @@ import {
 } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
 import type { Movement, MovementKind } from '../lib/types'
+import { DateField } from './DateField'
 import { RequiredMark } from './RequiredMark'
 
 type Props = {
@@ -119,20 +120,18 @@ export function MovementForm({
         </label>
       )}
 
-      <label className="field">
-        <span className="field__label">
+      <div className="field">
+        <label className="field__label" htmlFor="movement-date">
           {t.movements.dateLabel}
           <RequiredMark />
-        </span>
-        <input
-          className="income-form__input"
-          type="date"
+        </label>
+        <DateField
+          id="movement-date"
+          mode="single"
           value={draft.date}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-            patch({ date: event.target.value })
-          }
+          onChange={(date) => patch({ date })}
         />
-      </label>
+      </div>
 
       <label className="field">
         <span className="field__label">

@@ -3,6 +3,7 @@ import './ReceiptsScreen.css'
 import type { UseExpenses } from '../hooks/useExpenses'
 import { useFormat, useT } from '../i18n'
 import { spentTotalCents } from '../lib/budget'
+import type { CampWindow } from '../lib/camps'
 import { todayIso } from '../lib/dates'
 import {
   arrangeExpenses,
@@ -24,6 +25,9 @@ type Props = {
   /** Who holds the camp cash. Every "owed" marker is measured against this name, and while
    *  it is absent nothing on the screen owes anybody anything. */
   moneyHolder: string | undefined
+  /** The camp's known span, so the receipt date field can highlight it. `null` when the
+   *  camp has no per-diem income yet. */
+  campWindow: CampWindow | null
   expenses: UseExpenses
   /** This camp's pools — every one of them, so a row can still be named after its pool.
    *  Spending and deposits are separate blocks on the dashboard and stay separate here:
@@ -41,6 +45,7 @@ type Editing = { mode: 'new' } | { mode: 'edit'; expenseId: string }
 export function ReceiptsScreen({
   campId,
   moneyHolder,
+  campWindow,
   expenses,
   summaries,
   focusPoolId,
@@ -176,6 +181,7 @@ export function ReceiptsScreen({
           takenNumbers={takenNumbers}
           suggestedNumber={suggestedNumber}
           moneyHolder={moneyHolder}
+          campWindow={campWindow}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
         />
@@ -234,6 +240,7 @@ export function ReceiptsScreen({
             takenNumbers={takenNumbers}
             suggestedNumber={suggestedNumber}
             moneyHolder={moneyHolder}
+            campWindow={campWindow}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
           />

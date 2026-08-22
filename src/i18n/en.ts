@@ -26,6 +26,17 @@ export const en = {
     cancel: 'Cancel',
   },
 
+  /** The popover month-grid behind every date field. */
+  calendar: {
+    prevMonth: 'Previous month',
+    nextMonth: 'Next month',
+    /** Shown while `DateField` waits for the user to confirm a day outside the camp's
+     *  known span — picking one is allowed, just double-checked. */
+    outsideRangeTitle: 'Outside the camp dates',
+    outsideRangeLine: 'This date falls outside the camp — use it anyway?',
+    outsideRangeConfirm: 'Use this date',
+  },
+
   /** The ⋮ menu carrying a list row's actions. Shared by the receipt and custody rows —
    *  the words are the same on both, so they are written once. */
   rowMenu: {
@@ -305,8 +316,8 @@ export const en = {
     peoplePlaceholder: 'e.g. 12',
     rateLabel: 'Rate per person / day (€)',
     ratePlaceholder: 'e.g. 8,00',
-    startLabel: 'Start date',
-    endLabel: 'End date',
+    datesLabel: 'Dates',
+    datesPlaceholder: 'Pick a start and end date',
     add: '＋ Add empty block',
     copyLast: '＋ Copy previous block',
     personDays: (n: number) => `${n} person-day${n === 1 ? '' : 's'}`,
@@ -399,7 +410,7 @@ export const en = {
        *  money it was, so the choice is made rather than defaulted into. The emoji stands
        *  in for "holds the camp money" so the option reads as one short line instead of two
        *  words of explanation after every name. */
-      holderOption: (name: string) => `👛 ${name}`,
+      holderOption: (name: string) => `👑 ${name}`,
       /** Not shown as text — the second radio sits directly beside the name field, so the
        *  field itself says what picking it means. Kept as the radio's accessible name. */
       otherOption: 'Someone else',

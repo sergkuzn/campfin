@@ -8,6 +8,7 @@ import { useScrollToTop } from '../hooks/useScrollToTop'
 import type { Session } from '../hooks/useSession'
 import { useViewHistory } from '../hooks/useViewHistory'
 import { computeBurn, emptyBurn } from '../lib/burn'
+import { campWindow } from '../lib/camps'
 import { todayIso } from '../lib/dates'
 import { buildCampExport, exportFileName } from '../lib/exportJson'
 import { isCampAdmin, memberCount } from '../lib/members'
@@ -98,6 +99,10 @@ export function SignedInApp({ session }: Props) {
     [summaries, movements.movements],
   )
   const deposits = useMemo(() => depositPools(summaries), [summaries])
+
+  // The camp's span, for the receipt date field: highlights those days and asks before
+  // saving a receipt outside them.
+  const campSpan = useMemo(() => campWindow(blocks), [blocks])
 
   // What goes back at the end. Derived from the same summaries as the bars, so the
   // dashboard headline and the sheet behind it can never quote different totals.
@@ -203,6 +208,7 @@ export function SignedInApp({ session }: Props) {
       <ReceiptsScreen
         campId={openCamp.id}
         moneyHolder={openCamp.moneyHolder}
+        campWindow={campSpan}
         expenses={expenses}
         summaries={summaries}
         focusPoolId={view.poolId}
