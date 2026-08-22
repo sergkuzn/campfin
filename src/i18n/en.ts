@@ -127,7 +127,7 @@ export const en = {
     openReceipts: 'Open receipts',
     /** Shown until the camp has its daily grant — nothing per-day can be computed
      *  without it, so the chart and "allowed today" stay hidden. */
-    setupCallout: 'Add the daily grant to start tracking.',
+    setupCallout: 'Add the daily group allowance income to start tracking.',
     openSettings: 'Camp settings',
   },
 

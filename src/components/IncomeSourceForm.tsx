@@ -101,14 +101,16 @@ export function IncomeSourceForm({ campId, kind, pool, source, blocks, onSave, o
       {kind === 'per_diem' ? (
         <>
           <PerDiemBlocksEditor blocks={draft.blocks} onChange={(b) => patch({ blocks: b })} />
-          <p className="income__total-row">
-            <span>{t.income.personDaysTotal}</span>
-            <strong>{totalPersonDays}</strong>
-          </p>
-          <p className="income__total-row">
-            <span>{t.income.sourceTotal}</span>
-            <strong>{format.euros(draftTotalCents)}</strong>
-          </p>
+          <footer className="income__totals">
+            <p className="income__total-row">
+              <span>{t.income.personDaysTotal}</span>
+              <strong>{totalPersonDays}</strong>
+            </p>
+            <p className="income__total-row">
+              <span>{t.income.sourceTotal}</span>
+              <strong>{format.euros(draftTotalCents)}</strong>
+            </p>
+          </footer>
         </>
       ) : (
         <label className="field">
