@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/en'
@@ -178,12 +178,25 @@ describe('CampDashboard', () => {
     expect(screen.queryByText(en.camps.status.finished)).not.toBeInTheDocument()
   })
 
-  it('opens the receipts of the pool whose bar was tapped', async () => {
+  it('opens the whole receipt list from anywhere on the spending card', async () => {
     const { user, onOpenReceipts } = renderDashboard({ summaries: [fundedPool, depositPool] })
 
-    // The bar is named by what it says, not by a label: the figures are the row's content.
+    // The card is one button; a pool's own figures are part of its accessible name, so
+    // pressing on a bar is pressing the card.
     await user.click(screen.getByRole('button', { name: new RegExp(fundedPool.pool.name) }))
-    expect(onOpenReceipts).toHaveBeenCalledWith('pool-e')
+    expect(onOpenReceipts).toHaveBeenCalledWith(null)
+  })
+
+  it('leaves the pool bars as a readout rather than controls of their own', async () => {
+    const { user, onOpenReceipts } = renderDashboard({ summaries: [fundedPool] })
+
+    // One button for the card, not one per pool: a nested control would be both invalid
+    // inside a <button> and a second target on a row that is only there to be read.
+    const spending = screen.getByRole('button', { name: new RegExp(en.dashboard.spending) })
+    expect(within(spending).queryAllByRole('button')).toHaveLength(0)
+
+    await user.click(screen.getByText(fundedPool.pool.name))
+    expect(onOpenReceipts).toHaveBeenCalledWith(null)
   })
 
   it('keeps deposits out of the spending block — they have a block of their own', () => {

@@ -80,15 +80,41 @@
 }
 
 .dashboard__slot {
+  /* The card's own background, named so the hover tint below can be mixed *over* it
+     instead of replacing it. */
+  --slot-bg: transparent;
+  display: block;
+  width: 100%;
   padding: var(--space-4);
   border: 1px dashed var(--border); /* dashed = deliberately empty, not broken */
   border-radius: var(--radius);
+  background-color: var(--slot-bg);
 }
 
 /* Solid border once the slot holds real content rather than a placeholder. */
 .dashboard__slot--filled {
+  --slot-bg: var(--surface);
   border-style: solid;
-  background-color: var(--surface);
+}
+
+/* Every card that leads somewhere is itself the button, so a thumb aiming anywhere on it
+   hits the destination. The button defaults are reset to look like the card it is —
+   including `display: block`, since a <button> is inline-block and shrink-wraps. The
+   burn-chart card has no destination and stays a plain <section>. */
+button.dashboard__slot {
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.dashboard__slot:hover {
+  background-color: color-mix(in srgb, var(--accent) 7%, var(--slot-bg));
+}
+
+/* A phone has no hover, so the press itself is the only chance to show the card reacted. */
+button.dashboard__slot:active {
+  background-color: color-mix(in srgb, var(--accent) 12%, var(--slot-bg));
 }
 
 .dashboard__slot-title {
@@ -100,50 +126,38 @@
   color: var(--muted);
 }
 
-/* The block's title row doubles as the door to its screen. Pulled out to the card's own
-   edges by negative margins so the tap target spans the full width and reaches the top
-   corner — a thumb aiming anywhere along the title hits it, which a 14px line of text at
-   the bottom of the card never allowed.
+/* The title band. Not a control of its own — the card around it is — but drawn as a tinted
+   strip with its own bottom edge so the card reads as something to press: a card with no
+   banding looks like a panel, and nothing else on the dashboard is banded.
 
-   It is also drawn as a tinted band with its own bottom edge: a full-width control with no
-   background is invisible as a control, and nothing else on the dashboard is banded, so the
-   shading alone marks the row as the thing to press. */
+   Pulled out to the card's own edges by negative margins so it reaches the top corners. */
 .dashboard__slot-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  /* A <button> shrink-wraps its content even as a flex container — `width: auto` on a form
-     control is fit-content, not fill-available — so the full width has to be stated: the
-     card's content width plus the two paddings the negative margins cancel out. */
-  width: calc(100% + var(--space-4) * 2);
-  margin: calc(var(--space-4) * -1) 0 var(--space-3) calc(var(--space-4) * -1);
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-3);
   padding: var(--space-3) var(--space-4);
   /* 2.75rem ≈ 44px, the smallest comfortable touch target; the title alone is half that. */
   min-height: 2.75rem;
-  border: 0;
   border-bottom: 1px solid var(--border);
   /* One pixel inside the card's own radius, so the band's curve sits on the card's border
      instead of cutting across it. */
   border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
   background-color: color-mix(in srgb, var(--accent) 7%, transparent);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
 }
 
-/* Full-strength text in the band: muted grey reads as a caption, and this row is a button. */
+/* Full-strength text in the band: muted grey reads as a caption, and this names the card. */
 .dashboard__slot-head .dashboard__slot-title {
   color: var(--fg);
 }
 
-.dashboard__slot-head:hover {
+/* The band darkens with the card, so the press reads as one gesture on one target. */
+button.dashboard__slot:hover .dashboard__slot-head {
   background-color: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
-/* A phone has no hover, so the press itself is the only chance to show the row reacted. */
-.dashboard__slot-head:active {
+button.dashboard__slot:active .dashboard__slot-head {
   background-color: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 

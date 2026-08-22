@@ -1,4 +1,5 @@
 import './CampDashboard.css'
+import type { ReactNode } from 'react'
 import { useFormat, useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus } from '../lib/camps'
@@ -33,8 +34,8 @@ type Props = {
   settlement: Settlement
   onBack: () => void
   onOpenIncome: () => void
-  /** Opens the receipt list. With a pool id it opens filtered to that pool — tapping a bar
-   *  asks "what went out of *this* pot?", which is the same list with one chip on. */
+  /** Opens the receipt list. A pool id opens it filtered to that pool; the dashboard
+   *  always passes null, but the receipts screen itself still narrows by pool. */
   onOpenReceipts: (poolId: string | null) => void
   /** Opens the movements screen on one half of the custody money. */
   onOpenMovements: (focus: CustodyFocus) => void
@@ -43,27 +44,44 @@ type Props = {
 }
 
 /**
- * A block title that is also the way into the block's own screen. The whole row is the
- * button, so the destination no longer hangs off a line of small text at the bottom of the
- * card. `action` is never drawn — it is what a screen reader reads after the title, since
- * the chevron alone says nothing about where the row leads.
+ * A dashboard card that is, as a whole, the way into its own screen. The entire card is
+ * the button — nothing inside it is interactive, so a thumb aiming anywhere on it hits the
+ * destination. `action` is never drawn: it is what a screen reader reads after the title,
+ * since the chevron alone says nothing about where the card leads.
+ *
+ * A <button> may contain this much layout because none of its children is itself a control;
+ * that is what keeps one focusable element per card.
  */
-function SlotHeader({
+function SlotCard({
   title,
   action,
   onOpen,
+  /** Solid border and surface once the card holds real content rather than a placeholder. */
+  filled,
+  children,
 }: {
   title: string
   action: string
   onOpen: () => void
+  filled: boolean
+  children: ReactNode
 }) {
   return (
-    <button className="dashboard__slot-head" type="button" onClick={onOpen}>
-      <span className="dashboard__slot-title">{title}</span>
-      <span className="visually-hidden">{action}</span>
-      <span className="dashboard__slot-chevron" aria-hidden="true">
-        ›
-      </span>
+    <button
+      className={filled ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'}
+      type="button"
+      onClick={onOpen}
+    >
+      {/* Not a control of its own — the band is the visual cue that the card leads
+          somewhere, drawn where the eye looks for a title. */}
+      <div className="dashboard__slot-head">
+        <span className="dashboard__slot-title">{title}</span>
+        <span className="visually-hidden">{action}</span>
+        <span className="dashboard__slot-chevron" aria-hidden="true">
+          ›
+        </span>
+      </div>
+      {children}
     </button>
   )
 }
@@ -176,70 +194,48 @@ export function CampDashboard({
         )}
       </section>
 
-      <section
-        className={
-          funded || hasExpenses ? 'dashboard__slot dashboard__slot--filled' : 'dashboard__slot'
-        }
+      <SlotCard
+        title={t.dashboard.spending}
+        action={t.dashboard.openReceipts}
+        onOpen={() => onOpenReceipts(null)}
+        filled={funded || hasExpenses}
       >
-        <SlotHeader
-          title={t.dashboard.spending}
-          action={t.dashboard.openReceipts}
-          onOpen={() => onOpenReceipts(null)}
-        />
         {funded || hasExpenses ? (
           <>
             {!hasExpenses && <p className="dashboard__slot-hint">{t.dashboard.noReceipts}</p>}
-            <PoolBars summaries={summaries} onOpenPool={onOpenReceipts} />
+            <PoolBars summaries={summaries} />
           </>
         ) : (
           <p className="dashboard__slot-hint">{t.dashboard.noIncome}</p>
         )}
-      </section>
+      </SlotCard>
 
-      <section
-        className={
-          custody.statuses.length > 0
-            ? 'dashboard__slot dashboard__slot--filled'
-            : 'dashboard__slot'
-        }
+      <SlotCard
+        title={t.custody.deposits.title}
+        action={t.custody.deposits.open}
+        onOpen={() => onOpenMovements('deposits')}
+        filled={custody.statuses.length > 0}
       >
-        <SlotHeader
-          title={t.custody.deposits.title}
-          action={t.custody.deposits.open}
-          onOpen={() => onOpenMovements('deposits')}
-        />
         <DepositsStrip statuses={custody.statuses} />
-      </section>
+      </SlotCard>
 
-      <section
-        className={
-          custody.volunteerHeldCents > 0
-            ? 'dashboard__slot dashboard__slot--filled'
-            : 'dashboard__slot'
-        }
+      <SlotCard
+        title={t.custody.cash.title}
+        action={t.custody.cash.open}
+        onOpen={() => onOpenMovements('cash')}
+        filled={custody.volunteerHeldCents > 0}
       >
-        <SlotHeader
-          title={t.custody.cash.title}
-          action={t.custody.cash.open}
-          onOpen={() => onOpenMovements('cash')}
-        />
         <CashStrip heldCents={custody.volunteerHeldCents} count={custody.volunteerCount} />
-      </section>
+      </SlotCard>
 
-      <section
-        className={
-          settlement.toReturnCents > 0
-            ? 'dashboard__slot dashboard__slot--filled'
-            : 'dashboard__slot'
-        }
+      <SlotCard
+        title={t.settlement.toReturn}
+        action={t.settlement.open}
+        onOpen={onOpenSettlement}
+        filled={settlement.toReturnCents > 0}
       >
-        <SlotHeader
-          title={t.settlement.toReturn}
-          action={t.settlement.open}
-          onOpen={onOpenSettlement}
-        />
         <p className="dashboard__to-return">{format.euros(settlement.toReturnCents)}</p>
-      </section>
+      </SlotCard>
     </div>
   )
 }

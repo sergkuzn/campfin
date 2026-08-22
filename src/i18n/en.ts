@@ -63,7 +63,7 @@ export const en = {
 
   join: {
     title: 'Join a camp',
-    hint: 'Got a join code from the other leader? Type it here.',
+    hint: 'Got a join code? Type it here.',
     label: 'Join code',
     placeholder: 'MOOR-7F3K',
     searching: 'Looking…',
@@ -302,7 +302,6 @@ export const en = {
     unfunded: 'Nothing granted to this pool yet.',
     /** Not drawn: the whole bar is the button into that pool's receipts, and this is the
      *  hidden word that says so — the figures on the row are read out first. */
-    openPool: 'Open its receipts',
   },
 
   /** The day-by-day allowance: the headline number and the chart under it. */
