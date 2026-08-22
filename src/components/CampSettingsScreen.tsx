@@ -25,8 +25,9 @@ type Props = {
   onBack: () => void
   onOpenIncome: () => void
   onRename: (name: string) => void
-  /** Name the holder, or pass null so nobody holds the money. */
-  onChangeHolder: (name: string | null) => void
+  /** Hand the money to this person. There is no way to hand it to nobody: every "owed"
+   *  marker and the settlement sheet are measured against the holder. */
+  onChangeHolder: (name: string) => void
   onDelete: () => void
 }
 
@@ -59,9 +60,8 @@ export function CampSettingsScreen({
   // is, never whether you are in the middle of typing a replacement.
   const [changingHolder, setChangingHolder] = useState(false)
   const [newHolder, setNewHolder] = useState('')
-  // Held only while the question is on screen. Null is a real answer ("nobody"), so
-  // `undefined` is what means "nothing pending".
-  const [pendingHolder, setPendingHolder] = useState<string | null | undefined>(undefined)
+  // Held only while the confirm question is on screen; `undefined` means nothing pending.
+  const [pendingHolder, setPendingHolder] = useState<string | undefined>(undefined)
 
   const trimmed = name.trim()
   // Derived during render rather than stored: a saved name arrives back as a new `camp`
@@ -85,9 +85,9 @@ export function CampSettingsScreen({
       ? null
       : holderChangeImpact(expenses, camp.moneyHolder, pendingHolder)
 
-  const askHolder = (next: string | null) => {
+  const askHolder = (next: string) => {
     // Naming the person who already holds it is not a change, so it asks nothing.
-    if (isSamePayer(next ?? '', camp.moneyHolder)) {
+    if (isSamePayer(next, camp.moneyHolder)) {
       setChangingHolder(false)
       setNewHolder('')
       return
@@ -138,7 +138,7 @@ export function CampSettingsScreen({
       </SlotPanel>
 
       {/* No list of everyone the receipts name: the wallet changes hands once a camp at
-          most, so the screen states who has it and offers the two things you might do. */}
+          most, so the screen states who has it and offers the one thing you might do. */}
       <SlotPanel title={t.campSettings.holderSection}>
         <p className="camp-settings__hint">{t.campSettings.holderHint}</p>
 
@@ -195,6 +195,8 @@ export function CampSettingsScreen({
           </form>
         ) : (
           <div className="camp-settings__holder-actions">
+            {/* Only ever a hand-over: the wallet cannot be put down, so there is no
+                counterpart to this button. */}
             <button
               className="camp-settings__ghost"
               type="button"
@@ -204,15 +206,6 @@ export function CampSettingsScreen({
                 ? t.campSettings.holderSet
                 : t.campSettings.holderChange}
             </button>
-            {camp.moneyHolder !== undefined && (
-              <button
-                className="camp-settings__ghost"
-                type="button"
-                onClick={() => askHolder(null)}
-              >
-                {t.campSettings.holderRemove}
-              </button>
-            )}
           </div>
         )}
       </SlotPanel>
@@ -246,11 +239,7 @@ export function CampSettingsScreen({
           question is asked in rows that change rather than in what gets stored. */}
       <ConfirmDialog
         open={pendingHolder !== undefined}
-        title={
-          pendingHolder === undefined || pendingHolder === null
-            ? t.campSettings.holderClearTitle
-            : t.campSettings.holderChangeTitle(pendingHolder)
-        }
+        title={pendingHolder === undefined ? '' : t.campSettings.holderChangeTitle(pendingHolder)}
         lines={
           holderImpact === null
             ? []

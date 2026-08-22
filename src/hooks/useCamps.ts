@@ -34,8 +34,9 @@ export type UseCamps = {
    *  reason lands in `error`. */
   importCamp: (text: string) => Camp | null
   renameCamp: (campId: string, name: string) => void
-  /** Name the leader holding the camp's cash, or null so nobody does. */
-  setMoneyHolder: (campId: string, name: string | null) => void
+  /** Name the leader holding the camp's cash. Only ever a hand-over: a camp past setup
+   *  always has a holder, because every debt in it is measured against one. */
+  setMoneyHolder: (campId: string, name: string) => void
   deleteCamp: (campId: string) => void
   /** Dismiss the current error — call it when navigating away from the input that raised it. */
   clearError: () => void
@@ -137,14 +138,13 @@ export function useCamps(userId: string): UseCamps {
   )
 
   const setMoneyHolder = useCallback(
-    (campId: string, name: string | null): void => {
+    (campId: string, name: string): void => {
       setError(null)
-      // A blank name means nobody holds the money, which is a real state — not an error to
-      // report and not a person called "".
-      const trimmed = name === null ? null : name.trim()
-      void campsDb
-        .setMoneyHolder(campId, trimmed === '' ? null : trimmed)
-        .catch(() => setError(t.sync.writeFailed))
+      // The screens already refuse an empty field; dropping a blank here as well keeps a
+      // person called "" out of the camp whatever calls this.
+      const trimmed = name.trim()
+      if (trimmed === '') return
+      void campsDb.setMoneyHolder(campId, trimmed).catch(() => setError(t.sync.writeFailed))
     },
     [t],
   )

@@ -35,6 +35,23 @@ export function isCamp(value: unknown): value is Camp {
   return c.moneyHolder === undefined || typeof c.moneyHolder === 'string'
 }
 
+/**
+ * Whether the camp is ready to be used: someone holds the money, and there is money to
+ * hold. Both are compulsory — every "owed" marker and the whole settlement sheet are
+ * measured against the holder, and without income there is nothing to measure.
+ *
+ * `funded` is passed in rather than derived here so this file stays free of the pool
+ * shapes; the screens already compute it from their summaries.
+ */
+export function isCampSetUp(camp: Camp, funded: boolean): boolean {
+  return hasMoneyHolder(camp) && funded
+}
+
+/** A holder that is only spaces is no holder — the name ends up on receipts as-is. */
+export function hasMoneyHolder(camp: Camp): boolean {
+  return camp.moneyHolder !== undefined && camp.moneyHolder.trim() !== ''
+}
+
 /** True if another camp already has this name. Pass `excludeCampId` when renaming, so a camp doesn't collide with itself. */
 export function campNameExists(camps: Camp[], name: string, excludeCampId?: string): boolean {
   return camps.some((camp) => camp.name === name && camp.id !== excludeCampId)

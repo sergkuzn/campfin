@@ -41,38 +41,6 @@
   color: var(--fg);
 }
 
-/* A camp with no money in it yet: one thing to do, said at a size you cannot miss. */
-.dashboard__first-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-6) var(--space-4);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  text-align: center;
-}
-
-.dashboard__first-step-button {
-  width: 100%;
-  padding: var(--space-4);
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background-color: var(--accent);
-  color: var(--surface);
-  font: inherit;
-  font-size: 1.125rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.dashboard__first-step-hint {
-  margin: 0;
-  max-width: 24rem;
-  font-size: 0.875rem;
-  color: var(--muted);
-}
-
 .dashboard__error {
   margin: 0;
   color: var(--danger);

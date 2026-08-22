@@ -120,11 +120,6 @@ export const en = {
     receivedTotal: 'Received total',
     noIncome: 'No income sources yet.',
     setUpIncome: 'Set up income →',
-    /** The whole dashboard while the camp has no money in it yet: one thing to do, said
-     *  large, instead of five empty blocks. */
-    firstStepTitle: 'Start here',
-    firstStep: 'Set up income',
-    firstStepHint: 'Enter the money your camp was granted. Everything else follows from it.',
     spending: 'Spending',
     noReceipts: 'No receipts yet.',
     /** Not drawn: the block's title row is the button, and this is what names its
@@ -136,12 +131,26 @@ export const en = {
     openSettings: 'Camp settings',
   },
 
+  /** The whole dashboard until the camp can track anything: the two compulsory answers,
+   *  in the order they matter, each ticked as it lands. */
+  setup: {
+    title: 'Set up this camp',
+    hint: 'Two answers before the money can be tracked.',
+    holderStep: 'Money holder',
+    /** Read out after a step's title in place of the tick, which says nothing aloud. */
+    done: 'done',
+    incomeStep: 'Income',
+    incomeTodo: 'Enter the money your camp was granted. Everything else follows from it.',
+    incomeGo: 'Set up income',
+    incomeEdit: 'Edit income →',
+  },
+
   /** The camp's own screen: what it is called, who can reach it, and how to be rid of it —
    *  everything that changes the camp rather than its money. */
   campSettings: {
     title: 'Camp settings',
     back: '← Back to camp',
-    nameSection: 'Name',
+    nameSection: 'Camp name',
     nameLabel: 'Camp name',
     save: 'Save',
     shareSection: 'Join code',
@@ -154,18 +163,18 @@ export const en = {
      *  at most, so the screen offers only the two things you would ever do to it. The name
      *  is drawn separately, so this is only what follows it. */
     holderHolds: 'holds the money.',
+    /** Only reachable from the gear on the setup screen — every camp past setup has one. */
     holderNone: 'Nobody holds the money yet.',
     holderSet: 'Set money holder',
     holderChange: 'Change holder',
-    holderRemove: 'Remove holder',
     holderCancel: 'Cancel',
     holderNewNameLabel: 'Name',
     holderNewNamePlaceholder: 'e.g. Anna',
     holderSave: 'Save holder',
     /** Handing the wallet over rewrites no receipt, but it does flip who owes whom — so
-     *  the question says how many rows change, in both directions. */
+     *  the question says how many rows change, in both directions. The wallet can only
+     *  change hands, never be put down: every "owed" marker is measured against it. */
     holderChangeTitle: (name: string) => `Make ${name} the money holder?`,
-    holderClearTitle: 'Nobody holds the money?',
     holderReplaces: (current: string) => `${current} holds it now.`,
     holderStopOwing: (n: number) =>
       `${n} ${n === 1 ? 'receipt stops' : 'receipts stop'} showing as owed.`,
@@ -247,9 +256,9 @@ export const en = {
     },
     aboutLabel: 'What is a pool?',
     about:
-      'A pool is one pot of money, kept apart because it has to be accounted for on its own. ' +
-      'Group money is the daily pot every camp has; add another for a grant with its own purpose, ' +
-      'or a deposit you hand over and get back. Every receipt is booked against one pool.',
+      'A pool is a pot of money tracked on its own. "Group money" is the daily pot every ' +
+      'camp has; add another pool for a different purpose, or for a deposit you hand over ' +
+      'and get back. Every receipt belongs to one pool.',
     addIncomeTo: (name: string) => `Add income to ${name}`,
     editIncome: 'Edit income',
     deleteIncome: 'Delete income',
@@ -314,7 +323,7 @@ export const en = {
      *  below it already says what changed, so the blocks themselves are opt-in detail. */
     toggleBlocks: (open: boolean) => (open ? '▾ Granted / actual' : '▸ Granted / actual'),
     /** Shown on the actual tab while no actual block exists — actual *is* granted then. */
-    sameAsGranted: 'Nobody dropped out yet, so this matches what was granted.',
+    sameAsGranted: 'Matches what was granted.',
     copyFromGranted: '⧉ Copy from granted',
     reset: '↺ Everybody came',
     save: 'Save',

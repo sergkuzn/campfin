@@ -251,7 +251,7 @@ export function SignedInApp({ session }: Props) {
         onOpenIncome={() => navigate({ screen: 'income', campId: openCamp.id })}
         expenses={expenses.expenses}
         onRename={(name) => renameCamp(openCamp.id, name)}
-        onChangeHolder={(name: string | null) => setMoneyHolder(openCamp.id, name)}
+        onChangeHolder={(name: string) => setMoneyHolder(openCamp.id, name)}
         onDelete={() => handleDelete(openCamp.id)}
       />
     )
@@ -274,6 +274,7 @@ export function SignedInApp({ session }: Props) {
       settlement={settlement}
       onBack={goBack}
       onOpenIncome={() => navigate({ screen: 'income', campId: openCamp.id })}
+      onChangeHolder={(name: string) => setMoneyHolder(openCamp.id, name)}
       onOpenReceipts={(poolId) => navigate({ screen: 'receipts', campId: openCamp.id, poolId })}
       onOpenMovements={(focus) => navigate({ screen: 'movements', campId: openCamp.id, focus })}
       onOpenSettlement={() => navigate({ screen: 'settlement', campId: openCamp.id })}

@@ -1,13 +1,14 @@
 import './CampDashboard.css'
 import { useFormat, useT } from '../i18n'
 import type { Burn } from '../lib/burn'
-import { campStatus } from '../lib/camps'
+import { campStatus, isCampSetUp } from '../lib/camps'
 import type { CustodyFocus, CustodyReading } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
 import type { Settlement } from '../lib/settlement'
 import type { Camp } from '../lib/types'
 import { AllowedToday } from './AllowedToday'
 import { BurnChart } from './BurnChart'
+import { CampSetup } from './CampSetup'
 import { CashStrip } from './CashStrip'
 import { DepositsStrip } from './DepositsStrip'
 import { PoolBars } from './PoolBars'
@@ -34,6 +35,9 @@ type Props = {
   settlement: Settlement
   onBack: () => void
   onOpenIncome: () => void
+  /** Names the money holder from the setup checklist. A name only: the wallet can change
+   *  hands but can never be put down. */
+  onChangeHolder: (name: string) => void
   /** Opens the receipt list. A pool id opens it filtered to that pool; the dashboard
    *  always passes null, but the receipts screen itself still narrows by pool. */
   onOpenReceipts: (poolId: string | null) => void
@@ -58,6 +62,7 @@ export function CampDashboard({
   settlement,
   onBack,
   onOpenIncome,
+  onChangeHolder,
   onOpenReceipts,
   onOpenMovements,
   onOpenSettlement,
@@ -72,10 +77,11 @@ export function CampDashboard({
   // pool — the one whose bar further down shows the identical figure.
   const everydayRemainingCents =
     summaries.find((summary) => summary.pool.role === 'everyday')?.remainingCents ?? 0
-  // A camp with neither money nor receipts has nothing to show on any of the blocks below,
-  // and five empty boxes hide the one thing that needs doing. Receipts count too: entering
-  // one before the income is unusual, but it must not blank the screen it belongs on.
-  const untouched = !funded && !hasExpenses
+  // Both setup answers are compulsory, so a camp missing either shows the checklist rather
+  // than the hub — five blocks that cannot be trusted would hide the thing to do. Receipts
+  // do not count: a receipt entered before the grant is unusual, and its "owed" marker is
+  // meaningless until somebody holds the money anyway.
+  const setUp = isCampSetUp(camp, funded)
 
   const header = (
     <>
@@ -105,9 +111,10 @@ export function CampDashboard({
     </>
   )
 
-  // "Nothing here yet" would be a lie for the first second, and so would the first-step
-  // screen — a funded camp still loading looks exactly like an empty one.
-  if (untouched && isLoading) {
+  // The checklist would be a lie for the first second — a funded camp still loading looks
+  // exactly like an empty one, and telling somebody to enter income they already entered
+  // is a wrong instruction rather than a flicker.
+  if (!setUp && isLoading) {
     return (
       <div className="dashboard">
         {header}
@@ -116,17 +123,17 @@ export function CampDashboard({
     )
   }
 
-  if (untouched) {
+  if (!setUp) {
     return (
       <div className="dashboard">
         {header}
-        <section className="dashboard__first-step">
-          <p className="slot-card__title">{t.dashboard.firstStepTitle}</p>
-          <button className="dashboard__first-step-button" type="button" onClick={onOpenIncome}>
-            {t.dashboard.firstStep}
-          </button>
-          <p className="dashboard__first-step-hint">{t.dashboard.firstStepHint}</p>
-        </section>
+        <CampSetup
+          holder={camp.moneyHolder}
+          funded={funded}
+          summaries={summaries}
+          onSaveHolder={onChangeHolder}
+          onOpenIncome={onOpenIncome}
+        />
       </div>
     )
   }

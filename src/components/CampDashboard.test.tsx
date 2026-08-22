@@ -16,8 +16,12 @@ const camp: Camp = {
   createdAt: 1_700_000_000_000,
 }
 
+/** A camp past the first of the two setup steps. The default for every test that is not
+ *  about the checklist, since the hub only appears once somebody holds the money. */
+const heldCamp: Camp = { ...camp, moneyHolder: 'Anna' }
+
 /** The everyday pool a camp is born with: it exists from the first second and holds
- *  nothing, which is exactly the state the first-step screen is for. */
+ *  nothing, which is exactly the state the setup checklist is for. */
 const emptyPool: PoolSummary = {
   pool: { id: 'pool-e', campId: 'c1', name: 'Group money', role: 'everyday', createdAt: 1 },
   sources: [],
@@ -71,11 +75,12 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
   const onOpenReceipts = vi.fn()
   const onOpenMovements = vi.fn()
   const onOpenSettlement = vi.fn()
+  const onChangeHolder = vi.fn()
   const user = userEvent.setup()
   render(
     <I18nProvider>
       <CampDashboard
-        camp={camp}
+        camp={heldCamp}
         summaries={[emptyPool]}
         burn={emptyBurn}
         todayIso="2026-07-05"
@@ -86,6 +91,7 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
         settlement={settlement}
         onBack={vi.fn()}
         onOpenIncome={onOpenIncome}
+        onChangeHolder={onChangeHolder}
         onOpenReceipts={onOpenReceipts}
         onOpenMovements={onOpenMovements}
         onOpenSettlement={onOpenSettlement}
@@ -100,6 +106,7 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
     onOpenReceipts,
     onOpenMovements,
     onOpenSettlement,
+    onChangeHolder,
     user,
   }
 }
@@ -111,14 +118,23 @@ function slotHeader(action: string) {
 }
 
 describe('CampDashboard', () => {
-  it('shows nothing but the first step while the camp has no money in it', () => {
+  it('shows nothing but the setup checklist while the camp has no money in it', () => {
     renderDashboard()
 
-    expect(screen.getByRole('button', { name: en.dashboard.firstStep })).toBeInTheDocument()
+    expect(screen.getByText(en.setup.title)).toBeInTheDocument()
     // The blocks that would all be empty stay away until there is something in them.
     expect(screen.queryByText(en.dashboard.spending)).not.toBeInTheDocument()
     expect(screen.queryByText(en.burn.title)).not.toBeInTheDocument()
     expect(screen.queryByText(en.settlement.toReturn)).not.toBeInTheDocument()
+  })
+
+  it('keeps a funded camp on the checklist while nobody holds the money', () => {
+    // Both answers are compulsory: income alone is not enough, because every "owed"
+    // marker on the hub is measured against the holder.
+    renderDashboard({ camp, summaries: [fundedPool] })
+
+    expect(screen.getByText(en.setup.title)).toBeInTheDocument()
+    expect(screen.queryByText(en.dashboard.spending)).not.toBeInTheDocument()
   })
 
   it('waits for the query before claiming the camp is empty', () => {
@@ -127,22 +143,39 @@ describe('CampDashboard', () => {
     renderDashboard({ isLoading: true })
 
     expect(screen.getByText(en.app.loading)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: en.dashboard.firstStep })).not.toBeInTheDocument()
+    expect(screen.queryByText(en.setup.title)).not.toBeInTheDocument()
   })
 
-  it('opens the income screen from the first step', async () => {
+  it('opens the income screen from the checklist', async () => {
     const { user, onOpenIncome } = renderDashboard()
-    await user.click(screen.getByRole('button', { name: en.dashboard.firstStep }))
+    await user.click(screen.getByRole('button', { name: en.setup.incomeGo }))
 
     expect(onOpenIncome).toHaveBeenCalledOnce()
   })
 
-  it('shows the money blocks once income has been set up', () => {
+  it('names the money holder from the checklist, trimmed', async () => {
+    const { user, onChangeHolder } = renderDashboard({ camp })
+    await user.type(screen.getByLabelText(en.campSettings.holderNewNameLabel), '  Anna  ')
+    await user.click(screen.getByRole('button', { name: en.campSettings.holderSave }))
+
+    expect(onChangeHolder).toHaveBeenCalledExactlyOnceWith('Anna')
+  })
+
+  it('ticks the finished step and keeps it on the list', () => {
+    // The holder is already named here, so its step shows the name rather than the field.
+    renderDashboard()
+
+    expect(screen.getByText('Anna')).toBeInTheDocument()
+    expect(screen.queryByLabelText(en.campSettings.holderNewNameLabel)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: en.campSettings.holderChange })).toBeInTheDocument()
+  })
+
+  it('shows the money blocks once both setup steps are answered', () => {
     renderDashboard({ summaries: [fundedPool] })
 
     expect(screen.getByText(en.dashboard.spending)).toBeInTheDocument()
     expect(screen.getByText(en.settlement.toReturn)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: en.dashboard.firstStep })).not.toBeInTheDocument()
+    expect(screen.queryByText(en.setup.title)).not.toBeInTheDocument()
   })
 
   it('keeps the received total off the main screen — it lives in settings now', () => {
@@ -154,13 +187,13 @@ describe('CampDashboard', () => {
     expect(screen.queryByText('MOOR-7F3K')).not.toBeInTheDocument()
   })
 
-  it('shows the money blocks for a camp with receipts but no income yet', () => {
-    // Unusual, but real: a receipt entered before the grant was recorded must not be
-    // hidden behind the first-step screen.
+  it('keeps a camp with receipts but no income on the checklist', () => {
+    // A receipt entered before the grant does not complete the setup: its pool bar and
+    // its "owed" marker have nothing to be measured against yet.
     renderDashboard({ hasExpenses: true })
 
-    expect(screen.getByText(en.dashboard.spending)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: en.dashboard.firstStep })).not.toBeInTheDocument()
+    expect(screen.getByText(en.setup.title)).toBeInTheDocument()
+    expect(screen.queryByText(en.dashboard.spending)).not.toBeInTheDocument()
   })
 
   it('opens the settings screen from the gear', async () => {

@@ -4,7 +4,9 @@ import {
   campNameExists,
   campStatus,
   campWindow,
+  hasMoneyHolder,
   isCamp,
+  isCampSetUp,
   sortCampsByRecent,
   uniqueCampName,
 } from './camps'
@@ -50,6 +52,24 @@ describe('isCamp', () => {
         endDate: '2026-07-14',
       }),
     ).toBe(true)
+  })
+})
+
+describe('isCampSetUp', () => {
+  const held = camp({ moneyHolder: 'Anna' })
+
+  it('needs both a holder and income', () => {
+    expect(isCampSetUp(held, true)).toBe(true)
+  })
+  it('is not set up while nobody holds the money', () => {
+    expect(isCampSetUp(camp(), true)).toBe(false)
+  })
+  it('is not set up while there is no income', () => {
+    expect(isCampSetUp(held, false)).toBe(false)
+  })
+  it('treats a blank holder as no holder — a name of spaces names nobody', () => {
+    expect(isCampSetUp(camp({ moneyHolder: '   ' }), true)).toBe(false)
+    expect(hasMoneyHolder(camp({ moneyHolder: '' }))).toBe(false)
   })
 })
 

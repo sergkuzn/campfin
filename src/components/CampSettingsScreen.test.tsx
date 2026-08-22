@@ -159,12 +159,11 @@ describe('CampSettingsScreen', () => {
   })
 
   describe('money holder', () => {
-    it('states that nobody holds the money, and offers no removal', () => {
+    it('states that nobody holds the money', () => {
       renderScreen()
 
       expect(screen.getByText(t.holderNone)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: t.holderSet })).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: t.holderRemove })).not.toBeInTheDocument()
     })
 
     it('offers no list of the other people the receipts name', async () => {
@@ -196,14 +195,14 @@ describe('CampSettingsScreen', () => {
       expect(onChangeHolder).toHaveBeenCalledExactlyOnceWith('Ben')
     })
 
-    it('clears the holder after the confirmation', async () => {
-      const { user, onChangeHolder } = renderScreen({ camp: { ...camp, moneyHolder: 'Anna' } })
-      await user.click(screen.getByRole('button', { name: t.holderRemove }))
+    it('offers only a hand-over — the money can never be held by nobody', () => {
+      renderScreen({ camp: { ...camp, moneyHolder: 'Anna' } })
 
-      expect(screen.getByText(t.holderClearTitle)).toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: t.holderConfirm }))
-
-      expect(onChangeHolder).toHaveBeenCalledExactlyOnceWith(null)
+      // Every "owed" marker is measured against the holder, so a camp past setup always
+      // has one: the only thing settings can do is name somebody else.
+      expect(screen.getByRole('button', { name: t.holderChange })).toBeInTheDocument()
+      const buttons = screen.getAllByRole('button').map((button) => button.textContent)
+      expect(buttons.filter((label) => label?.match(/remove|clear|nobody/i))).toEqual([])
     })
 
     it('does not list who is still to be paid back', () => {

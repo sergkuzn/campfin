@@ -183,12 +183,13 @@ export function renameCamp(campId: string, name: string): Promise<unknown> {
 }
 
 /**
- * Name the leader who holds the camp's cash, or pass null so nobody does.
+ * Name the leader who holds the camp's cash. The wallet can only change hands — a camp
+ * cannot be handed back to nobody, since every debt in it is measured against this name.
  *
  * No receipt is rewritten: who owes whom is derived from this name at render time, which
  * is what lets one write flip every debt in the camp at once.
  */
-export function setMoneyHolder(campId: string, name: string | null): Promise<unknown> {
+export function setMoneyHolder(campId: string, name: string): Promise<unknown> {
   return db.transact(chunk(db.tx.camps[campId]).update({ moneyHolder: name }))
 }
 
