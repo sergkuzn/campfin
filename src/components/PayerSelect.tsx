@@ -41,6 +41,8 @@ export function PayerSelect({
   // Everything else is derived, which is what keeps an edited receipt selecting the right
   // radio with no effect to synchronise it.
   const [otherPicked, setOtherPicked] = useState(false)
+  // The "paid back" explanation costs a line only when asked for, by whoever taps the ⓘ.
+  const [showReturnedHint, setShowReturnedHint] = useState(false)
 
   // An explicit pick of "someone else" wins over what the name happens to say, so typing
   // the holder's own name into that box cannot leave both radios lit at once.
@@ -72,31 +74,33 @@ export function PayerSelect({
         </label>
       )}
 
-      <label className="field field--check">
-        <input type="radio" name="paidBy" checked={isOther} onChange={pickOther} />
-        <span className="field__check-label">{t.receipts.payer.otherOption}</span>
-      </label>
+      {/* The radio, the name field, and (once there is a name to owe) the "paid back"
+          checkbox all read as one answer, so they share a row rather than a line each. The
+          radio carries no visible text — the name field beside it already says what
+          choosing it means. */}
+      <div className="payer__other">
+        <input
+          type="radio"
+          name="paidBy"
+          aria-label={t.receipts.payer.otherOption}
+          checked={isOther}
+          onChange={pickOther}
+        />
+        <input
+          className="income-form__input payer__other-name"
+          aria-label={t.receipts.payer.newNameLabel}
+          value={value}
+          placeholder={t.receipts.payer.newNamePlaceholder}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
+        />
 
-      {isOther && (
-        <>
-          <label className="field payer__name">
-            <span className="field__label">{t.receipts.payer.newNameLabel}</span>
-            <input
-              className="income-form__input"
-              value={value}
-              placeholder={t.receipts.payer.newNamePlaceholder}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                onChange(event.target.value)
-              }
-            />
-          </label>
-
-          {/* Only once there is somebody who *could* be owed. A receipt can be typed in
-              days after the cash was already handed over, so the editor has to be able to
-              say "this one is already settled" without a trip through the list — but the
-              holder can never owe themselves, whichever radio put their name in the box. */}
-          {trimmed !== '' && !namesHolder && (
-            <label className="field field--check">
+        {/* Only once there is somebody who *could* be owed. A receipt can be typed in days
+            after the cash was already handed over, so the editor has to be able to say "this
+            one is already settled" without a trip through the list — but the holder can
+            never owe themselves, whichever radio put their name in the box. */}
+        {isOther && trimmed !== '' && !namesHolder && (
+          <>
+            <label className="payer__returned">
               <input
                 type="checkbox"
                 checked={reimbursed}
@@ -104,13 +108,23 @@ export function PayerSelect({
                   onReimbursedChange(event.target.checked)
                 }
               />
-              <span>
-                <span className="field__check-label">{t.receipts.payer.returnedLabel}</span>
-                <span className="field__hint">{t.receipts.payer.returnedHint}</span>
-              </span>
+              <span className="field__check-label">{t.receipts.payer.returnedLabel}</span>
             </label>
-          )}
-        </>
+            <button
+              type="button"
+              className="payer__info"
+              aria-expanded={showReturnedHint}
+              aria-label={t.receipts.payer.returnedInfoLabel}
+              onClick={() => setShowReturnedHint((shown) => !shown)}
+            >
+              ⓘ
+            </button>
+          </>
+        )}
+      </div>
+
+      {isOther && trimmed !== '' && !namesHolder && showReturnedHint && (
+        <p className="field__hint">{t.receipts.payer.returnedHint}</p>
       )}
     </fieldset>
   )

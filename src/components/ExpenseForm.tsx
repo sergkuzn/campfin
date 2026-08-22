@@ -8,8 +8,12 @@ import {
   expenseIssues,
   type SaveExpenseInput,
 } from '../lib/expenses'
+import { poolColorOf } from '../lib/poolColors'
 import type { PoolSummary } from '../lib/pools'
 import type { Expense } from '../lib/types'
+import './IncomeSetup.css'
+import './PoolTag.css'
+import './ReceiptFilters.css'
 import { PayerSelect } from './PayerSelect'
 import { ReceiptNumberField } from './ReceiptNumberField'
 
@@ -74,17 +78,25 @@ export function ExpenseForm({
 
   return (
     <form className="card card--editing" onSubmit={handleSubmit}>
-      <label className="field">
-        <span className="field__label">{t.receipts.dateLabel}</span>
-        <input
-          className="income-form__input"
-          type="date"
-          value={draft.date}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-            patch({ date: event.target.value })
-          }
+      <div className="block__row">
+        <label className="field">
+          <span className="field__label">{t.receipts.dateLabel}</span>
+          <input
+            className="income-form__input"
+            type="date"
+            value={draft.date}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              patch({ date: event.target.value })
+            }
+          />
+        </label>
+
+        <ReceiptNumberField
+          value={draft.number}
+          suggestion={suggestedNumber}
+          onChange={(number) => patch({ number })}
         />
-      </label>
+      </div>
 
       <label className="field">
         <span className="field__label">{t.receipts.nameLabel}</span>
@@ -113,28 +125,25 @@ export function ExpenseForm({
         />
       </label>
 
-      <label className="field">
+      <div className="field">
         <span className="field__label">{t.receipts.poolLabel}</span>
-        <select
-          className="income-form__input"
-          value={draft.poolId}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-            patch({ poolId: event.target.value })
-          }
-        >
+        <div className="filters__chips">
           {pools.map((summary) => (
-            <option key={summary.pool.id} value={summary.pool.id}>
+            <button
+              key={summary.pool.id}
+              type="button"
+              className={`filters__chip pool-tag--${poolColorOf(summary.pool)}`}
+              // A single choice rather than a multi-select filter, so picking one pool
+              // switches to it instead of toggling it on top of whatever was already lit.
+              aria-pressed={draft.poolId === summary.pool.id}
+              onClick={() => patch({ poolId: summary.pool.id })}
+            >
+              <span className="pool-tag__dot" aria-hidden="true" />
               {summary.pool.name}
-            </option>
+            </button>
           ))}
-        </select>
-      </label>
-
-      <ReceiptNumberField
-        value={draft.number}
-        suggestion={suggestedNumber}
-        onChange={(number) => patch({ number })}
-      />
+        </div>
+      </div>
 
       <PayerSelect
         value={draft.paidBy}

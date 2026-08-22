@@ -189,9 +189,9 @@ describe('ReceiptsScreen — deposits stay out', () => {
     const { user } = renderScreen({ pools: [food, tools, busDeposit] })
     await user.click(screen.getByRole('button', { name: t.add }))
 
-    const picker = screen.getByLabelText(t.poolLabel)
-    expect(within(picker).getByRole('option', { name: food.name })).toBeInTheDocument()
-    expect(within(picker).queryByRole('option', { name: busDeposit.name })).not.toBeInTheDocument()
+    const form = screen.getByRole('button', { name: t.save }).closest('form') as HTMLElement
+    expect(within(form).getByRole('button', { name: food.name })).toBeInTheDocument()
+    expect(within(form).queryByRole('button', { name: busDeposit.name })).not.toBeInTheDocument()
   })
 
   it('offers no deposit chip in the filter', () => {
@@ -355,8 +355,7 @@ describe('ReceiptsScreen — saying whose money it was', () => {
     const { user, saveExpense } = renderScreen({ moneyHolder: 'Anna' })
     await startReceipt(user)
 
-    // The label wraps its hint, so the checkbox's accessible name is the whole phrase.
-    const returnedTick = () => screen.queryByRole('checkbox', { name: /Already paid back/ })
+    const returnedTick = () => screen.queryByRole('checkbox', { name: t.payer.returnedLabel })
 
     await user.click(screen.getByRole('radio', { name: t.payer.holderOption('Anna') }))
     expect(returnedTick()).not.toBeInTheDocument() // the holder cannot owe themselves

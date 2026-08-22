@@ -192,7 +192,40 @@
   border: 0;
 }
 
-/* Indented under the radio it belongs to, so it reads as part of that answer. */
-.payer__name {
-  margin-left: var(--space-4);
+/* The "someone else" radio, its name field, and the "paid back" checkbox share one row —
+   wrapping on a narrow phone rather than scrolling, since a receipt form is read top to
+   bottom, not sideways. */
+.payer__other {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Takes whatever width the row's other controls do not need. */
+.payer__other-name {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.payer__returned {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Round rather than pill-shaped: it holds one character, not a word. */
+.payer__info {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background-color: var(--bg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
 }

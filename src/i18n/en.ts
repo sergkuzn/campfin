@@ -333,19 +333,21 @@ export const en = {
     add: '＋ Add receipt',
     empty: 'No receipts yet — tap ＋ Add receipt.',
     dateLabel: 'Date',
-    nameLabel: 'What was it?',
+    nameLabel: 'Item',
     namePlaceholder: 'e.g. Bakery',
-    amountLabel: 'Amount',
-    amountPlaceholder: '€ e.g. 8,00',
+    amountLabel: 'Amount (€)',
+    amountPlaceholder: 'e.g. 8,00',
     poolLabel: 'Paid from',
     /** The number written on the paper slip, so the folder and the app can be matched
      *  row by row. Optional — a receipt is worth entering before it is filed. */
-    numberLabel: 'Receipt no. (optional)',
+    numberLabel: 'Receipt no.',
     numberPlaceholder: 'e.g. 12',
     /** Fills the field with the next free number, which is the whole point of the button:
-     *  nobody should have to remember where the folder got to. */
-    numberSuggest: (n: number) => `Next: #${n}`,
-    numberTag: (n: number) => `#${n}`,
+     *  nobody should have to remember where the folder got to. A trailing dot rather than a
+     *  "#" — the same convention the row tag below uses, so a number reads the same way
+     *  wherever it appears. */
+    numberSuggest: (n: number) => `Next: ${n}.`,
+    numberTag: (n: number) => `${n}.`,
     noteLabel: 'Note (optional)',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
@@ -355,17 +357,26 @@ export const en = {
     payer: {
       label: 'Paid by',
       /** The two answers. Nothing is picked to begin with — a receipt has to say whose
-       *  money it was, so the choice is made rather than defaulted into. */
-      holderOption: (name: string) => `${name} (holds the camp money)`,
+       *  money it was, so the choice is made rather than defaulted into. The emoji stands
+       *  in for "holds the camp money" so the option reads as one short line instead of two
+       *  words of explanation after every name. */
+      holderOption: (name: string) => `👛 ${name}`,
+      /** Not shown as text — the second radio sits directly beside the name field, so the
+       *  field itself says what picking it means. Kept as the radio's accessible name. */
       otherOption: 'Someone else',
+      /** Not shown — the input's placeholder already says "name", so a label above it would
+       *  repeat itself. Kept as the accessible name for a screen reader. */
       newNameLabel: 'Their name',
       newNamePlaceholder: 'e.g. Ben',
       /** Shown instead of the first option when no holder has been named yet. */
       noHolder: 'No money holder yet — name one in camp settings, then this becomes a choice.',
       /** In the editor, for a receipt somebody else paid: it may already have been settled
        *  before it was ever typed in. */
-      returnedLabel: 'Already paid back',
+      returnedLabel: 'Paid back',
+      /** Behind the ⓘ button beside the checkbox, shown only on request rather than always,
+       *  since most taps of the checkbox need no explanation at all. */
       returnedHint: 'Tick if the money holder has already returned this money.',
+      returnedInfoLabel: 'What does “Paid back” mean?',
       /** On the row itself. Only ever shown when someone other than the holder paid, so
        *  the common case costs no words at all. */
       paidByRow: (name: string) => `Paid by ${name}`,
