@@ -76,6 +76,9 @@
 }
 
 .field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   color: var(--muted);
   font-size: 0.75rem;
 }
@@ -261,6 +264,11 @@
 .card__name {
   flex: 1;
   font-size: 0.9375rem;
+}
+
+.card__kind-inline {
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
 .card__amount {

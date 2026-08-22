@@ -51,10 +51,12 @@ export function IncomeSourceBody({
   // Only worth printing when it says something the pool heading doesn't: an income named
   // after its pool — or, since the name became optional, not named at all — repeats it.
   const ownName = namedAbove ? undefined : distinctSourceName(source, pool)
-  // A Kaution pool wears a "Deposit" badge and holds nothing but its one deposit, so
-  // naming the kind underneath would be the third time the same word appears.
+  // Named above means this body sits under `IncomeSourceCard`'s own header, which already
+  // shows the kind inline beside the name — repeating it here would say it twice. A
+  // Kaution pool also wears a "Deposit" badge and holds nothing but its one deposit, so
+  // naming the kind underneath would be the third time the same word appears there too.
   const kindLabel =
-    !namedAbove && pool.role === 'deposit' && source.kind === 'deposit'
+    namedAbove || (pool.role === 'deposit' && source.kind === 'deposit')
       ? undefined
       : t.income.kinds[source.kind].label
 
@@ -94,6 +96,7 @@ type CardProps = Omit<BodyProps, 'namedAbove'> & {
 /** One saved income among siblings in the same pool: its own name, its own amount and its
  *  own ⋮, because the pool header above can only speak for the pool as a whole. */
 export function IncomeSourceCard({ amountCents, menu, ...body }: CardProps) {
+  const t = useT()
   const format = useFormat()
   const label = sourceLabel(body.source, body.pool)
 
@@ -101,6 +104,7 @@ export function IncomeSourceCard({ amountCents, menu, ...body }: CardProps) {
     <article className="card">
       <header className="card__header">
         <span className="card__name">{label}</span>
+        <span className="card__kind-inline">{t.income.kinds[body.source.kind].label}</span>
         <span className="card__amount">{format.euros(amountCents)}</span>
         <RowMenu label={label} disabled={body.disabled} items={menu} />
       </header>

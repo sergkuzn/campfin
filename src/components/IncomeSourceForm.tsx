@@ -39,6 +39,10 @@ export function IncomeSourceForm({ campId, kind, pool, source, blocks, onSave, o
   // on the first render — otherwise draftFromSource would rebuild it on every keystroke.
   const [draft, setDraft] = useState<SourceDraft>(() => draftFromSource(kind, source, blocks))
 
+  // The "leave it blank" hint costs a line only when asked for, by whoever taps the ⓘ —
+  // the same on-demand pattern as the "paid back" explanation on a receipt.
+  const [showNameHint, setShowNameHint] = useState(false)
+
   const patch = (fields: Partial<SourceDraft>) => setDraft((d) => ({ ...d, ...fields }))
 
   // Derived during render, not stored: storing `issues` in state would let it drift
@@ -61,15 +65,27 @@ export function IncomeSourceForm({ campId, kind, pool, source, blocks, onSave, o
 
   return (
     <form className="card card--editing" onSubmit={handleSubmit}>
-      {/* The kind is a statement, not a question: the pool decided it. */}
-      <p className="card__kind">{t.income.intoPool(t.income.kinds[kind].label, pool.name)}</p>
+      {/* The kind is a statement, not a question: the pool decided it. The pool it lands
+          in is already on screen, so naming it again here would only repeat the obvious. */}
+      <p className="card__kind">{t.income.kinds[kind].label}</p>
 
       {/* Only a fixed grant can end up beside a sibling it has to be told apart from, and
           even then the name is optional — left blank, the income answers to its pool's
           name, which then stays right when the pool is renamed. */}
       {kindNeedsName(kind) && (
         <label className="field">
-          <span className="field__label">{t.income.nameLabel}</span>
+          <span className="field__label">
+            {t.income.nameLabel}
+            <button
+              type="button"
+              className="info-button"
+              aria-expanded={showNameHint}
+              aria-label={t.income.nameHintLabel}
+              onClick={() => setShowNameHint((shown) => !shown)}
+            >
+              ⓘ
+            </button>
+          </span>
           <input
             className="income-form__input"
             value={draft.name}
@@ -78,7 +94,7 @@ export function IncomeSourceForm({ campId, kind, pool, source, blocks, onSave, o
             }
             placeholder={pool.name}
           />
-          <span className="field__hint">{t.income.nameHint}</span>
+          {showNameHint && <span className="field__hint">{t.income.nameHint}</span>}
         </label>
       )}
 
