@@ -3,10 +3,3 @@
 .number-field__input {
   width: 6rem;
 }
-
-.number-field__hint {
-  display: block;
-  margin-top: var(--space-1);
-  color: var(--muted);
-  font-size: 0.75rem;
-}

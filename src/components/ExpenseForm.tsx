@@ -128,11 +128,7 @@ export function ExpenseForm({
           />
         </div>
 
-        <ReceiptNumberField
-          value={draft.number}
-          suggestion={suggestedNumber}
-          onChange={(number) => patch({ number })}
-        />
+        <ReceiptNumberField value={draft.number} onChange={(number) => patch({ number })} />
       </div>
 
       <label className="field">

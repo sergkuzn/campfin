@@ -392,9 +392,6 @@ export const en = {
      *  row by row. Optional — a receipt is worth entering before it is filed. */
     numberLabel: 'Receipt no.',
     numberPlaceholder: 'e.g. 12',
-    /** Shown under the field while it still holds the offered number, so a prefilled value
-     *  reads as an offer rather than as something already written on a slip. */
-    numberHint: 'Next free number',
     numberTag: (n: number) => `${n}.`,
     noteLabel: 'Note',
     notePlaceholder: 'e.g. paid in cash',

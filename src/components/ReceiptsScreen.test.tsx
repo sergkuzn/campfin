@@ -110,7 +110,6 @@ describe('ReceiptsScreen — numbers', () => {
     await user.click(screen.getByRole('button', { name: t.add }))
     // The highest in the camp is 2, so the field starts on 3.
     expect(screen.getByLabelText(t.numberLabel)).toHaveValue('3')
-    expect(screen.getByText(t.numberHint)).toBeInTheDocument()
   })
 
   it('refuses to save a number another receipt already carries', async () => {
