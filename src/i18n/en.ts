@@ -392,11 +392,9 @@ export const en = {
      *  row by row. Optional — a receipt is worth entering before it is filed. */
     numberLabel: 'Receipt no.',
     numberPlaceholder: 'e.g. 12',
-    /** Fills the field with the next free number, which is the whole point of the button:
-     *  nobody should have to remember where the folder got to. A trailing dot rather than a
-     *  "#" — the same convention the row tag below uses, so a number reads the same way
-     *  wherever it appears. */
-    numberSuggest: (n: number) => `Next: ${n}.`,
+    /** Shown under the field while it still holds the offered number, so a prefilled value
+     *  reads as an offer rather than as something already written on a slip. */
+    numberHint: 'Next free number',
     numberTag: (n: number) => `${n}.`,
     noteLabel: 'Note',
     notePlaceholder: 'e.g. paid in cash',

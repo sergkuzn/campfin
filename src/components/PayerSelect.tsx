@@ -93,7 +93,9 @@ export function PayerSelect({
         <input
           className="income-form__input payer__other-name"
           aria-label={t.receipts.payer.newNameLabel}
-          value={value}
+          // Blank while the holder is selected: `paidBy` carries their name in that case,
+          // and echoing it here would read as a second, different person.
+          value={isOther ? value : ''}
           placeholder={t.receipts.payer.newNamePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
         />

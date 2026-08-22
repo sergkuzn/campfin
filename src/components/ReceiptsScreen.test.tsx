@@ -416,4 +416,19 @@ describe('PayerSelect — the two radios stay exclusive', () => {
     expect(screen.getByRole('radio', { name: t.payer.otherOption })).toBeChecked()
     expect(screen.getByLabelText(t.payer.newNameLabel)).toHaveValue('Ben')
   })
+
+  it('a receipt the holder paid leaves the "someone else" name empty', async () => {
+    const { user } = renderScreen({
+      expenses: [expense({ id: 'a', name: 'Bakery', paidBy: 'Anna' })],
+      moneyHolder: 'Anna',
+    })
+
+    await user.click(screen.getByRole('button', { name: en.rowMenu.open('Bakery') }))
+    await user.click(screen.getByRole('button', { name: en.rowMenu.edit }))
+
+    // The holder's name is what `paidBy` stores, but echoing it in the other-person box
+    // would read as a second person who fronted the money.
+    expect(screen.getByRole('radio', { name: t.payer.holderOption('Anna') })).toBeChecked()
+    expect(screen.getByLabelText(t.payer.newNameLabel)).toHaveValue('')
+  })
 })
