@@ -373,7 +373,7 @@ export const en = {
       returnedButton: 'Returned',
       /** Both directions ask first: the button sits in a list you scroll past. */
       confirmReturnTitle: (name: string) => `Return the money to ${name}?`,
-      confirmReturnLine: (amount: string) => `${amount} goes back out of the camp cash.`,
+      confirmReturnLine: (amount: string) => `${amount} will be returned.`,
       confirmReturnLabel: 'Yes, returned',
       confirmUndoTitle: (name: string) => `Undo the return to ${name}?`,
       confirmUndoLine: (amount: string) => `${amount} goes back to being owed.`,
