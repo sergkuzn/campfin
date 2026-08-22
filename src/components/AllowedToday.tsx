@@ -9,14 +9,17 @@ type Props = {
   remainingCents: number
 }
 
-/** One labelled figure: label then value, left-aligned. A local component because the
- *  table is four of the same thing and nothing outside this file needs the shape. */
+/** One labelled figure, rendered as two grid cells rather than a wrapping element: the
+ *  table places every label in the grid's label column and every value in the grid's
+ *  value column, so labels stay left and values line up flush right underneath each
+ *  other. A local component because the table is four of the same thing and nothing
+ *  outside this file needs the shape. */
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <span className="allowed__stat">
+    <>
       <span className="allowed__stat-label">{label}</span>
       <span className="allowed__stat-value">{value}</span>
-    </span>
+    </>
   )
 }
 
@@ -44,13 +47,13 @@ export function AllowedToday({ burn, remainingCents }: Props) {
             : format.euros(burn.allowedTodayCents)}
         </p>
       </div>
-      {/* Filled column by column, so the left column explains today's headline and the
-          right one says what the rest of the camp has to live on. Reading order stays the
-          DOM order, which is also the order the pairs belong in. */}
+      {/* Filled row by row, so the left pair explains today's headline and the right pair
+          says what the rest of the camp has to live on. Reading order stays the DOM order,
+          which is also the order the pairs belong in. */}
       <div className="allowed__stats">
         <Stat label={t.burn.spentToday} value={format.euros(burn.spentTodayCents)} />
-        <Stat label={t.burn.medianDay} value={format.euros(burn.medianDayCents)} />
         <Stat label={t.burn.daysLeft} value={String(burn.remainingDays)} />
+        <Stat label={t.burn.medianDay} value={format.euros(burn.medianDayCents)} />
         {/* Floored: an overspent pool has nothing left, and "−€8 left" is a riddle. The
             overspend itself is already shouted by the headline beside it. */}
         <Stat label={t.burn.moneyLeft} value={format.euros(Math.max(remainingCents, 0))} />
