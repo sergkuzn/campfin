@@ -98,6 +98,13 @@ export function blankBlockDraft(key: string): BlockDraft {
   return { id: null, key, label: '', persons: '', startDate: '', endDate: '', rate: '' }
 }
 
+/** A new row seeded from `source`'s fields — same name, people, rate and dates, so a
+ *  follow-up block that only changes one thing (a headcount drop, a later start) begins
+ *  from something real instead of blank. `id: null` makes it a row of its own to save. */
+export function copyBlockDraft(source: BlockDraft, key: string): BlockDraft {
+  return { ...source, id: null, key }
+}
+
 /** 1250 → "8,00" — the inverse of parseEurosToCents, for pre-filling an input. */
 export function centsToEuroInput(cents: number): string {
   // Deliberately not formatEuros: its "2.125,00 €" has a thousands separator and a

@@ -308,6 +308,13 @@
   font-size: 0.875rem;
 }
 
+/* One block with nothing to tell it apart from: its row has only the amount, so it goes
+   to the far end rather than sitting stranded at the start now the space-between has
+   nothing on the other side. */
+.card__block-row--solo {
+  justify-content: flex-end;
+}
+
 .card__issues {
   margin: 0;
   padding-left: var(--space-4);
@@ -412,6 +419,12 @@
   font-size: 0.875rem;
 }
 
+.blocks__add-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 .blocks__add {
   align-self: flex-start;
   border: 0;
@@ -468,6 +481,18 @@
   gap: var(--space-2);
 }
 
+/* The disclosure over the block breakdown: a plain left-aligned line of text, like
+   .blocks__add, so it reads as "there is more here" rather than as a form control. */
+.attendance__toggle {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
 /* Two equal halves so the strip is thumb-sized on a phone whatever the labels say. */
 .attendance__tabs {
   display: flex;
@@ -503,11 +528,14 @@
   color: var(--muted);
 }
 
-.attendance__actions,
-.attendance__form-actions {
+/* The border marks this off as a distinct group of shortcuts, sitting above the blocks
+   they act on rather than blending into the editor or the Save/Cancel row below it. */
+.attendance__quick-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
 }
 
 .attendance__button {

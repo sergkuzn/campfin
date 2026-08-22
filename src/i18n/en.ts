@@ -31,6 +31,7 @@ export const en = {
   rowMenu: {
     open: (name: string) => `Actions for ${name}`,
     edit: 'Edit',
+    editActual: 'Edit actual',
     delete: 'Delete',
   },
 
@@ -237,11 +238,11 @@ export const en = {
     roles: {
       earmarked: {
         label: 'Normal',
-        hint: 'Money the camp spends. Receipts come out of it.',
+        hint: 'Money the camp spends.',
       },
       deposit: {
         label: 'Deposit',
-        hint: 'A Kaution you hand over and get back — never yours to spend.',
+        hint: 'A Deposit - you hand over and get back.',
       },
     },
     aboutLabel: 'What is a pool?',
@@ -253,7 +254,7 @@ export const en = {
     editIncome: 'Edit income',
     deleteIncome: 'Delete income',
     emptyPool: 'No income yet — tap ＋ to say what came in.',
-    depositNote: "Handed back at the end of camp.",
+    depositNote: 'Handed back at the end of camp.',
     rename: 'Rename pool',
     renamePrompt: 'Rename pool',
     /** Colours are how a pool is recognised in a list of receipts, so every pool gets one
@@ -297,7 +298,8 @@ export const en = {
     ratePlaceholder: 'e.g. 8,00',
     startLabel: 'Start date',
     endLabel: 'End date',
-    add: '＋ Add block',
+    add: '＋ Add empty block',
+    copyLast: '＋ Copy previous block',
     personDays: (n: number) => `${n} person-day${n === 1 ? '' : 's'}`,
     personDaysUnknown: '— person-days',
     days: (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`,
@@ -307,15 +309,16 @@ export const en = {
   /** Granted vs actual attendance, inside the per-person-per-day card. */
   attendance: {
     granted: 'Granted',
-    actual: 'Who came',
+    actual: 'Actual',
+    /** The disclosure over the block breakdown, collapsed by default — the comparison line
+     *  below it already says what changed, so the blocks themselves are opt-in detail. */
+    toggleBlocks: (open: boolean) => (open ? '▾ Granted / actual' : '▸ Granted / actual'),
     /** Shown on the actual tab while no actual block exists — actual *is* granted then. */
     sameAsGranted: 'Nobody dropped out yet, so this matches what was granted.',
     copyFromGranted: '⧉ Copy from granted',
-    edit: 'Edit who came',
     reset: '↺ Everybody came',
     save: 'Save',
     cancel: 'Cancel',
-    hint: 'Drop the people who never came, or shorten a stay. What is left is what you may spend.',
     comparison: (granted: string, actual: string) => `Granted ${granted} · Actual ${actual}`,
     goesBack: (amount: string) => `${amount} goes back`,
     overAttended: (amount: string) =>

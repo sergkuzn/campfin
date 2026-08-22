@@ -6,13 +6,12 @@ import { BlockList } from './BlockList'
 import { PerDiemAttendance } from './PerDiemAttendance'
 import { RowMenu, type RowMenuItem } from './RowMenu'
 
-/** The granted/actual half of a per-diem card. One optional prop group rather than six
+/** The granted/actual half of a per-diem card. One optional prop group rather than five
  *  loose optional props, so "either a card has attendance or it doesn't" stays checkable. */
 type Attendance = {
   actualBlocks: PerDiemBlock[]
   totals: PerDiemTotals
   editing: boolean
-  onEdit: (seedFromGranted: boolean) => void
   renderForm: () => React.ReactNode
 }
 
@@ -21,8 +20,6 @@ type BodyProps = {
   pool: Pool
   /** Granted blocks of this source; `[]` for a fixed grant or a deposit. */
   blocks: PerDiemBlock[]
-  /** Another card is open for editing, so this one's buttons are inert. */
-  disabled: boolean
   /** True when a heading right above already spells this income's name out, so the
    *  subtitle can stay a bare kind label instead of repeating it. */
   namedAbove: boolean
@@ -38,14 +35,7 @@ type BodyProps = {
  * the pool header carries the name, the amount and the menu, and this hangs underneath it.
  * A pool with two incomes wraps each of these in a card instead.
  */
-export function IncomeSourceBody({
-  source,
-  pool,
-  blocks,
-  disabled,
-  namedAbove,
-  attendance,
-}: BodyProps) {
+export function IncomeSourceBody({ source, pool, blocks, namedAbove, attendance }: BodyProps) {
   const t = useT()
 
   // Only worth printing when it says something the pool heading doesn't: an income named
@@ -79,8 +69,6 @@ export function IncomeSourceBody({
           actualBlocks={attendance.actualBlocks}
           totals={attendance.totals}
           editing={attendance.editing}
-          disabled={disabled}
-          onEdit={attendance.onEdit}
           renderForm={attendance.renderForm}
         />
       )}
@@ -90,12 +78,14 @@ export function IncomeSourceBody({
 
 type CardProps = Omit<BodyProps, 'namedAbove'> & {
   amountCents: number // from sourceAmountCents — do not recompute here
+  /** Another card is open for editing, so this one's ⋮ is inert. */
+  disabled: boolean
   menu: RowMenuItem[]
 }
 
 /** One saved income among siblings in the same pool: its own name, its own amount and its
  *  own ⋮, because the pool header above can only speak for the pool as a whole. */
-export function IncomeSourceCard({ amountCents, menu, ...body }: CardProps) {
+export function IncomeSourceCard({ amountCents, disabled, menu, ...body }: CardProps) {
   const t = useT()
   const format = useFormat()
   const label = sourceLabel(body.source, body.pool)
@@ -106,7 +96,7 @@ export function IncomeSourceCard({ amountCents, menu, ...body }: CardProps) {
         <span className="card__name">{label}</span>
         <span className="card__kind-inline">{t.income.kinds[body.source.kind].label}</span>
         <span className="card__amount">{format.euros(amountCents)}</span>
-        <RowMenu label={label} disabled={body.disabled} items={menu} />
+        <RowMenu label={label} disabled={disabled} items={menu} />
       </header>
 
       <IncomeSourceBody {...body} namedAbove={true} />

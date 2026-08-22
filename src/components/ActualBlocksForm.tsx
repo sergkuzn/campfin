@@ -63,11 +63,7 @@ export function ActualBlocksForm({
 
   return (
     <form className="attendance__form" onSubmit={handleSubmit}>
-      <p className="attendance__hint">{t.attendance.hint}</p>
-
-      <PerDiemBlocksEditor blocks={blocks} onChange={setBlocks} />
-
-      <div className="attendance__form-actions">
+      <div className="attendance__quick-actions">
         <button
           className="attendance__button"
           type="button"
@@ -81,6 +77,8 @@ export function ActualBlocksForm({
           {t.attendance.reset}
         </button>
       </div>
+
+      <PerDiemBlocksEditor blocks={blocks} onChange={setBlocks} />
 
       <p className="income__total-row">
         <span>{t.attendance.actual}</span>

@@ -9,10 +9,14 @@ type Props = {
 }
 
 /** Saved per-diem blocks, read-only: label, money, people × rate, dates. Used by both the
- *  granted and the actual side of a per-diem card, so the two always read identically. */
+ *  granted and the actual side of a per-diem card, so the two always read identically.
+ *
+ *  A block's name is worth a line only when there is more than one to tell apart — the one
+ *  block a card usually has already takes its meaning from the card it sits under. */
 export function BlockList({ blocks }: Props) {
   const t = useT()
   const format = useFormat()
+  const soloBlock = blocks.length === 1
 
   return (
     <>
@@ -21,8 +25,14 @@ export function BlockList({ blocks }: Props) {
         const personDays = blockPersonDays(block.numPersons, block.startDate, block.endDate)
         return (
           <div key={block.id} className="card__block">
-            <p className="card__block-row card__block-row--head">
-              <span>{block.label ?? t.blocks.fallbackLabel}</span>
+            <p
+              className={
+                soloBlock
+                  ? 'card__block-row card__block-row--head card__block-row--solo'
+                  : 'card__block-row card__block-row--head'
+              }
+            >
+              {!soloBlock && <span>{block.label ?? t.blocks.fallbackLabel}</span>}
               <strong>
                 {format.euros(
                   blockCents(

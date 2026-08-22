@@ -4,6 +4,7 @@ import {
   blankBlockDraft,
   blockDraftCents,
   blockDraftPersonDays,
+  copyBlockDraft,
 } from '../lib/drafts'
 import { RequiredMark } from './RequiredMark'
 
@@ -37,6 +38,12 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
   // stays null until the card is saved and the hook mints one. Two different kinds of
   // identity — never use one for the other.
   const addRow = () => onChange([...blocks, blankBlockDraft(crypto.randomUUID())])
+
+  const copyLastRow = () => {
+    const last = blocks[blocks.length - 1]
+    if (last === undefined) return
+    onChange([...blocks, copyBlockDraft(last, crypto.randomUUID())])
+  }
 
   const removeRow = (key: string) => onChange(blocks.filter((block) => block.key !== key))
 
@@ -154,9 +161,16 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
         )
       })}
 
-      <button className="blocks__add" type="button" onClick={addRow}>
-        {t.blocks.add}
-      </button>
+      <div className="blocks__add-actions">
+        <button className="blocks__add" type="button" onClick={addRow}>
+          {t.blocks.add}
+        </button>
+        {blocks.length > 0 && (
+          <button className="blocks__add" type="button" onClick={copyLastRow}>
+            {t.blocks.copyLast}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

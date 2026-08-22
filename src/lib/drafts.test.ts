@@ -8,6 +8,7 @@ import {
   blockDraftsToInput,
   blockDraftToInput,
   centsToEuroInput,
+  copyBlockDraft,
   copyDraftsFromBlocks,
   draftFromSource,
   draftIssues,
@@ -120,6 +121,22 @@ describe('draftFromSource', () => {
         rate: '12,50',
       },
     ])
+  })
+})
+
+describe('copyBlockDraft', () => {
+  it('copies every field but resets id and key', () => {
+    const source = goodBlock({ id: 'blk-1', label: 'Participants' })
+    expect(copyBlockDraft(source, 'k2')).toEqual({
+      ...source,
+      id: null,
+      key: 'k2',
+    })
+  })
+
+  it('carries over a half-typed row as-is, so the copy needs the same fix as the original', () => {
+    const half = blankBlockDraft('k1')
+    expect(copyBlockDraft(half, 'k2')).toEqual({ ...half, id: null, key: 'k2' })
   })
 })
 

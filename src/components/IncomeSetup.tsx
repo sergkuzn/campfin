@@ -167,7 +167,6 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
       source,
       pool,
       blocks: grantedBlocks,
-      disabled: locked,
       attendance:
         source.kind !== 'per_diem'
           ? undefined
@@ -175,8 +174,6 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
               actualBlocks: blocksOf(blocks, source.id, 'actual'),
               totals: perDiemTotals(blocks, source.id),
               editing: editingActual !== null,
-              onEdit: (seedFromGranted: boolean) =>
-                setEditing({ mode: 'actual', sourceId: source.id, seedFromGranted }),
               renderForm: () => (
                 <ActualBlocksForm
                   key={source.id}
@@ -198,12 +195,22 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
       <IncomeSourceCard
         key={source.id}
         {...body}
+        disabled={locked}
         amountCents={sourceAmountCents(source, blocks)}
         menu={[
           {
             label: t.rowMenu.edit,
             onSelect: () => setEditing({ mode: 'edit', sourceId: source.id }),
           },
+          ...(source.kind === 'per_diem'
+            ? [
+                {
+                  label: t.rowMenu.editActual,
+                  onSelect: () =>
+                    setEditing({ mode: 'actual', sourceId: source.id, seedFromGranted: false }),
+                },
+              ]
+            : []),
           {
             label: t.rowMenu.delete,
             danger: true,
@@ -274,6 +281,9 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
           onAddIncome={() => handleAddIncome(summary.pool)}
           onPickKind={(kind) => handlePickKind(summary.pool.id, kind)}
           onEditIncome={(sourceId) => setEditing({ mode: 'edit', sourceId })}
+          onEditActual={(sourceId) =>
+            setEditing({ mode: 'actual', sourceId, seedFromGranted: false })
+          }
           onDeleteIncome={(sourceId) => setPending({ target: 'source', sourceId })}
           onRenamePool={() => handleRenamePool(summary.pool.id, summary.pool.name)}
           onColorPool={() => setColoringPoolId(summary.pool.id)}
@@ -375,6 +385,7 @@ type PoolSectionProps = {
   onAddIncome: () => void
   onPickKind: (kind: IncomeKind) => void
   onEditIncome: (sourceId: string) => void
+  onEditActual: (sourceId: string) => void
   onDeleteIncome: (sourceId: string) => void
   onRenamePool: () => void
   onColorPool: () => void
@@ -395,6 +406,7 @@ function PoolSection({
   onAddIncome,
   onPickKind,
   onEditIncome,
+  onEditActual,
   onDeleteIncome,
   onRenamePool,
   onColorPool,
@@ -417,6 +429,9 @@ function PoolSection({
     ...(merged === undefined
       ? []
       : [{ label: t.pools.editIncome, onSelect: () => onEditIncome(merged.id) }]),
+    ...(merged === undefined || merged.kind !== 'per_diem'
+      ? []
+      : [{ label: t.rowMenu.editActual, onSelect: () => onEditActual(merged.id) }]),
     { label: t.pools.rename, onSelect: onRenamePool },
     { label: t.pools.color, onSelect: onColorPool },
     ...(merged === undefined
