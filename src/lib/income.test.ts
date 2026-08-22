@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import {
+  addableKinds,
   blockIdsToDelete,
+  distinctSourceName,
   hasPerDiemSource,
   type IncomeState,
+  isIncomeSource,
   isMovement,
   isPerDiemBlock,
   isPool,
-  orphanPoolIds,
   poolCascade,
-  poolPolicyFor,
   sourceBlockIds,
+  sourceLabel,
 } from './income'
 import type { AmountSource, PerDiemBlock, PerDiemSource, Pool } from './types'
 
@@ -77,6 +79,13 @@ describe('type guards', () => {
     expect(isPool({ ...validPool, role: 'petty-cash' })).toBe(false)
   })
 
+  it('isIncomeSource accepts a source with no name and rejects a non-string one', () => {
+    const row = { id: 's', campId: 'C', poolId: 'p', kind: 'fixed', amountCents: 100, createdAt: 1 }
+    expect(isIncomeSource(row)).toBe(true)
+    expect(isIncomeSource({ ...row, name: 'Bakery' })).toBe(true)
+    expect(isIncomeSource({ ...row, name: 7 })).toBe(false)
+  })
+
   it('isPerDiemBlock rejects a block without a variant', () => {
     expect(isPerDiemBlock(block('b'))).toBe(true)
     expect(isPerDiemBlock({ ...block('b'), variant: undefined })).toBe(false)
@@ -107,35 +116,57 @@ describe('type guards', () => {
   })
 })
 
-describe('poolPolicyFor / hasPerDiemSource', () => {
-  it('maps each income kind to its pool policy', () => {
-    expect(poolPolicyFor('per_diem')).toBe('everyday')
-    expect(poolPolicyFor('fixed')).toBe('choose')
-    expect(poolPolicyFor('deposit')).toBe('own')
-  })
-
+describe('hasPerDiemSource', () => {
   it('spots the camp’s one per-diem source', () => {
     expect(hasPerDiemSource([food, kaution])).toBe(false)
     expect(hasPerDiemSource([food, perDiem])).toBe(true)
   })
 })
 
-describe('orphanPoolIds', () => {
-  it('drops an earmarked pool nothing feeds', () => {
-    expect(orphanPoolIds(state.pools, state.sources)).toEqual(['pool-t'])
+describe('addableKinds', () => {
+  it('offers the everyday pool its per-diem grant until one exists', () => {
+    expect(addableKinds(everyday, [])).toEqual(['per_diem', 'fixed'])
+    expect(addableKinds(everyday, [food])).toEqual(['per_diem', 'fixed'])
+    expect(addableKinds(everyday, state.sources)).toEqual(['fixed'])
   })
 
-  it('drops a deposit pool whose Kaution was deleted', () => {
-    const afterDelete = state.sources.filter((s) => s.id !== 'src-dep')
-    expect(orphanPoolIds(state.pools, afterDelete)).toEqual(['pool-b', 'pool-t'])
+  it('never offers per-diem outside the everyday pool', () => {
+    expect(addableKinds(trip, [])).toEqual(['fixed'])
+    expect(addableKinds(trip, [perDiem, food])).toEqual(['fixed'])
   })
 
-  it('keeps the everyday pool with no sources at all', () => {
-    expect(orphanPoolIds([everyday], [])).toEqual([])
+  it('fills a deposit pool exactly once', () => {
+    expect(addableKinds(bike, [])).toEqual(['deposit'])
+    expect(addableKinds(bike, state.sources)).toEqual([])
   })
 
-  it('keeps a pool that still has a source', () => {
-    expect(orphanPoolIds([bike], [kaution])).toEqual([])
+  it('counts only the pool’s own income when deciding a deposit pool is full', () => {
+    // The Kaution sits in pool-b, so pool-t is still empty and still open.
+    expect(addableKinds({ ...trip, role: 'deposit' }, [kaution])).toEqual(['deposit'])
+  })
+})
+
+describe('sourceLabel / distinctSourceName', () => {
+  it('falls back to the pool for an income with no name of its own', () => {
+    const unnamed: AmountSource = { ...kaution, name: undefined }
+    expect(sourceLabel(unnamed, bike)).toBe('Bike')
+    expect(distinctSourceName(unnamed, bike)).toBeUndefined()
+  })
+
+  it('keeps a name that says something the pool’s does not', () => {
+    expect(sourceLabel(food, everyday)).toBe('Extra food')
+    expect(distinctSourceName(food, everyday)).toBe('Extra food')
+  })
+
+  it('treats a name that only repeats the pool as no name at all', () => {
+    // Rows written before the name became optional often duplicate their pool verbatim.
+    const echo: AmountSource = { ...food, name: '  everyday ' }
+    expect(sourceLabel(echo, everyday)).toBe('everyday')
+    expect(distinctSourceName(echo, everyday)).toBeUndefined()
+  })
+
+  it('treats a blank name as absent', () => {
+    expect(sourceLabel({ ...food, name: '   ' }, everyday)).toBe('Everyday')
   })
 })
 

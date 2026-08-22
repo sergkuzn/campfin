@@ -16,36 +16,71 @@ import type {
   PerDiemBlock,
   PerDiemVariant,
   Pool,
-  PoolPolicy,
   PoolRole,
 } from './types'
 
-/** Menu order of the "＋ Add income" options. Labels live in the dictionary. */
-export const INCOME_KINDS: readonly IncomeKind[] = ['per_diem', 'fixed', 'deposit']
+/** Exactly one per-diem source per camp — it is the camp's spine, not one grant of many. */
+export function hasPerDiemSource(sources: IncomeSource[]): boolean {
+  return sources.some((s) => s.kind === 'per_diem')
+}
 
 /**
- * Per-diem money is the camp's spine and always feeds the everyday pool; a deposit is
- * returned to one counterparty so it never shares a pool; a fixed grant is the only kind
- * with a real choice.
+ * Which income kinds a pool can still take. The kind is never asked for as such — the pool
+ * a leader is standing in already determines it, and this is where that rule lives so the
+ * screen only has to count the answers:
+ *
+ * - `[]` — nothing more fits, so the pool shows no ＋ at all. A Kaution is one agreement
+ *   with one counterparty, so its pool holds exactly one income and then it is full.
+ * - one kind — open the form straight away; there is no question to put to the user.
+ * - two kinds — the everyday pool before its per-diem grant exists. A leader may want to
+ *   park a fixed top-up in the daily pot first, so this is the one place a choice appears.
+ *
+ * `sources` is the whole camp's list, not the pool's: "one per-diem per camp" is a
+ * camp-wide fact, and passing a pre-filtered list would quietly make it per-pool.
  */
-export function poolPolicyFor(kind: IncomeKind): PoolPolicy {
-  switch (kind) {
-    case 'per_diem':
-      return 'everyday'
-    case 'fixed':
-      return 'choose'
+export function addableKinds(pool: Pool, sources: IncomeSource[]): IncomeKind[] {
+  switch (pool.role) {
     case 'deposit':
-      return 'own'
+      return sources.some((s) => s.poolId === pool.id) ? [] : ['deposit']
+    case 'everyday':
+      return hasPerDiemSource(sources) ? ['fixed'] : ['per_diem', 'fixed']
+    case 'earmarked':
+      return ['fixed']
     default: {
-      const _never: never = kind
+      // A fourth role breaks the build here rather than silently offering nothing.
+      const _never: never = pool.role
       return _never
     }
   }
 }
 
-/** Exactly one per-diem source per camp — the menu hides the option once one exists. */
-export function hasPerDiemSource(sources: IncomeSource[]): boolean {
-  return sources.some((s) => s.kind === 'per_diem')
+// --- Naming -------------------------------------------------------------------
+
+/** Case- and space-insensitive, so "Bikes" and " bikes " are not two different names. */
+function sameName(a: string, b: string): boolean {
+  return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase()
+}
+
+/**
+ * What to call one income. A pool holding a single income needs one name, not two, so the
+ * deposit and per-diem forms never ask for one and the pool answers for it. Resolved at
+ * read time rather than copied into the row, so renaming the pool renames the income too.
+ */
+export function sourceLabel(source: IncomeSource, pool: Pool): string {
+  const name = source.name?.trim()
+  return name === undefined || name === '' ? pool.name : name
+}
+
+/**
+ * The income's own name, but only when it says something the pool's name doesn't —
+ * `undefined` when printing it would just repeat the heading above it. Rows written before
+ * the name became optional often duplicate their pool's name verbatim, which is why this
+ * compares rather than only checking for absence.
+ */
+export function distinctSourceName(source: IncomeSource, pool: Pool): string | undefined {
+  const name = source.name?.trim()
+  if (name === undefined || name === '' || sameName(name, pool.name)) return undefined
+  return name
 }
 
 // --- Type guards: the door from unknown (a database row) into the typed world ----
@@ -81,7 +116,8 @@ export function isIncomeSource(value: unknown): value is IncomeSource {
     typeof s.id !== 'string' ||
     typeof s.campId !== 'string' ||
     typeof s.poolId !== 'string' ||
-    typeof s.name !== 'string' ||
+    // Absent for a pool's only income, which is named by its pool.
+    (s.name !== undefined && typeof s.name !== 'string') ||
     typeof s.createdAt !== 'number'
   ) {
     return false
@@ -155,18 +191,6 @@ export type IncomeState = {
 export const emptyIncome: IncomeState = { pools: [], sources: [], blocks: [] }
 
 // --- Planners: which rows a write must delete alongside itself ----------------
-
-/**
- * Pools nothing feeds any more. A pool nobody funds is not a pool — except the everyday
- * pool, which exists from the camp's birth and outlives every source in it.
- *
- * Callers pass the sources as they will be *after* the write, so the ids come back in time
- * to go into the same transaction.
- */
-export function orphanPoolIds(pools: Pool[], sources: IncomeSource[]): string[] {
-  const funded = new Set(sources.map((s) => s.poolId))
-  return pools.filter((p) => p.role !== 'everyday' && !funded.has(p.id)).map((p) => p.id)
-}
 
 /** Blocks belong to their source, so they die with it — both variants. */
 export function sourceBlockIds(blocks: PerDiemBlock[], sourceId: string): string[] {

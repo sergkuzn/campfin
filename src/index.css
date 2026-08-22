@@ -111,3 +111,20 @@ body {
   font-size: 0.875rem;
   cursor: pointer;
 }
+
+/* An explanation you can ask for and put away again — used where a control needs a
+   sentence of context that would be noise on every later visit. Round rather than
+   pill-shaped: it holds one character, not a word. Shared by two screens, so it lives
+   with the shell rather than in either one's stylesheet. */
+.info-button {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background-color: var(--bg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+}

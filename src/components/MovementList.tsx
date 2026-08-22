@@ -65,8 +65,10 @@ export function MovementList({
             <RowMenu
               label={movement.name}
               disabled={locked}
-              onEdit={() => onEdit(movement.id)}
-              onDelete={() => onDelete(movement.id)}
+              items={[
+                { label: t.rowMenu.edit, onSelect: () => onEdit(movement.id) },
+                { label: t.rowMenu.delete, danger: true, onSelect: () => onDelete(movement.id) },
+              ]}
             />
           </li>
         ),

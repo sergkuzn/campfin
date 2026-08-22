@@ -187,19 +187,22 @@ export const en = {
     // was — so the label cannot name a destination the way the other screens' do.
     back: '← Back',
     title: 'Set up income',
-    add: '＋ Add income',
-    empty: 'No income yet — tap ＋ Add income.',
+    /** Only ever seen if a camp somehow has no pools at all — every camp is born with one. */
+    empty: 'No pools yet — tap ＋ Add pool.',
     receivedTotal: 'Received total',
-    nameLabel: 'Income name',
-    namePlaceholder: 'Name, e.g. Group money',
+    nameLabel: 'Income name (optional)',
+    nameHint: "Leave blank and it goes by the pool's name.",
+    /** The subtitle of an income shown under a heading that does not name it. */
+    kindWithName: (name: string, kind: string) => `${name} · ${kind}`,
+    /** On the form: which kind is being added, and where it lands. Neither is a question
+     *  any more — the pool the form was opened in decided both. */
+    intoPool: (kind: string, pool: string) => `${kind} · into ${pool}`,
     amountLabel: 'Amount',
     amountPlaceholder: '€ e.g. 300,00',
     personDaysTotal: 'Total person-days',
     sourceTotal: 'Source total',
     save: 'Save',
     cancel: 'Cancel',
-    edit: 'Edit',
-    delete: 'Delete',
     kinds: {
       per_diem: {
         label: 'Per person, per day',
@@ -215,8 +218,7 @@ export const en = {
       },
     },
     issues: {
-      name: 'Give this income a name.',
-      poolName: 'Name the new pool.',
+      poolName: 'Give the pool a name.',
       noBlocks: 'Add at least one block of people and days.',
       invalidBlock: 'Every block needs people, dates (start before end) and a rate.',
       amount: 'Enter an amount in euros, e.g. 120,00.',
@@ -228,7 +230,32 @@ export const en = {
      *  switching language later must never rename their pools. Deliberately the same
      *  wording as the per-person-per-day income that feeds it: one name, one pot. */
     everydayDefault: 'Group money',
-    actions: (name: string) => `Actions for ${name}`,
+    add: '＋ Add pool',
+    addTitle: 'New pool',
+    addSave: 'Create pool',
+    nameLabel: 'Pool name',
+    namePlaceholder: 'e.g. Bike hire',
+    roleLabel: 'What is this pot for?',
+    roles: {
+      earmarked: {
+        label: 'Normal',
+        hint: 'Money the camp spends. Receipts come out of it.',
+      },
+      deposit: {
+        label: 'Deposit',
+        hint: 'A Kaution you hand over and get back — never yours to spend.',
+      },
+    },
+    aboutLabel: 'What is a pool?',
+    about:
+      'A pool is one pot of money, kept apart because it has to be accounted for on its own. ' +
+      'Group money is the daily pot every camp has; add another for a grant with its own purpose, ' +
+      'or a deposit you hand over and get back. Every receipt is booked against one pool.',
+    addIncomeTo: (name: string) => `Add income to ${name}`,
+    editIncome: 'Edit income',
+    deleteIncome: 'Delete income',
+    emptyPool: 'No income yet — tap ＋ to say what came in.',
+    depositNote: "Handed back at the end of camp — not the camp's money to spend.",
     rename: 'Rename pool',
     renamePrompt: 'Rename pool',
     /** Colours are how a pool is recognised in a list of receipts, so every pool gets one
@@ -252,12 +279,11 @@ export const en = {
     deleteTitleFallback: 'Delete pool?',
     deleteSources: (count: number, amount: string) =>
       `Its ${count} income ${count === 1 ? 'source' : 'sources'} worth ${amount} will be deleted too.`,
+    deleteEmpty: 'Nothing funds it, so no income goes with it.',
     sourceDeleteTitle: (name: string) => `Delete "${name}"?`,
     sourceDeleteTitleFallback: 'Delete this income?',
     sourceDeleteLine: (amount: string, pool: string) =>
-      `This removes ${amount} from the ${pool} pool.`,
-    sourceDeleteLastLine: (pool: string) =>
-      `The ${pool} pool goes with it — it has no other income.`,
+      `This removes ${amount} from the ${pool} pool. The pool itself stays.`,
   },
 
   blocks: {
@@ -571,13 +597,5 @@ export const en = {
       repaid: 'Repaid',
       repaidNo: 'no',
     },
-  },
-
-  poolSelect: {
-    label: 'Pool',
-    newOption: '＋ New pool…',
-    newNameLabel: 'New pool name',
-    newNamePlaceholder: 'e.g. Bike deposit',
-    copyName: '⧉ Same as income name',
   },
 }

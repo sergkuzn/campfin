@@ -6,6 +6,7 @@
 }
 
 .income__title {
+  flex: 1;
   margin: 0;
   font-size: 1.5rem;
   letter-spacing: -0.02em;
@@ -13,15 +14,23 @@
 
 .income__header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .income__empty {
   margin: 0;
   color: var(--muted);
   font-size: 0.875rem;
+}
+
+/* The ⓘ paragraph under the header, shown only while it is asked for. */
+.income__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
 }
 
 .income__error {
@@ -58,7 +67,7 @@
 
 /* Label above its control. Height stays content-sized: a flex-basis here would be
    read as a height by the column-flex forms and blow the field up. Side-by-side
-   sizing is the row container's job (see .block__row / .pool-select below). */
+   sizing is the row container's job (see .block__row below). */
 .field {
   display: flex;
   flex-direction: column;
@@ -156,15 +165,23 @@
   background-color: var(--surface);
 }
 
+/* Money that is only passing through the camp's hands. Dashed rather than a different
+   colour, so the pot's own hue keeps saying which pot it is — the border says how the
+   money behaves, the dot says which pool it belongs to. */
+.pool--deposit {
+  border-style: dashed;
+}
+
 .pool__header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
 }
 
 .pool__name {
   /* Flex so the pool's colour dot sits on the name's line rather than above it. */
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   flex: 1;
@@ -172,54 +189,52 @@
   font-size: 1rem;
 }
 
+.pool__badge {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .pool__total {
   font-variant-numeric: tabular-nums;
   font-size: 0.9375rem;
 }
 
-/* The disclosure triangle is the browser's; we want a bare ⋯ button. */
-.pool__menu {
-  position: relative;
-}
-
-.pool__menu-button {
-  list-style: none;
-  padding: 0 var(--space-2);
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.pool__menu-button::-webkit-details-marker {
-  display: none;
-}
-
-.pool__menu-items {
-  position: absolute;
-  right: 0;
-  z-index: 1;
+/* The same 2.25rem thumb target as the ⋮ beside it, so the two read as one pair of
+   controls rather than a big button next to a small one. */
+.pool__add {
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
-  min-width: 9rem;
-  padding: var(--space-1);
-  border: 1px solid var(--border);
-  border-radius: var(--space-2);
-  background-color: var(--surface);
-}
-
-.pool__menu-items button {
-  padding: var(--space-2);
-  border: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
   background: none;
-  color: inherit;
+  color: var(--accent);
   font: inherit;
-  font-size: 0.875rem;
-  text-align: left;
+  font-size: 1.125rem;
+  line-height: 1;
   cursor: pointer;
 }
 
-.pool__menu-items button:disabled {
+.pool__add:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pool__note,
+.pool__empty {
+  margin: 0;
   color: var(--muted);
-  cursor: not-allowed;
+  font-size: 0.75rem;
 }
 
 .card {
@@ -399,34 +414,30 @@
   cursor: pointer;
 }
 
-.pool-select {
+/* min-inline-size overrides the fieldset's built-in min-content width, which would
+   otherwise stop the hints wrapping on a narrow phone. */
+.pool-roles {
+  min-inline-size: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.pool-select__field {
-  display: flex;
-  flex: 1 1 10rem;
   flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
-.pool-select__copy {
-  align-self: flex-start;
+  gap: var(--space-2);
+  margin: 0;
   padding: 0;
   border: 0;
-  background: none;
-  color: var(--accent);
-  font: inherit;
-  font-size: 0.75rem;
+}
+
+/* The radio on its own line-height, the label and its hint stacked beside it. */
+.pool-roles__option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
   cursor: pointer;
 }
 
-.pool-select__copy:disabled {
-  color: var(--muted);
-  cursor: not-allowed;
+.pool-roles__option > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .income__totals {

@@ -11,7 +11,7 @@ import { useCallback, useMemo, useState } from 'react'
 import * as incomeDb from '../db/incomeDb'
 import { db } from '../db/instant'
 import { useT } from '../i18n'
-import type { SaveBlocksInput, SaveSourceInput } from '../lib/drafts'
+import type { SaveBlocksInput, SavePoolInput, SaveSourceInput } from '../lib/drafts'
 import type { IncomeState } from '../lib/income'
 import { mapRows, toBlock, toPool, toSource } from '../lib/rows'
 import type { IncomeSource, PerDiemBlock, Pool, PoolColor } from '../lib/types'
@@ -19,6 +19,8 @@ import type { IncomeSource, PerDiemBlock, Pool, PoolColor } from '../lib/types'
 export type UseIncome = IncomeState & {
   isLoading: boolean
   error: string | null
+  /** Returns the new pool's id, so the caller can open its income form at once. */
+  createPool: (input: SavePoolInput) => string
   saveSource: (input: SaveSourceInput) => void
   /** Replace one variant's block rows — the actual-attendance editor. */
   saveBlocks: (input: SaveBlocksInput) => void
@@ -71,8 +73,18 @@ export function useIncome(campId: string): UseIncome {
     [data],
   )
 
-  // Each mutator passes the current rows along, because what a write must *also* delete is
-  // computed from them. That is why `state` is in every dependency list here.
+  // Each mutator passes the current rows along, because what a write must *also* write or
+  // delete is computed from them. That is why `state` is in every dependency list here.
+  const createPool = useCallback(
+    (input: SavePoolInput): string => {
+      setError(null)
+      const { poolId, done } = incomeDb.createPool(input, state)
+      void done.catch(() => setError(t.sync.writeFailed))
+      return poolId
+    },
+    [state, t],
+  )
+
   const saveSource = useCallback(
     (input: SaveSourceInput): void => {
       setError(null)
@@ -125,6 +137,7 @@ export function useIncome(campId: string): UseIncome {
     ...state,
     isLoading,
     error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
+    createPool,
     saveSource,
     saveBlocks,
     deleteSource,

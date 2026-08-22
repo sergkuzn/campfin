@@ -14,19 +14,14 @@ import {
   draftPersonDays,
   draftsFromBlocks,
   draftToInput,
-  NEW_POOL,
+  kindNeedsName,
+  type PoolDraft,
+  poolDraftIssues,
+  poolDraftToInput,
   type SourceDraft,
 } from './drafts'
 import { parseEurosToCents } from './money'
-import type { AmountSource, PerDiemBlock, PerDiemSource, Pool } from './types'
-
-const everyday: Pool = {
-  id: 'pool-e',
-  campId: 'C',
-  name: 'Everyday',
-  role: 'everyday',
-  createdAt: 1,
-}
+import type { AmountSource, PerDiemBlock, PerDiemSource } from './types'
 
 const perDiem: PerDiemSource = {
   id: 'src-pd',
@@ -71,8 +66,6 @@ const goodDraft = (over: Partial<SourceDraft> = {}): SourceDraft => ({
   kind: 'fixed',
   name: 'Extra food',
   amount: '300',
-  poolChoice: 'pool-e',
-  newPoolName: '',
   blocks: [],
   ...over,
 })
@@ -92,29 +85,29 @@ describe('centsToEuroInput', () => {
 })
 
 describe('draftFromSource', () => {
-  it('starts blank for a new source, pre-selecting the default pool', () => {
-    const draft = draftFromSource('fixed', null, [], everyday)
-    expect(draft).toEqual({
+  it('starts blank for a new source', () => {
+    expect(draftFromSource('fixed', null, [])).toEqual({
       kind: 'fixed',
       name: '',
       amount: '',
-      poolChoice: 'pool-e',
-      newPoolName: '',
       blocks: [],
     })
   })
 
-  it('falls back to "new pool" when there is no default', () => {
-    expect(draftFromSource('deposit', null, [], undefined).poolChoice).toBe(NEW_POOL)
+  it('turns an amount source into strings', () => {
+    expect(draftFromSource('fixed', food, [])).toMatchObject({
+      name: 'Extra food',
+      amount: '19,99',
+    })
   })
 
-  it('turns an amount source into strings', () => {
-    const draft = draftFromSource('fixed', food, [], undefined)
-    expect(draft).toMatchObject({ name: 'Extra food', amount: '19,99', poolChoice: 'pool-e' })
+  it('shows an unnamed source as a blank name, so the pool keeps answering for it', () => {
+    const unnamed: AmountSource = { ...food, name: undefined }
+    expect(draftFromSource('fixed', unnamed, []).name).toBe('')
   })
 
   it('turns per-diem blocks into rows keyed by their database id', () => {
-    const draft = draftFromSource('per_diem', perDiem, [persistedBlock], undefined)
+    const draft = draftFromSource('per_diem', perDiem, [persistedBlock])
     expect(draft.amount).toBe('') // per-diem money is computed, never typed
     expect(draft.blocks).toEqual([
       {
@@ -184,14 +177,14 @@ describe('the actual-attendance editor', () => {
 
 describe('draft round trip', () => {
   it('preserves an amount to the cent — including the 19,99 float trap', () => {
-    const draft = draftFromSource('fixed', food, [], undefined)
-    const input = draftToInput(draft, 'C', food)
+    const draft = draftFromSource('fixed', food, [])
+    const input = draftToInput(draft, 'C', 'pool-e', food)
     expect(input?.amountCents).toBe(1999)
   })
 
   it('preserves per-diem blocks unchanged', () => {
-    const draft = draftFromSource('per_diem', perDiem, [persistedBlock], undefined)
-    const input = draftToInput(draft, 'C', perDiem)
+    const draft = draftFromSource('per_diem', perDiem, [persistedBlock])
+    const input = draftToInput(draft, 'C', 'pool-e', perDiem)
     expect(input?.amountCents).toBeNull()
     expect(input?.blocks).toEqual([
       {
@@ -291,13 +284,8 @@ describe('draftIssues', () => {
     expect(draftIssues(goodDraft())).toEqual([])
   })
 
-  it('flags a missing name', () => {
-    expect(draftIssues(goodDraft({ name: '  ' }))).toEqual(['name'])
-  })
-
-  it('flags a new pool with no name, and clears once named', () => {
-    expect(draftIssues(goodDraft({ poolChoice: NEW_POOL }))).toEqual(['poolName'])
-    expect(draftIssues(goodDraft({ poolChoice: NEW_POOL, newPoolName: 'Bikes' }))).toEqual([])
+  it('lets a blank name pass — an unnamed income goes by its pool', () => {
+    expect(draftIssues(goodDraft({ name: '  ' }))).toEqual([])
   })
 
   it('flags a missing or zero amount on fixed and deposit', () => {
@@ -318,33 +306,82 @@ describe('draftIssues', () => {
 
 describe('draftToInput', () => {
   it('returns null whenever draftIssues is non-empty', () => {
-    expect(draftToInput(goodDraft({ name: '' }), 'C', null)).toBeNull()
-    expect(draftToInput(goodDraft({ amount: 'x' }), 'C', null)).toBeNull()
+    expect(draftToInput(goodDraft({ amount: 'x' }), 'C', 'pool-e', null)).toBeNull()
+    expect(draftToInput(goodDraft({ kind: 'per_diem' }), 'C', 'pool-e', null)).toBeNull()
   })
 
   it('stamps every block with the variant being edited, granted by default', () => {
     const draft = goodDraft({ kind: 'per_diem', blocks: [goodBlock(), goodBlock({ key: 'k2' })] })
-    expect(draftToInput(draft, 'C', null)?.blocks.map((b) => b.variant)).toEqual([
+    expect(draftToInput(draft, 'C', 'pool-e', null)?.blocks.map((b) => b.variant)).toEqual([
       'granted',
       'granted',
     ])
-    expect(draftToInput(draft, 'C', null, 'actual')?.blocks.map((b) => b.variant)).toEqual([
-      'actual',
-      'actual',
-    ])
+    expect(
+      draftToInput(draft, 'C', 'pool-e', null, 'actual')?.blocks.map((b) => b.variant),
+    ).toEqual(['actual', 'actual'])
   })
 
-  it('maps a new-pool choice to a new-pool payload', () => {
-    const draft = goodDraft({ poolChoice: NEW_POOL, newPoolName: '  Bikes  ' })
-    expect(draftToInput(draft, 'C', null)?.pool).toEqual({ mode: 'new', name: 'Bikes' })
+  it('saves the income into the pool the form was opened in', () => {
+    expect(draftToInput(goodDraft(), 'C', 'pool-bikes', null)?.poolId).toBe('pool-bikes')
+  })
+
+  it('keeps a trimmed name for a fixed grant', () => {
+    expect(draftToInput(goodDraft({ name: '  Bakery  ' }), 'C', 'pool-e', null)?.name).toBe(
+      'Bakery',
+    )
+  })
+
+  it('sends a null name for a blank one, so the income falls back to its pool', () => {
+    expect(draftToInput(goodDraft({ name: '   ' }), 'C', 'pool-e', null)?.name).toBeNull()
+  })
+
+  it('sends a null name for the kinds that are never asked for one', () => {
+    const perDiemDraft = goodDraft({
+      kind: 'per_diem',
+      name: 'typed anyway',
+      blocks: [goodBlock()],
+    })
+    expect(draftToInput(perDiemDraft, 'C', 'pool-e', null)?.name).toBeNull()
+    const depositDraft = goodDraft({ kind: 'deposit', name: 'typed anyway' })
+    expect(draftToInput(depositDraft, 'C', 'pool-e', null)?.name).toBeNull()
   })
 
   it('carries the existing row through so its id and createdAt survive an edit', () => {
-    expect(draftToInput(goodDraft(), 'C', food)?.existing).toBe(food)
+    expect(draftToInput(goodDraft(), 'C', 'pool-e', food)?.existing).toBe(food)
   })
 
   it('sends no blocks for a non-per-diem source, even if the draft carries some', () => {
-    const input = draftToInput(goodDraft({ blocks: [goodBlock()] }), 'C', null)
+    const input = draftToInput(goodDraft({ blocks: [goodBlock()] }), 'C', 'pool-e', null)
     expect(input?.blocks).toEqual([])
+  })
+})
+
+describe('kindNeedsName', () => {
+  it('asks only for a fixed grant, which is the only kind that can have a sibling', () => {
+    expect(kindNeedsName('fixed')).toBe(true)
+    expect(kindNeedsName('per_diem')).toBe(false)
+    expect(kindNeedsName('deposit')).toBe(false)
+  })
+})
+
+describe('the pool form', () => {
+  const poolDraft = (over: Partial<PoolDraft> = {}): PoolDraft => ({
+    name: 'Bike hire',
+    role: 'earmarked',
+    ...over,
+  })
+
+  it('needs a name — it is the one name the pool and its only income share', () => {
+    expect(poolDraftIssues(poolDraft({ name: '  ' }))).toEqual(['poolName'])
+    expect(poolDraftIssues(poolDraft())).toEqual([])
+    expect(poolDraftToInput(poolDraft({ name: '' }), 'C')).toBeNull()
+  })
+
+  it('trims the name and carries the role through', () => {
+    expect(poolDraftToInput(poolDraft({ name: '  Bikes  ', role: 'deposit' }), 'C')).toEqual({
+      campId: 'C',
+      name: 'Bikes',
+      role: 'deposit',
+    })
   })
 })

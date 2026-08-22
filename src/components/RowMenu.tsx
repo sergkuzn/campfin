@@ -3,27 +3,32 @@ import './RowMenu.css'
 import { useBackDismiss } from '../hooks/useBackDismiss'
 import { useT } from '../i18n'
 
+export type RowMenuItem = {
+  label: string
+  /** Red — for the one choice that destroys something. */
+  danger?: boolean
+  onSelect: () => void
+}
+
 type Props = {
   /** Names the row in the trigger's accessible label — a bare ⋮ says nothing on its own. */
   label: string
   /** True while a form is open elsewhere: the row's actions go inert, and an already-open
    *  menu closes rather than offering choices that would do nothing. */
   disabled: boolean
-  onEdit: () => void
-  onDelete: () => void
+  /** Top to bottom, as shown. A pool header carries four, a receipt row two. */
+  items: RowMenuItem[]
 }
 
-/**
- * Roughly how tall the open menu is. Only used to pick which side of the trigger it opens
- * on, so an estimate is enough — being a few pixels out never clips anything.
- */
-const MENU_HEIGHT_PX = 96
+/** Roughly one item's height, for the drop-up estimate below. */
+const ITEM_HEIGHT_PX = 40
 
 /**
- * The ⋮ in a list row's corner: edit and delete, hidden until asked for. Two buttons per
- * row cost a whole extra line on a phone, which is what pushed the rows to wrap.
+ * The ⋮ in a row's corner: the row's actions, hidden until asked for. Spelling them out as
+ * buttons costs a whole extra line on a phone, which is what pushed the receipt rows to
+ * wrap — and a pool header has four of them to fit beside a name and an amount.
  */
-export function RowMenu({ label, disabled, onEdit, onDelete }: Props) {
+export function RowMenu({ label, disabled, items }: Props) {
   const t = useT()
   const [open, setOpen] = useState(false)
   // Opens upwards for a row near the bottom of the screen, where a downward menu would
@@ -71,7 +76,9 @@ export function RowMenu({ label, disabled, onEdit, onDelete }: Props) {
   const toggle = () => {
     if (!open) {
       const bottom = triggerRef.current?.getBoundingClientRect().bottom ?? 0
-      setDropUp(bottom + MENU_HEIGHT_PX > window.innerHeight)
+      // An estimate is enough: it only picks which side of the trigger the panel opens on,
+      // and being a few pixels out never clips anything.
+      setDropUp(bottom + items.length * ITEM_HEIGHT_PX > window.innerHeight)
     }
     setOpen(!open)
   }
@@ -100,16 +107,18 @@ export function RowMenu({ label, disabled, onEdit, onDelete }: Props) {
 
       {open && (
         <div className={`row-menu__items${dropUp ? ' row-menu__items--up' : ''}`}>
-          <button className="row-menu__item" type="button" onClick={() => choose(onEdit)}>
-            {t.rowMenu.edit}
-          </button>
-          <button
-            className="row-menu__item row-menu__item--danger"
-            type="button"
-            onClick={() => choose(onDelete)}
-          >
-            {t.rowMenu.delete}
-          </button>
+          {items.map((item) => (
+            <button
+              key={item.label}
+              className={
+                item.danger === true ? 'row-menu__item row-menu__item--danger' : 'row-menu__item'
+              }
+              type="button"
+              onClick={() => choose(item.onSelect)}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
       )}
     </div>

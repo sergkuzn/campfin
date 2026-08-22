@@ -70,7 +70,9 @@ const _schema = i.schema({
       campId: i.string().indexed(),
       poolId: i.string().indexed(),
       kind: i.string<IncomeKind>().indexed(),
-      name: i.string(),
+      // Optional: a pool's only income is named by the pool itself, so the deposit and
+      // per-diem forms never ask for one. Only a second income in the same pool needs it.
+      name: i.string().optional(),
       // Optional because a per-diem source has no stored amount at all — it is computed
       // from its blocks. The row mapper enforces "present for fixed and deposit".
       amountCents: i.number().optional(),

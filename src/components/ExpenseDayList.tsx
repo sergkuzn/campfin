@@ -184,7 +184,14 @@ function ReceiptRow({
 
       <span className="receipt__amount">{format.euros(expense.amountCents)}</span>
 
-      <RowMenu label={expense.name} disabled={locked} onEdit={onEdit} onDelete={onDelete} />
+      <RowMenu
+        label={expense.name}
+        disabled={locked}
+        items={[
+          { label: t.rowMenu.edit, onSelect: onEdit },
+          { label: t.rowMenu.delete, danger: true, onSelect: onDelete },
+        ]}
+      />
     </li>
   )
 }

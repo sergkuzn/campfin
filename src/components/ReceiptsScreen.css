@@ -215,17 +215,3 @@
   font-size: 0.875rem;
   white-space: nowrap;
 }
-
-/* Round rather than pill-shaped: it holds one character, not a word. */
-.payer__info {
-  flex: 0 0 auto;
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background-color: var(--bg);
-  color: var(--muted);
-  font-size: 0.75rem;
-  line-height: 1;
-  cursor: pointer;
-}

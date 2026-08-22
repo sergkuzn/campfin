@@ -116,7 +116,7 @@ export function PayerSelect({
             </label>
             <button
               type="button"
-              className="payer__info"
+              className="info-button"
               aria-expanded={showReturnedHint}
               aria-label={t.receipts.payer.returnedInfoLabel}
               onClick={() => setShowReturnedHint((shown) => !shown)}

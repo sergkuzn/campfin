@@ -56,6 +56,13 @@ export type Membership = {
 export type PoolRole = 'everyday' | 'earmarked' | 'deposit'
 
 /**
+ * The roles "＋ Add pool" offers. `Exclude` subtracts a member from a union, so the
+ * everyday pool — born with the camp and never created by hand — cannot leak into the
+ * form by accident, and adding a fourth role adds it here for free.
+ */
+export type CreatablePoolRole = Exclude<PoolRole, 'everyday'>
+
+/**
  * How a pool is told apart at a glance. A *token*, not a hex string: the token says which
  * pool this is, and the stylesheet decides what it looks like — so every hue gets a
  * readable value in light and in dark mode, which a colour typed on one phone could not
@@ -79,19 +86,13 @@ export type Pool = {
   createdAt: number
 }
 
-/**
- * Which pool an income kind is allowed to feed. Derived from the kind, never stored:
- * `everyday` = no choice, it joins the daily pot · `choose` = pick a pool or make one ·
- * `own` = always a fresh pool of its own.
- */
-export type PoolPolicy = 'everyday' | 'choose' | 'own'
-
 export type PerDiemSource = {
   id: string
   campId: string
   poolId: string
   kind: 'per_diem'
-  name: string
+  /** Optional — see AmountSource.name. */
+  name?: string
   createdAt: number
   // amount is COMPUTED from its blocks, never stored
 }
@@ -107,14 +108,22 @@ export type AmountSource = {
   campId: string
   poolId: string
   kind: 'fixed' | 'deposit'
-  name: string
+  /**
+   * Absent when the pool's name already says it: a pool holding one income needs one
+   * name, not two. `sourceLabel` falls back to the pool, so renaming the pool renames
+   * the income with it — there is no second copy to keep in step.
+   */
+  name?: string
   amountCents: number // note the Cents suffix — make the unit unmissable
   createdAt: number
 }
 
 export type IncomeSource = PerDiemSource | AmountSource
 
-/** The three entries in the "＋ Add income" menu. */
+/**
+ * What an income *is*. Never chosen from a menu of three any more: the pool decides it,
+ * and `addableKinds` is where that decision lives.
+ */
 export type IncomeKind = IncomeSource['kind']
 
 /**

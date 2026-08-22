@@ -109,14 +109,14 @@ export function importCamp(args: ImportCampArgs): { camp: Camp; done: Promise<un
                 campId,
                 poolId: source.poolId,
                 kind: source.kind,
-                name: source.name,
+                name: source.name ?? null,
                 createdAt: source.createdAt,
               }
             : {
                 campId,
                 poolId: source.poolId,
                 kind: source.kind,
-                name: source.name,
+                name: source.name ?? null,
                 amountCents: source.amountCents,
                 createdAt: source.createdAt,
               },
