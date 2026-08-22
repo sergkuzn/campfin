@@ -31,7 +31,7 @@ type Props = {
   todayIso: string
   /** Receipt numbers other rows already carry — a duplicate blocks the save. */
   takenNumbers: ReadonlySet<number>
-  /** What the "next number" button fills in: one past the highest in the camp. */
+  /** The number a new receipt starts on: one past the highest in the camp. */
   suggestedNumber: number
   /** Who holds the camp cash, so "paid out of the camp cash" can name them. Set in camp
    *  settings — this form only reads it. */
@@ -63,7 +63,7 @@ export function ExpenseForm({
   // on every keystroke and throw away what was typed.
   const [draft, setDraft] = useState<ExpenseDraft>(() =>
     expense === null
-      ? blankExpenseDraft(todayIso, pools[0]?.pool.id ?? '')
+      ? blankExpenseDraft(todayIso, pools[0]?.pool.id ?? '', suggestedNumber)
       : draftFromExpense(expense),
   )
 
@@ -86,6 +86,29 @@ export function ExpenseForm({
 
   return (
     <form className="card card--editing" onSubmit={handleSubmit}>
+      <div className="field">
+        <span className="field__label">
+          {t.receipts.poolLabel}
+          <RequiredMark />
+        </span>
+        <div className="filters__chips">
+          {pools.map((summary) => (
+            <button
+              key={summary.pool.id}
+              type="button"
+              className={`filters__chip pool-tag--${poolColorOf(summary.pool)}`}
+              // A single choice rather than a multi-select filter, so picking one pool
+              // switches to it instead of toggling it on top of whatever was already lit.
+              aria-pressed={draft.poolId === summary.pool.id}
+              onClick={() => patch({ poolId: summary.pool.id })}
+            >
+              <span className="pool-tag__dot" aria-hidden="true" />
+              {summary.pool.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="block__row">
         <div className="field">
           <label className="field__label" htmlFor="expense-date">
@@ -146,29 +169,6 @@ export function ExpenseForm({
           }
         />
       </label>
-
-      <div className="field">
-        <span className="field__label">
-          {t.receipts.poolLabel}
-          <RequiredMark />
-        </span>
-        <div className="filters__chips">
-          {pools.map((summary) => (
-            <button
-              key={summary.pool.id}
-              type="button"
-              className={`filters__chip pool-tag--${poolColorOf(summary.pool)}`}
-              // A single choice rather than a multi-select filter, so picking one pool
-              // switches to it instead of toggling it on top of whatever was already lit.
-              aria-pressed={draft.poolId === summary.pool.id}
-              onClick={() => patch({ poolId: summary.pool.id })}
-            >
-              <span className="pool-tag__dot" aria-hidden="true" />
-              {summary.pool.name}
-            </button>
-          ))}
-        </div>
-      </div>
 
       <PayerSelect
         value={draft.paidBy}

@@ -147,15 +147,21 @@ export function isExpense(value: unknown): value is Expense {
  * A fresh draft. Today's date is passed in, not read: a receipt is nearly always entered
  * on the day it was paid, and the clock stays at the edge so this is testable.
  */
-export function blankExpenseDraft(todayIso: string, poolId: string): ExpenseDraft {
+export function blankExpenseDraft(
+  todayIso: string,
+  poolId: string,
+  suggestedNumber: number,
+): ExpenseDraft {
   // `paidBy` starts empty on purpose: nothing is pre-picked, so recording whose money it
   // was is a decision the user makes rather than a default they can save without noticing.
+  // The number is the opposite case: receipts are filed in order, so the next free one is
+  // right almost every time and is filled in ready to be overwritten or cleared.
   return {
     date: todayIso,
     name: '',
     amount: '',
     poolId,
-    number: '',
+    number: String(suggestedNumber),
     note: '',
     paidBy: '',
     reimbursed: false,

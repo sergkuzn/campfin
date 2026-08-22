@@ -1,23 +1,12 @@
-.number-field {
-  display: flex;
-  gap: var(--space-2);
-}
-
-/* The field itself stays narrow — a receipt number is two or three digits — and the button
-   takes the rest of the row rather than sitting on a line of its own. */
+/* The field itself stays narrow — a receipt number is two or three digits — rather than
+   stretching across the row it shares with the date. */
 .number-field__input {
-  flex: 0 1 6rem;
+  width: 6rem;
 }
 
-.number-field__suggest {
-  flex: 0 0 auto;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--space-2);
-  background-color: var(--bg);
-  color: var(--accent);
-  font: inherit;
-  font-size: 0.8125rem;
-  white-space: nowrap;
-  cursor: pointer;
+.number-field__hint {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: 0.75rem;
 }

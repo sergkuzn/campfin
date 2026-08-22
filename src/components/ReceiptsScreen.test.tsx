@@ -105,11 +105,12 @@ describe('ReceiptsScreen — numbers', () => {
     expect(screen.getByText(t.numberTag(2))).toBeInTheDocument()
   })
 
-  it('offers the next free number in the form', async () => {
+  it('opens a new receipt on the next free number', async () => {
     const { user } = renderScreen()
     await user.click(screen.getByRole('button', { name: t.add }))
-    // The highest in the camp is 2, so the button offers 3.
-    expect(screen.getByRole('button', { name: t.numberSuggest(3) })).toBeInTheDocument()
+    // The highest in the camp is 2, so the field starts on 3.
+    expect(screen.getByLabelText(t.numberLabel)).toHaveValue('3')
+    expect(screen.getByText(t.numberHint)).toBeInTheDocument()
   })
 
   it('refuses to save a number another receipt already carries', async () => {
@@ -118,6 +119,7 @@ describe('ReceiptsScreen — numbers', () => {
 
     await user.type(labelled(t.nameLabel), 'Milk')
     await user.type(labelled(t.amountLabel), '3,00')
+    await user.clear(screen.getByLabelText(t.numberLabel))
     await user.type(screen.getByLabelText(t.numberLabel), '1')
 
     expect(screen.getByText(t.issues.numberTaken)).toBeInTheDocument()

@@ -131,24 +131,28 @@ describe('expenseDraftToInput', () => {
 })
 
 describe('blankExpenseDraft', () => {
-  it('defaults the date to today and pre-selects the pool', () => {
-    expect(blankExpenseDraft('2026-07-30', 'pool-2')).toEqual({
+  it('defaults the date to today, pre-selects the pool and fills in the next number', () => {
+    expect(blankExpenseDraft('2026-07-30', 'pool-2', 25)).toEqual({
       paidBy: '',
       reimbursed: false,
       date: '2026-07-30',
       name: '',
       amount: '',
       poolId: 'pool-2',
-      number: '',
+      number: '25',
       note: '',
     })
+  })
+
+  it('fills in 1 in a camp whose receipts are unnumbered', () => {
+    expect(blankExpenseDraft('2026-07-30', 'pool-2', 1).number).toBe('1')
   })
 })
 
 describe('the payer on a draft', () => {
   it('a new receipt picks nobody — whose money it was is a choice, not a default', () => {
-    expect(blankExpenseDraft('2026-07-30', 'pool-2').paidBy).toBe('')
-    expect(blankExpenseDraft('2026-07-30', 'pool-2').reimbursed).toBe(false)
+    expect(blankExpenseDraft('2026-07-30', 'pool-2', 1).paidBy).toBe('')
+    expect(blankExpenseDraft('2026-07-30', 'pool-2', 1).reimbursed).toBe(false)
   })
 
   it('stores the name trimmed, and an empty field as no payer at all', () => {
