@@ -31,10 +31,11 @@
 }
 
 /* Sticky day heading: scrolling a long list keeps the day you are looking at named.
-   Parks below the back bar rather than at the very top, which is already taken. */
+   Pins to the very top — the way back is plain text now and scrolls away with the rest
+   of the page, so nothing else is parked there. */
 .day__header {
   position: sticky;
-  top: var(--screen-back-height);
+  top: 0;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
