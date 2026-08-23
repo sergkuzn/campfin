@@ -1,0 +1,109 @@
+/* The card primitive: a bordered box holding one saved or in-progress record, with an
+   optional header, detail block, issue list and action row. Global because fourteen
+   components render one — income sources, pools, receipts, movements, per-diem blocks. */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--bg);
+}
+
+.card--editing {
+  border-color: var(--accent);
+}
+
+.card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.card__name {
+  flex: 1;
+  font-size: 0.9375rem;
+}
+
+.card__kind-inline {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.card__amount {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9375rem;
+}
+
+.card__kind {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* A saved per-diem block: heading + two detail rows, each label left, figure right. */
+.card__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-radius: var(--space-2);
+  background-color: var(--surface);
+}
+
+.card__block-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.card__block-row--head {
+  color: var(--fg);
+  font-size: 0.875rem;
+}
+
+/* One block with nothing to tell it apart from: its row has only the amount, so it goes
+   to the far end rather than sitting stranded at the start now the space-between has
+   nothing on the other side. */
+.card__block-row--solo {
+  justify-content: flex-end;
+}
+
+.card__issues {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--danger);
+  font-size: 0.75rem;
+}
+
+.card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* The card's own secondary button — surface-filled, so it reads as belonging to the card
+   rather than competing with the accent-filled .btn that submits the form. */
+.card__button {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background-color: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.card__button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}

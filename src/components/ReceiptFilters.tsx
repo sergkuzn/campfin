@@ -46,7 +46,7 @@ export function ReceiptFilters({
         <label className="filters__sort">
           <span className="filters__label">{t.receipts.sortLabel}</span>
           <select
-            className="income-form__input"
+            className="input"
             value={sort}
             // The value of a <select> is always a string, so it is narrowed back to the union
             // here — the one place the cast lives, rather than in every caller.

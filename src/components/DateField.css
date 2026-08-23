@@ -3,7 +3,7 @@
   min-width: 0;
 }
 
-/* Matches .income-form__input so a date field sits flush beside the other inputs on the
+/* Matches .input so a date field sits flush beside the other inputs on the
    same form row. */
 .date-field__trigger {
   width: 100%;

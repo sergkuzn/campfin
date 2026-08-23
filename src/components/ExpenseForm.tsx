@@ -12,7 +12,6 @@ import {
 import { poolColorOf } from '../lib/poolColors'
 import type { PoolSummary } from '../lib/pools'
 import type { Expense } from '../lib/types'
-import './IncomeSetup.css'
 import './PoolTag.css'
 import './ReceiptFilters.css'
 import { DateField } from './DateField'
@@ -107,7 +106,7 @@ export function ExpenseForm({
         </div>
       </div>
 
-      <div className="block__row">
+      <div className="field-row">
         <div className="field">
           <label className="field__label" htmlFor="expense-date">
             {t.receipts.dateLabel}
@@ -131,7 +130,7 @@ export function ExpenseForm({
           <RequiredMark />
         </span>
         <input
-          className="income-form__input"
+          className="input"
           aria-required="true"
           value={draft.name}
           placeholder={t.receipts.namePlaceholder}
@@ -147,7 +146,7 @@ export function ExpenseForm({
           <RequiredMark />
         </span>
         <input
-          className="income-form__input income-form__input--amount"
+          className="input input--amount"
           aria-required="true"
           // inputMode="decimal" so a phone shows a numeric keypad. The value stays a
           // string here; cents happen in `lib/expenses.ts`.
@@ -171,7 +170,7 @@ export function ExpenseForm({
       <label className="field">
         <span className="field__label">{t.receipts.noteLabel}</span>
         <input
-          className="income-form__input"
+          className="input"
           value={draft.note}
           placeholder={t.receipts.notePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -192,7 +191,7 @@ export function ExpenseForm({
         <button className="card__button" type="button" onClick={onCancel}>
           {t.receipts.cancel}
         </button>
-        <button className="income-form__button" type="submit" disabled={issues.length > 0}>
+        <button className="btn" type="submit" disabled={issues.length > 0}>
           {t.receipts.save}
         </button>
       </div>

@@ -242,7 +242,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
           ⓘ
         </button>
         <button
-          className="income-form__button"
+          className="btn"
           type="button"
           disabled={locked}
           onClick={() => setEditing({ mode: 'pool' })}

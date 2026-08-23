@@ -91,7 +91,7 @@ export function PayerSelect({
           onChange={pickOther}
         />
         <input
-          className="income-form__input payer__other-name"
+          className="input payer__other-name"
           aria-label={t.receipts.payer.newNameLabel}
           // Blank while the holder is selected: `paidBy` carries their name in that case,
           // and echoing it here would read as a second, different person.

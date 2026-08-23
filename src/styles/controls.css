@@ -1,0 +1,39 @@
+/* Bare form controls: the text input and the primary button, shared by every form.
+   Named for what they are rather than for the screen they first appeared on. */
+
+/* Sized by its container, never by flex-basis: inside a column flex parent a basis
+   would set the input's HEIGHT, which is what made these boxes tower. */
+.input {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background-color: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* An amount never needs the full width, and a short box says "a number goes here". */
+.input--amount {
+  max-width: 12rem;
+}
+
+.btn {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--space-2);
+  background-color: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  background-color: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+}

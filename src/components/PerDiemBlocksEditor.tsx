@@ -70,7 +70,7 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
             <label className="field">
               <span className="field__label">{t.blocks.nameLabel}</span>
               <input
-                className="income-form__input"
+                className="input"
                 value={block.label}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   patchRow(block.key, { label: event.target.value })
@@ -79,14 +79,14 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
               />
             </label>
 
-            <div className="block__row">
+            <div className="field-row">
               <label className="field">
                 <span className="field__label">
                   {t.blocks.peopleLabel}
                   <RequiredMark />
                 </span>
                 <input
-                  className="income-form__input"
+                  className="input"
                   type="number"
                   min="1"
                   step="1"
@@ -104,7 +104,7 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
                   <RequiredMark />
                 </span>
                 <input
-                  className="income-form__input"
+                  className="input"
                   aria-required="true"
                   // inputMode="decimal" so a phone shows a numeric keypad. The value stays
                   // a string here: cents happen in drafts.ts.

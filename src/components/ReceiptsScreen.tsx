@@ -155,7 +155,7 @@ export function ReceiptsScreen({
       <header className="receipts__header">
         <h2 className="receipts__title">{t.receipts.title}</h2>
         <button
-          className="income-form__button"
+          className="btn"
           type="button"
           disabled={locked || spendable.length === 0}
           onClick={() => setEditing({ mode: 'new' })}

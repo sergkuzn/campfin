@@ -97,7 +97,7 @@ export function ActualBlocksForm({
         <button className="card__button" type="button" onClick={onCancel}>
           {t.attendance.cancel}
         </button>
-        <button className="income-form__button" type="submit" disabled={issues.length > 0}>
+        <button className="btn" type="submit" disabled={issues.length > 0}>
           {t.attendance.save}
         </button>
       </div>

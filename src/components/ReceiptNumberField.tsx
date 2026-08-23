@@ -23,7 +23,7 @@ export function ReceiptNumberField({ value, onChange }: Props) {
         {t.receipts.numberLabel}
       </label>
       <input
-        className="income-form__input number-field__input"
+        className="input number-field__input"
         id={inputId}
         // A phone keypad, not a spinner: `type="number"` on a mobile browser brings tiny
         // steppers and accepts "1e3", neither of which helps here.

@@ -48,7 +48,7 @@ export function PoolForm({ campId, onSave, onCancel }: Props) {
           <RequiredMark />
         </span>
         <input
-          className="income-form__input"
+          className="input"
           aria-required="true"
           value={draft.name}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -91,7 +91,7 @@ export function PoolForm({ campId, onSave, onCancel }: Props) {
         <button className="card__button" type="button" onClick={onCancel}>
           {t.income.cancel}
         </button>
-        <button className="income-form__button" type="submit" disabled={issues.length > 0}>
+        <button className="btn" type="submit" disabled={issues.length > 0}>
           {t.pools.addSave}
         </button>
       </div>

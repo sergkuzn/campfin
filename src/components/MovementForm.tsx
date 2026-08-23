@@ -173,7 +173,7 @@ export function MovementForm({
           <RequiredMark />
         </span>
         <input
-          className="income-form__input"
+          className="input"
           aria-required="true"
           value={draft.name}
           placeholder={nameCopy.namePlaceholder}
@@ -189,7 +189,7 @@ export function MovementForm({
           <RequiredMark />
         </span>
         <input
-          className="income-form__input income-form__input--amount"
+          className="input input--amount"
           aria-required="true"
           // inputMode="decimal" so a phone shows a numeric keypad. The value stays a string
           // here; cents happen in `lib/movements.ts`.
@@ -210,7 +210,7 @@ export function MovementForm({
       <label className="field">
         <span className="field__label">{t.movements.noteLabel}</span>
         <input
-          className="income-form__input"
+          className="input"
           value={draft.note}
           placeholder={t.movements.notePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -231,7 +231,7 @@ export function MovementForm({
         <button className="card__button" type="button" onClick={onCancel}>
           {t.movements.cancel}
         </button>
-        <button className="income-form__button" type="submit" disabled={issues.length > 0}>
+        <button className="btn" type="submit" disabled={issues.length > 0}>
           {t.movements.save}
         </button>
       </div>
