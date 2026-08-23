@@ -63,7 +63,7 @@ export function isSamePayer(a: string | undefined, b: string | undefined): boole
  * owed *by*, so nothing is owed.
  */
 export function owedPayerName(expense: Expense, moneyHolder: string | undefined): string | null {
-  if (expense.reimbursedAt !== undefined) return null
+  if (expense.reimbursed === true) return null
   if (!isNamed(moneyHolder) || !isNamed(expense.paidBy)) return null
   if (payerKey(expense.paidBy) === payerKey(moneyHolder)) return null
   return expense.paidBy.trim()

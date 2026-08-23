@@ -1,7 +1,6 @@
 import './FinancialReport.css'
 import { useFormat, useT } from '../i18n'
 import { csvAmount, toCsv } from '../lib/csv'
-import { toIsoDate } from '../lib/dates'
 import { sourceLabel } from '../lib/income'
 import { isSamePayer } from '../lib/payers'
 import type { PoolSummary } from '../lib/pools'
@@ -84,17 +83,13 @@ export function FinancialReport({
       : `${warning.kind}-${warning.pool?.id ?? 'none'}`
 
   /**
-   * The Repaid column, in the three states a reader needs to tell apart: the day the money
-   * came back, "no" while it is still owed, and blank when there was nothing to pay back —
-   * either nobody was tracked, or the money holder paid it out of their own cash anyway.
-   *
-   * `toIsoDate` rather than `toISOString()`: the timestamp is a moment, and cutting it up
-   * in UTC would file a late-evening repayment under the next day.
+   * The Repaid column, in the three states a reader needs to tell apart: yes, no while it
+   * is still owed, and blank when there was nothing to pay back — either nobody was
+   * tracked, or the money holder paid it out of their own cash anyway.
    */
   const repaidCell = (expense: Expense): string => {
     if (expense.paidBy === undefined || isSamePayer(expense.paidBy, camp.moneyHolder)) return ''
-    if (expense.reimbursedAt === undefined) return t.report.csv.repaidNo
-    return toIsoDate(new Date(expense.reimbursedAt))
+    return expense.reimbursed === true ? t.report.csv.repaidYes : t.report.csv.repaidNo
   }
 
   const handleExportCsv = () => {
@@ -164,8 +159,8 @@ export function FinancialReport({
             csvAmount(expense.amountCents),
             expense.note ?? '',
             expense.paidBy ?? '',
-            // Three answers in one column: the date it came back, "no" while it is still
-            // owed, and empty when nobody fronted the money.
+            // Three answers in one column: "yes" once it is paid back, "no" while it is
+            // still owed, and empty when nobody fronted the money.
             repaidCell(expense),
           ]),
       ]),

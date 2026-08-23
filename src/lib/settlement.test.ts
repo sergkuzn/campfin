@@ -224,7 +224,7 @@ describe('computeSettlement', () => {
         exp({ id: 'e1', amountCents: 800, paidBy: 'Ben' }),
         exp({ id: 'e2', amountCents: 1200, paidBy: 'ben' }), // same person, other spelling
         exp({ id: 'e3', amountCents: 500, paidBy: 'Anna' }), // the holder's own money
-        exp({ id: 'e4', amountCents: 900, paidBy: 'Chris', reimbursedAt: 5 }), // settled
+        exp({ id: 'e4', amountCents: 900, paidBy: 'Chris', reimbursed: true }), // settled
       ],
       moneyHolder: 'Anna',
     })

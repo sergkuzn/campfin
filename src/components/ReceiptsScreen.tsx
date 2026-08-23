@@ -118,7 +118,7 @@ export function ReceiptsScreen({
 
   const handleConfirmReturn = () => {
     if (pendingReturn !== null) {
-      expenses.setReimbursed(pendingReturn.id, pendingReturn.repaid ? Date.now() : null)
+      expenses.setReimbursed(pendingReturn.id, pendingReturn.repaid)
     }
     setPendingReturn(null)
   }

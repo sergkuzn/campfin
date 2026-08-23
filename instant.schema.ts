@@ -105,10 +105,10 @@ const _schema = i.schema({
       // import. Names are compared through `payerKey`, so case and spacing never split
       // one person in two.
       paidBy: i.string().optional(),
-      // When the money holder paid it back, epoch ms. Absent = still owed. A flag rather
-      // than a second row: the budget was consumed when the receipt was paid, so booking
-      // the payback as a movement would spend the pool twice.
-      reimbursedAt: i.number().optional(),
+      // Whether the money holder has paid this person back. Absent/false = still owed. A
+      // flag rather than a second row: the budget was consumed when the receipt was paid,
+      // so booking the payback as a movement would spend the pool twice.
+      reimbursed: i.boolean().optional(),
       enteredBy: i.string().optional(),
       createdAt: i.number(),
     }),

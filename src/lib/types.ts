@@ -211,17 +211,13 @@ export type Expense = {
    */
   paidBy?: string
   /**
-   * When the money holder paid this back, in epoch milliseconds. Absent = still owed.
-   *
-   * A timestamp rather than a boolean: it reads the same in a condition, it records *when*
-   * for free, and two phones settling the same receipt merge to the later write instead of
-   * to an arbitrary `true`.
+   * Whether the money holder has paid this back. Absent/false = still owed.
    *
    * Deliberately *not* a `Movement`: the budget was consumed when the receipt was paid,
    * whoever's wallet it came from. Booking the payback as a second row would spend the
    * pool twice and bend the burn curve.
    */
-  reimbursedAt?: number
+  reimbursed?: boolean
   enteredBy?: string
   createdAt: number
 }

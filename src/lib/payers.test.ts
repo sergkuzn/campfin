@@ -62,7 +62,7 @@ describe('owedPayerName', () => {
   })
 
   it('owes nobody once it has been paid back', () => {
-    expect(owedPayerName(expense({ paidBy: 'Ben', reimbursedAt: 1234 }), 'Anna')).toBeNull()
+    expect(owedPayerName(expense({ paidBy: 'Ben', reimbursed: true }), 'Anna')).toBeNull()
   })
 
   it('owes nobody when the receipt names no payer — every receipt written before the field existed', () => {
@@ -140,7 +140,7 @@ describe('payerDebts', () => {
 
   it('leaves out people who are square', () => {
     const rows = [
-      expense({ id: 'a', paidBy: 'Ben', reimbursedAt: 5 }),
+      expense({ id: 'a', paidBy: 'Ben', reimbursed: true }),
       expense({ id: 'b', paidBy: 'Anna' }),
     ]
     expect(payerDebts(rows, 'Anna')).toEqual([])
@@ -163,7 +163,7 @@ describe('unreimbursedTotalCents', () => {
   it('adds up only what is still owed', () => {
     const rows = [
       expense({ id: 'a', paidBy: 'Ben', amountCents: 500 }),
-      expense({ id: 'b', paidBy: 'Ben', amountCents: 400, reimbursedAt: 3 }),
+      expense({ id: 'b', paidBy: 'Ben', amountCents: 400, reimbursed: true }),
       expense({ id: 'c', paidBy: 'Anna', amountCents: 900 }),
       expense({ id: 'd', amountCents: 1000 }),
     ]
@@ -200,7 +200,7 @@ describe('holderChangeImpact', () => {
     expense({ id: 'a', paidBy: 'Ben' }), // owed today, Ben's own once he holds the wallet
     expense({ id: 'b', paidBy: 'Ben' }),
     expense({ id: 'c', paidBy: 'Anna' }), // free today, owed once Anna is not the holder
-    expense({ id: 'd', paidBy: 'Ben', reimbursedAt: 7 }), // settled, and stays settled
+    expense({ id: 'd', paidBy: 'Ben', reimbursed: true }), // settled, and stays settled
     expense({ id: 'e' }), // no payer, so neither holder can owe for it
   ]
 

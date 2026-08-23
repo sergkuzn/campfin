@@ -618,9 +618,10 @@ export const en = {
       name: 'What',
       note: 'Note',
       paidBy: 'Paid by',
-      /** One column, three answers: a date, "no" while it is owed, empty when nobody
+      /** One column, three answers: "yes", "no" while it is owed, empty when nobody
        *  fronted the money. */
       repaid: 'Repaid',
+      repaidYes: 'yes',
       repaidNo: 'no',
     },
   },

@@ -262,9 +262,7 @@ describe('ReceiptsScreen — what the money holder owes', () => {
 
     await user.click(screen.getByRole('button', { name: t.payer.confirmReturnLabel }))
 
-    // The timestamp is `Date.now()`, so the assertion is about its shape rather than its
-    // value: the row is marked repaid *now*, and only the row that was tapped.
-    expect(setReimbursed).toHaveBeenCalledWith('a', expect.any(Number))
+    expect(setReimbursed).toHaveBeenCalledWith('a', true)
   })
 
   it('backing out of that question leaves the receipt owed', async () => {
@@ -277,13 +275,13 @@ describe('ReceiptsScreen — what the money holder owes', () => {
   })
 
   it('undoing a return asks in the same way', async () => {
-    const repaid = expense({ id: 'a', name: 'Bakery', paidBy: 'Ben', reimbursedAt: 5 })
+    const repaid = expense({ id: 'a', name: 'Bakery', paidBy: 'Ben', reimbursed: true })
     const { user, setReimbursed } = renderScreen({ expenses: [repaid], moneyHolder: 'Anna' })
 
     await user.click(screen.getByRole('button', { name: t.payer.returnedButton }))
     await user.click(screen.getByRole('button', { name: t.payer.confirmUndoLabel }))
 
-    expect(setReimbursed).toHaveBeenCalledWith('a', null)
+    expect(setReimbursed).toHaveBeenCalledWith('a', false)
   })
 
   it('totals what is still owed under the list', () => {
@@ -304,7 +302,7 @@ describe('ReceiptsScreen — what the money holder owes', () => {
   })
 
   it('filters down to what is not repaid yet', async () => {
-    const settled = expense({ id: 'c', name: 'Ferry', paidBy: 'Ben', reimbursedAt: 5 })
+    const settled = expense({ id: 'c', name: 'Ferry', paidBy: 'Ben', reimbursed: true })
     const { user } = renderScreen({
       expenses: [owed, holderPaid, settled],
       moneyHolder: 'Anna',
@@ -376,7 +374,7 @@ describe('ReceiptsScreen — saying whose money it was', () => {
     await user.click(screen.getByRole('button', { name: t.save }))
 
     expect(saveExpense).toHaveBeenCalledWith(
-      expect.objectContaining({ paidBy: 'Ben', reimbursedAt: expect.any(Number) }),
+      expect.objectContaining({ paidBy: 'Ben', reimbursed: true }),
     )
   })
 

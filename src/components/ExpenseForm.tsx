@@ -75,9 +75,7 @@ export function ExpenseForm({
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    // The clock is read here, at the edge, and handed to the pure builder — a repayment
-    // ticked in this form is stamped with the moment Save was pressed.
-    const input = expenseDraftToInput(draft, campId, expense, takenNumbers, Date.now())
+    const input = expenseDraftToInput(draft, campId, expense, takenNumbers)
     // null means invalid; the check narrows the type as a side effect, so validation
     // lives in exactly one place.
     if (input === null) return

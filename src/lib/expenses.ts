@@ -9,7 +9,6 @@
  */
 
 import { parseEurosToCents } from './money'
-import { isSamePayer } from './payers'
 import type { Expense } from './types'
 
 /** The form's editable shape: everything a string, euros still euros. */
@@ -41,9 +40,7 @@ export type SaveExpenseInput = {
   number?: number
   note?: string
   paidBy?: string
-  /** Carried through the save so editing a receipt does not silently un-repay it — unless
-   *  the payer changed, in which case the old repayment was to somebody else. */
-  reimbursedAt?: number
+  reimbursed?: boolean
 }
 
 /**
@@ -137,7 +134,7 @@ export function isExpense(value: unknown): value is Expense {
     (e.number === undefined || isReceiptNumber(e.number)) &&
     (e.note === undefined || typeof e.note === 'string') &&
     (e.paidBy === undefined || typeof e.paidBy === 'string') &&
-    (e.reimbursedAt === undefined || typeof e.reimbursedAt === 'number') &&
+    (e.reimbursed === undefined || typeof e.reimbursed === 'boolean') &&
     (e.enteredBy === undefined || typeof e.enteredBy === 'string') &&
     typeof e.createdAt === 'number'
   )
@@ -179,7 +176,7 @@ export function draftFromExpense(expense: Expense): ExpenseDraft {
     number: expense.number === undefined ? '' : String(expense.number),
     note: expense.note ?? '',
     paidBy: expense.paidBy ?? '',
-    reimbursed: expense.reimbursedAt !== undefined,
+    reimbursed: expense.reimbursed === true,
   }
 }
 
@@ -220,9 +217,6 @@ export function expenseDraftToInput(
   campId: string,
   existing: Expense | null,
   taken: ReadonlySet<number>,
-  /** Now, in epoch ms — the stamp a newly ticked repayment carries. Passed in rather than
-   *  read, so this stays a pure function of its arguments. */
-  nowMs: number,
 ): SaveExpenseInput | null {
   // One gate, so a caller cannot smuggle an invalid draft past validation by calling
   // this instead of checking the issues first.
@@ -244,23 +238,8 @@ export function expenseDraftToInput(
     number: number.kind === 'value' ? number.value : undefined,
     note: note === '' ? undefined : note, // an omitted optional field is undefined, not ''
     paidBy: paidBy === '' ? undefined : paidBy,
-    // The tick decides *whether*; the stamp already on the row decides *when*, so re-saving
-    // a settled receipt does not move the date it was settled on. Re-assigning it to
-    // somebody else starts the clock again: that repayment was to a different person.
-    reimbursedAt: reimbursedStamp(draft, existing, paidBy, nowMs),
+    reimbursed: draft.reimbursed || undefined,
   }
-}
-
-/** When this receipt was paid back, or undefined if it has not been. */
-function reimbursedStamp(
-  draft: ExpenseDraft,
-  existing: Expense | null,
-  paidBy: string,
-  nowMs: number,
-): number | undefined {
-  if (!draft.reimbursed) return undefined
-  const samePerson = isSamePayer(existing?.paidBy, paidBy)
-  return samePerson && existing?.reimbursedAt !== undefined ? existing.reimbursedAt : nowMs
 }
 
 /**

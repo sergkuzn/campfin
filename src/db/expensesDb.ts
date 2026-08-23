@@ -32,7 +32,7 @@ export function saveExpense(input: SaveExpenseInput): Promise<unknown> {
         number: input.number ?? null,
         note: input.note ?? null,
         paidBy: input.paidBy ?? null,
-        reimbursedAt: input.reimbursedAt ?? null,
+        reimbursed: input.reimbursed ?? null,
         createdAt,
       })
       // Permission rules can only traverse links, so the camp link is what makes this row
@@ -48,8 +48,8 @@ export function saveExpense(input: SaveExpenseInput): Promise<unknown> {
  * Nothing else is touched: the receipt already spent the pool's money when it was paid, so
  * repaying the person who fronted it must not move a single cent of budget.
  */
-export function setExpenseReimbursed(expenseId: string, at: number | null): Promise<unknown> {
-  return db.transact(chunk(db.tx.expenses[expenseId]).update({ reimbursedAt: at }))
+export function setExpenseReimbursed(expenseId: string, reimbursed: boolean): Promise<unknown> {
+  return db.transact(chunk(db.tx.expenses[expenseId]).update({ reimbursed: reimbursed || null }))
 }
 
 export function deleteExpense(expenseId: string): Promise<unknown> {

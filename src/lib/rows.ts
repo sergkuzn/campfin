@@ -109,7 +109,7 @@ export function toExpense(row: unknown): Expense | null {
   const value = withoutNulls(row)
   if (!isExpense(value)) return null
   const { id, campId, poolId, name, amountCents, date, number, note, createdAt } = value
-  const { paidBy, reimbursedAt, enteredBy } = value
+  const { paidBy, reimbursed, enteredBy } = value
   return {
     id,
     campId,
@@ -120,7 +120,7 @@ export function toExpense(row: unknown): Expense | null {
     number,
     note,
     paidBy,
-    reimbursedAt,
+    reimbursed,
     enteredBy,
     createdAt,
   }
