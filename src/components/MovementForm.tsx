@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useT } from '../i18n'
+import type { CampWindow } from '../lib/camps'
 import {
   blankMovementDraft,
   type CustodyFocus,
@@ -26,6 +27,10 @@ type Props = {
   deposits: PoolSummary[]
   /** Today, local. Passed in so the form has no clock of its own. */
   todayIso: string
+  /** The camp's known span, derived from its per-diem blocks. Highlights those days on the
+   *  date picker and asks for confirmation before saving a date outside them. `null` when
+   *  the camp has no per-diem income yet, so nothing dates it. */
+  campWindow: CampWindow | null
   onSave: (input: SaveMovementInput) => void
   onCancel: () => void
 }
@@ -37,6 +42,7 @@ export function MovementForm({
   movement,
   deposits,
   todayIso,
+  campWindow,
   onSave,
   onCancel,
 }: Props) {
@@ -129,6 +135,7 @@ export function MovementForm({
           id="movement-date"
           mode="single"
           value={draft.date}
+          campWindow={campWindow ?? undefined}
           onChange={(date) => patch({ date })}
         />
       </div>

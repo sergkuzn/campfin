@@ -73,6 +73,17 @@
   background-color: var(--bg);
 }
 
+/* The camp's span, stated as a fact. The dates carry the weight; the day count trails
+   them, muted, because it is the same information counted differently. */
+.camp-settings__dates {
+  margin: 0 0 var(--space-1);
+  font-size: 0.9375rem;
+}
+
+.camp-settings__dates-days {
+  color: var(--muted);
+}
+
 .camp-settings__hint {
   margin: 0 0 var(--space-2);
   color: var(--muted);

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './MovementsScreen.css'
 import type { UseMovements } from '../hooks/useMovements'
 import { useFormat, useT } from '../i18n'
+import type { CampWindow } from '../lib/camps'
 import { todayIso } from '../lib/dates'
 import {
   type CustodyFocus,
@@ -25,13 +26,24 @@ type Props = {
   deposits: PoolSummary[]
   /** Computed once by the parent, so the strip here and on the dashboard agree. */
   custody: CustodyReading
+  /** The camp's span, for the date picker in the form below. `null` until per-diem income
+   *  dates the camp. */
+  campWindow: CampWindow | null
   onBack: () => void
 }
 
 /** Which movement is unlocked. One at a time — the same lock model as the other screens. */
 type Editing = { mode: 'new' } | { mode: 'edit'; movementId: string }
 
-export function MovementsScreen({ campId, focus, movements, deposits, custody, onBack }: Props) {
+export function MovementsScreen({
+  campId,
+  focus,
+  movements,
+  deposits,
+  custody,
+  campWindow,
+  onBack,
+}: Props) {
   const t = useT()
   const format = useFormat()
 
@@ -109,6 +121,7 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
           deposits={deposits}
           // Read at the edge and passed down, so nothing below here touches the clock.
           todayIso={todayIso()}
+          campWindow={campWindow}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
         />
@@ -137,6 +150,7 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
             movement={editingRow}
             deposits={deposits}
             todayIso={todayIso()}
+            campWindow={campWindow}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
           />

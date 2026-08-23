@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import './CampSettingsScreen.css'
-import { useT } from '../i18n'
+import { useFormat, useT } from '../i18n'
+import { type CampWindow, windowLabel } from '../lib/camps'
+import { dayCount } from '../lib/dates'
 import { holderChangeImpact, isSamePayer } from '../lib/payers'
 import type { PoolSummary } from '../lib/pools'
 import type { Camp, Expense } from '../lib/types'
@@ -15,6 +17,9 @@ type Props = {
   summaries: PoolSummary[]
   /** How many leaders share this camp. A count, never names. */
   memberCount: number
+  /** The camp's span, derived from its per-diem blocks — shown here, never edited here.
+   *  `null` when no per-diem income dates the camp yet. */
+  campWindow: CampWindow | null
   /** Only the camp's admin may delete it; everyone else sees no danger zone at all. */
   isAdmin: boolean
   isLoading: boolean
@@ -43,6 +48,7 @@ export function CampSettingsScreen({
   camp,
   summaries,
   memberCount,
+  campWindow,
   isAdmin,
   isLoading,
   error,
@@ -54,6 +60,7 @@ export function CampSettingsScreen({
   onDelete,
 }: Props) {
   const t = useT()
+  const format = useFormat()
   const [name, setName] = useState(camp.name)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   // Whether the name field is on screen. UI mode, not data: the stored holder says who it
@@ -131,6 +138,24 @@ export function CampSettingsScreen({
             {t.campSettings.save}
           </button>
         </form>
+      </SlotPanel>
+
+      {/* Stated, not edited: the camp's days are the span of its per-diem blocks, so the
+          only way to change them is to change those blocks on the income screen. */}
+      <SlotPanel title={t.campSettings.datesSection}>
+        {campWindow === null ? (
+          <p className="camp-settings__hint">{t.campSettings.datesNone}</p>
+        ) : (
+          <>
+            <p className="camp-settings__dates">
+              <strong>{windowLabel(campWindow, format.day)}</strong>{' '}
+              <span className="camp-settings__dates-days">
+                ({t.campSettings.datesDays(dayCount(campWindow.startIso, campWindow.endIso))})
+              </span>
+            </p>
+            <p className="camp-settings__hint">{t.campSettings.datesFrom}</p>
+          </>
+        )}
       </SlotPanel>
 
       <SlotPanel title={t.campSettings.shareSection}>

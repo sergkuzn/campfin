@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import './DateField.css'
 import { useBackDismiss } from '../hooks/useBackDismiss'
 import { useFormat, useT } from '../i18n'
+import { type CampWindow, windowLabel } from '../lib/camps'
 import { isWithin } from '../lib/dates'
 import { Calendar } from './Calendar'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -10,9 +11,10 @@ type SingleProps = {
   mode: 'single'
   value: string
   onChange: (iso: string) => void
-  /** Days outside get a confirm-first warning instead of an instant pick. Absent when
-   *  nothing dates the camp yet, or the field isn't camp-scoped at all. */
-  allowedRange?: { startIso: string; endIso: string }
+  /** The camp's span: highlighted on the grid, and days outside it get a confirm-first
+   *  warning instead of an instant pick. Absent when nothing dates the camp yet, or the
+   *  field isn't camp-scoped at all. */
+  campWindow?: CampWindow
 }
 
 type RangeProps = {
@@ -29,7 +31,7 @@ type Props = (SingleProps | RangeProps) & {
 function labelFor(props: Props, formatDay: (iso: string) => string): string {
   if (props.mode === 'single') return props.value === '' ? '' : formatDay(props.value)
   if (props.value === null) return props.placeholder
-  return `${formatDay(props.value.start)} – ${formatDay(props.value.end)}`
+  return windowLabel({ startIso: props.value.start, endIso: props.value.end }, formatDay)
 }
 
 /**
@@ -69,8 +71,8 @@ export function DateField(props: Props) {
 
   const commitSingle = (iso: string) => {
     if (props.mode !== 'single') return
-    const { allowedRange } = props
-    if (allowedRange !== undefined && !isWithin(iso, allowedRange.startIso, allowedRange.endIso)) {
+    const { campWindow } = props
+    if (campWindow !== undefined && !isWithin(iso, campWindow.startIso, campWindow.endIso)) {
       setPendingOutside(iso)
       return
     }
@@ -103,7 +105,7 @@ export function DateField(props: Props) {
             <Calendar
               mode="single"
               value={props.value}
-              allowedRange={props.allowedRange}
+              campWindow={props.campWindow}
               onSelect={commitSingle}
             />
           ) : (

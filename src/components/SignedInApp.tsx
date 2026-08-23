@@ -225,6 +225,7 @@ export function SignedInApp({ session }: Props) {
         movements={movements}
         deposits={deposits}
         custody={custody}
+        campWindow={campSpan}
         onBack={goBack}
       />
     )
@@ -250,6 +251,7 @@ export function SignedInApp({ session }: Props) {
         camp={openCamp}
         summaries={summaries}
         memberCount={memberCount(memberships, openCamp.id)}
+        campWindow={campSpan}
         isAdmin={isCampAdmin(memberships, openCamp.id, session.userId)}
         isLoading={income.isLoading}
         error={error ?? income.error}

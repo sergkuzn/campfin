@@ -73,9 +73,9 @@
   color: var(--danger);
 }
 
-/* Highlights the camp's span on a receipt's calendar — a plain tint, not a border, so it
+/* Highlights the camp's span on every camp-scoped calendar — a plain tint, not a border, so it
    reads as "these days belong together" rather than competing with the today outline. */
-.calendar__day[data-allowed="true"] {
+.calendar__day[data-in-camp="true"] {
   background-color: color-mix(in srgb, var(--ok) 16%, transparent);
 }
 
@@ -87,13 +87,13 @@
 /* Only the two ends of a run are rounded, so the days between stay square and the stripe
    stays unbroken. A run that spills over a week boundary is capped on the row it ends on,
    which is the whole reason these are separate attributes rather than one "is an edge". */
-.calendar__day[data-allowed-start="true"],
+.calendar__day[data-in-camp-start="true"],
 .calendar__day[data-selected-start="true"] {
   border-start-start-radius: var(--radius);
   border-end-start-radius: var(--radius);
 }
 
-.calendar__day[data-allowed-end="true"],
+.calendar__day[data-in-camp-end="true"],
 .calendar__day[data-selected-end="true"] {
   border-start-end-radius: var(--radius);
   border-end-end-radius: var(--radius);

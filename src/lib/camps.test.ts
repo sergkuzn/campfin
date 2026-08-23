@@ -9,6 +9,7 @@ import {
   isCampSetUp,
   sortCampsByRecent,
   uniqueCampName,
+  windowLabel,
 } from './camps'
 import type { Camp, PerDiemBlock } from './types'
 
@@ -199,5 +200,19 @@ describe('campStatus', () => {
   })
   it('is finished the day after', () => {
     expect(campStatus(dated, '2026-07-15')).toBe('finished')
+  })
+})
+
+describe('windowLabel', () => {
+  // A stand-in formatter: the real one is locale-bound and lives in the i18n layer, so the
+  // only thing to test here is that both ends go through it, in order.
+  const formatDay = (iso: string) => iso.slice(8, 10)
+
+  it('joins both ends with an en dash', () => {
+    expect(windowLabel({ startIso: '2026-07-01', endIso: '2026-07-14' }, formatDay)).toBe('01 – 14')
+  })
+
+  it('still names both ends for a one-day window', () => {
+    expect(windowLabel({ startIso: '2026-07-01', endIso: '2026-07-01' }, formatDay)).toBe('01 – 01')
   })
 })

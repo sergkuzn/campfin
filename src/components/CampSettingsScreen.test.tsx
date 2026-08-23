@@ -67,6 +67,7 @@ function renderScreen(props: Partial<React.ComponentProps<typeof CampSettingsScr
         camp={camp}
         summaries={[summary]}
         memberCount={2}
+        campWindow={null}
         isAdmin
         isLoading={false}
         error={null}

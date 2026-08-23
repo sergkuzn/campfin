@@ -137,6 +137,15 @@ export function campStatus(window: CampWindow | null, todayIso: string): CampSta
   return 'finished'
 }
 
+/**
+ * A window as one line: "Wed 1 Jul – Tue 14 Jul". `formatDay` is passed in rather than
+ * imported so this file stays free of locale, and so the settings screen and the date
+ * field's range label read the span exactly the same way.
+ */
+export function windowLabel(window: CampWindow, formatDay: (iso: string) => string): string {
+  return `${formatDay(window.startIso)} – ${formatDay(window.endIso)}`
+}
+
 // The camp list itself is no longer local state: InstantDB owns it, a live query reads it
 // and `src/db/campsDb.ts` writes it. What stays here is the pure logic a screen needs
 // before or after such a write — validation, ordering and status.

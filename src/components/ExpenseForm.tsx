@@ -119,11 +119,7 @@ export function ExpenseForm({
             id="expense-date"
             mode="single"
             value={draft.date}
-            allowedRange={
-              campWindow === null
-                ? undefined
-                : { startIso: campWindow.startIso, endIso: campWindow.endIso }
-            }
+            campWindow={campWindow ?? undefined}
             onChange={(date) => patch({ date })}
           />
         </div>

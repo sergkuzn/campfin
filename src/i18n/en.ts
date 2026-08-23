@@ -165,6 +165,14 @@ export const en = {
     nameLabel: 'Camp name',
     save: 'Save',
     shareSection: 'Join code',
+    /** The camp's own dates. Read-only: they are the span of the per-person-per-day
+     *  income's days, so the note says where they come from and where to change them. */
+    datesSection: 'Camp dates',
+    datesFrom: 'Taken from the dates on the per-person-per-day income.',
+    datesDays: (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`,
+    /** No per-diem income yet, so nothing dates the camp — the chart and the date pickers
+     *  have no span to draw either. */
+    datesNone: 'No dates yet — add a per-person-per-day income to date the camp.',
     incomeSection: 'Income',
     /** Who carries the cash. Camp-wide, and the thing every "owed" marker is measured
      *  against — so it lives with the camp's other once-per-camp settings. */

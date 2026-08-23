@@ -2,14 +2,15 @@ import { useState } from 'react'
 import './Calendar.css'
 import { useT } from '../i18n'
 import { type CalendarDay, monthGrid } from '../lib/calendarGrid'
+import type { CampWindow } from '../lib/camps'
 import { isWithin, todayIso } from '../lib/dates'
 
 type SingleProps = {
   mode: 'single'
   value: string
   onSelect: (iso: string) => void
-  /** Days inside get a highlight; days outside are still pickable but shown plain. */
-  allowedRange?: { startIso: string; endIso: string }
+  /** The camp's days get a highlight; days outside are still pickable but shown plain. */
+  campWindow?: CampWindow
 }
 
 type RangeProps = {
@@ -61,21 +62,21 @@ export function Calendar(props: Props) {
     return previewRange !== null && isWithin(day.iso, previewRange.start, previewRange.end)
   }
 
-  const isAllowed = (day: CalendarDay): boolean => {
-    if (props.mode !== 'single' || props.allowedRange === undefined) return false
-    return isWithin(day.iso, props.allowedRange.startIso, props.allowedRange.endIso)
+  const isInCamp = (day: CalendarDay): boolean => {
+    if (props.mode !== 'single' || props.campWindow === undefined) return false
+    return isWithin(day.iso, props.campWindow.startIso, props.campWindow.endIso)
   }
 
   // The two ends of each highlighted run, so the CSS can round only those and leave the
   // days between square — a stripe with caps rather than a chain of boxes. A single picked
   // day is both ends of its own one-day run, which is what gives it a pill of its own.
-  const allowedEdges = (day: CalendarDay): { start: boolean; end: boolean } => {
-    if (props.mode !== 'single' || props.allowedRange === undefined) {
+  const campEdges = (day: CalendarDay): { start: boolean; end: boolean } => {
+    if (props.mode !== 'single' || props.campWindow === undefined) {
       return { start: false, end: false }
     }
     return {
-      start: day.iso === props.allowedRange.startIso,
-      end: day.iso === props.allowedRange.endIso,
+      start: day.iso === props.campWindow.startIso,
+      end: day.iso === props.campWindow.endIso,
     }
   }
 
@@ -146,7 +147,7 @@ export function Calendar(props: Props) {
 
       <div className="calendar__grid">
         {weeks.flat().map((day) => {
-          const allowed = allowedEdges(day)
+          const inCamp = campEdges(day)
           const selected = selectedEdges(day)
           return (
             <button
@@ -159,9 +160,9 @@ export function Calendar(props: Props) {
               data-selected={isSelected(day)}
               data-selected-start={selected.start}
               data-selected-end={selected.end}
-              data-allowed={isAllowed(day)}
-              data-allowed-start={allowed.start}
-              data-allowed-end={allowed.end}
+              data-in-camp={isInCamp(day)}
+              data-in-camp-start={inCamp.start}
+              data-in-camp-end={inCamp.end}
               onClick={() => select(day.iso)}
             >
               {Number(day.iso.slice(8, 10))}
