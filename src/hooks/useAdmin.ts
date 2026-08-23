@@ -8,7 +8,7 @@
  * to save a round trip, not a guard.
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import * as accountsDb from '../db/accountsDb'
 import { db } from '../db/instant'
 import { useT } from '../i18n'
@@ -24,6 +24,7 @@ import {
 } from '../lib/accounts'
 import { mapRows, toAccount, toCamp } from '../lib/rows'
 import type { Account, Camp } from '../lib/types'
+import { useWriteState } from './useWriteState'
 
 export type UseAdmin = {
   /** Everyone the admin can act on, signed-in and merely invited alike, sorted by address. */
@@ -41,7 +42,6 @@ export type UseAdmin = {
 
 export function useAdmin(enabled: boolean): UseAdmin {
   const t = useT()
-  const [error, setError] = useState<string | null>(null)
 
   // Passing `null` skips the query outright, so a non-admin phone never asks for the roster
   // at all. `$users` carries its nested grant, which is the link the permission rules read;
@@ -51,6 +51,10 @@ export function useAdmin(enabled: boolean): UseAdmin {
     error: queryError,
     data,
   } = db.useQuery(enabled ? { $users: { account: {} }, accounts: {}, camps: {} } : null)
+
+  // A failed load outranks a stale write or validation message: with no roster on screen,
+  // nothing else said about it is trustworthy either.
+  const { error, run, fail } = useWriteState(queryError)
 
   const accounts = useMemo<Account[]>(() => mapRows(data?.accounts, toAccount), [data])
   const camps = useMemo(() => mapRows(data?.camps, toCamp), [data])
@@ -71,52 +75,42 @@ export function useAdmin(enabled: boolean): UseAdmin {
     (email: string): boolean => {
       const address = normalizeEmail(email)
       if (!isEmailish(address)) {
-        setError(t.admin.badEmail)
+        fail(t.admin.badEmail)
         return false
       }
       if (accountForEmail(accounts, address) !== undefined) {
-        setError(t.admin.alreadyGranted(address))
+        fail(t.admin.alreadyGranted(address))
         return false
       }
-      setError(null)
-      void accountsDb
-        .grantAccount({
+      run(
+        accountsDb.grantAccount({
           email: address,
           role: 'leader',
           campQuota: DEFAULT_CAMP_QUOTA,
           now: Date.now(),
-        })
-        .catch(() => setError(t.sync.writeFailed))
+        }),
+      )
       return true
     },
-    [accounts, t],
+    [accounts, fail, run, t],
   )
 
   const setQuota = useCallback(
-    (accountId: string, quota: number): void => {
-      setError(null)
-      void accountsDb
-        .setCampQuota(accountId, clampQuota(quota))
-        .catch(() => setError(t.sync.writeFailed))
-    },
-    [t],
+    (accountId: string, quota: number): void =>
+      run(accountsDb.setCampQuota(accountId, clampQuota(quota))),
+    [run],
   )
 
   const revoke = useCallback(
-    (accountId: string): void => {
-      setError(null)
-      void accountsDb.revokeAccount(accountId).catch(() => setError(t.sync.writeFailed))
-    },
-    [t],
+    (accountId: string): void => run(accountsDb.revokeAccount(accountId)),
+    [run],
   )
 
   return {
     roster,
     camps,
     isLoading,
-    // A failed load outranks a stale write message: with no roster on screen, nothing else
-    // said about it is trustworthy either.
-    error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
+    error,
     grant,
     setQuota,
     revoke,

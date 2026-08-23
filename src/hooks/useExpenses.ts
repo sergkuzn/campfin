@@ -6,13 +6,13 @@
  * is the newest-first one both the list screen and the day grouping want.
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import * as expensesDb from '../db/expensesDb'
 import { db } from '../db/instant'
-import { useT } from '../i18n'
 import type { SaveExpenseInput } from '../lib/expenses'
 import { mapRows, toExpense } from '../lib/rows'
 import type { Expense } from '../lib/types'
+import { useWriteState } from './useWriteState'
 
 export type UseExpenses = {
   /** Newest day first; inside a day, newest row first. */
@@ -27,9 +27,6 @@ export type UseExpenses = {
 
 /** Pass `''` while no camp is open: the query is skipped rather than run for nothing. */
 export function useExpenses(campId: string): UseExpenses {
-  const t = useT()
-  const [error, setError] = useState<string | null>(null)
-
   const {
     isLoading,
     error: queryError,
@@ -44,40 +41,32 @@ export function useExpenses(campId: string): UseExpenses {
         },
   )
 
+  const { error, run } = useWriteState(queryError)
+
   // Memoised on the query result: `summarisePools` downstream takes this array as a
   // dependency, so a fresh array on every render would recompute every pool total.
   const expenses = useMemo(() => mapRows<Expense>(data?.expenses, toExpense), [data])
 
   const saveExpense = useCallback(
-    (input: SaveExpenseInput): void => {
-      setError(null)
-      void expensesDb.saveExpense(input).catch(() => setError(t.sync.writeFailed))
-    },
-    [t],
+    (input: SaveExpenseInput): void => run(expensesDb.saveExpense(input)),
+    [run],
   )
 
   const setReimbursed = useCallback(
-    (expenseId: string, reimbursed: boolean): void => {
-      setError(null)
-      void expensesDb
-        .setExpenseReimbursed(expenseId, reimbursed)
-        .catch(() => setError(t.sync.writeFailed))
-    },
-    [t],
+    (expenseId: string, reimbursed: boolean): void =>
+      run(expensesDb.setExpenseReimbursed(expenseId, reimbursed)),
+    [run],
   )
 
   const deleteExpense = useCallback(
-    (expenseId: string): void => {
-      setError(null)
-      void expensesDb.deleteExpense(expenseId).catch(() => setError(t.sync.writeFailed))
-    },
-    [t],
+    (expenseId: string): void => run(expensesDb.deleteExpense(expenseId)),
+    [run],
   )
 
   return {
     expenses,
     isLoading,
-    error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
+    error,
     saveExpense,
     setReimbursed,
     deleteExpense,

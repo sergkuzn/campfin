@@ -8,7 +8,7 @@
  * merely filtered out, it is unreadable.
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import * as campsDb from '../db/campsDb'
 import { db } from '../db/instant'
 import { useT } from '../i18n'
@@ -16,6 +16,7 @@ import { campNameExists } from '../lib/camps'
 import { generateJoinCode } from '../lib/joinCode'
 import { mapRows, toBlock, toCamp, toMembership } from '../lib/rows'
 import type { Camp, Membership, PerDiemBlock } from '../lib/types'
+import { useWriteState } from './useWriteState'
 
 export type UseCamps = {
   camps: Camp[]
@@ -45,8 +46,6 @@ export type UseCamps = {
  */
 export function useCamps(userId: string, allCamps = false): UseCamps {
   const t = useT()
-  // Validation failures and rejected writes are a UI concern, not query state.
-  const [error, setError] = useState<string | null>(null)
 
   // The nested `members` and `perDiemBlocks` ride along in the same subscription, so the
   // leader count, my role and every camp's date window cost no second query. Blocks are a
@@ -72,6 +71,10 @@ export function useCamps(userId: string, allCamps = false): UseCamps {
     },
   })
 
+  // Validation failures and rejected writes share one channel: both are a UI concern, and
+  // a failed load outranks either.
+  const { error, run, fail, clearError } = useWriteState(queryError)
+
   const camps = useMemo(() => mapRows(data?.camps, toCamp), [data])
   const memberships = useMemo(
     () => (data?.camps ?? []).flatMap((camp) => mapRows(camp.members, toMembership)),
@@ -89,10 +92,9 @@ export function useCamps(userId: string, allCamps = false): UseCamps {
     (name: string): Camp | null => {
       const trimmed = name.trim()
       if (campNameExists(camps, trimmed)) {
-        setError(t.camps.nameTaken(trimmed))
+        fail(t.camps.nameTaken(trimmed))
         return null
       }
-      setError(null)
 
       // The write lands locally at once, so the camp can be returned and opened before the
       // server has heard of it. Only a *rejection* — a join-code collision, a permission
@@ -104,56 +106,46 @@ export function useCamps(userId: string, allCamps = false): UseCamps {
         now: Date.now(),
         everydayPoolName: t.pools.everydayDefault,
       })
-      void done.catch(() => setError(t.sync.createFailed))
+      // A refused creation reads differently from a refused edit: it is usually the camp
+      // quota, not a lost connection.
+      clearError()
+      void done.catch(() => fail(t.sync.createFailed))
       return camp
     },
-    [camps, t, userId],
+    [camps, clearError, fail, t, userId],
   )
 
   const renameCamp = useCallback(
     (campId: string, name: string): void => {
       const trimmed = name.trim()
       if (campNameExists(camps, trimmed, campId)) {
-        setError(t.camps.nameTaken(trimmed))
+        fail(t.camps.nameTaken(trimmed))
         return
       }
-      setError(null)
-      void campsDb.renameCamp(campId, trimmed).catch(() => setError(t.sync.writeFailed))
+      run(campsDb.renameCamp(campId, trimmed))
     },
-    [camps, t],
+    [camps, fail, run, t],
   )
 
   const setMoneyHolder = useCallback(
     (campId: string, name: string): void => {
-      setError(null)
       // The screens already refuse an empty field; dropping a blank here as well keeps a
       // person called "" out of the camp whatever calls this.
       const trimmed = name.trim()
       if (trimmed === '') return
-      void campsDb.setMoneyHolder(campId, trimmed).catch(() => setError(t.sync.writeFailed))
+      run(campsDb.setMoneyHolder(campId, trimmed))
     },
-    [t],
+    [run],
   )
 
-  const deleteCamp = useCallback(
-    (campId: string): void => {
-      void campsDb.deleteCamp(campId).catch(() => setError(t.sync.writeFailed))
-    },
-    [t],
-  )
-
-  const clearError = useCallback((): void => {
-    setError(null)
-  }, [])
+  const deleteCamp = useCallback((campId: string): void => run(campsDb.deleteCamp(campId)), [run])
 
   return {
     camps,
     memberships,
     blocks,
     isLoading,
-    // A failed load outranks a stale validation message: if the data isn't there, nothing
-    // else on screen is trustworthy either.
-    error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
+    error,
     createCamp,
     renameCamp,
     setMoneyHolder,
