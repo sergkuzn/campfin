@@ -1,15 +1,7 @@
-.income {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  width: 100%;
-}
-
+/* On top of the global `.screen__title`: this header wraps, so the title takes the
+   leftover width and pushes the ⓘ toggle to the end of the row. */
 .income__title {
   flex: 1;
-  margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: -0.02em;
 }
 
 .income__header {

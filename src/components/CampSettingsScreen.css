@@ -1,16 +1,3 @@
-.camp-settings {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-}
-
-.camp-settings__title {
-  margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: -0.02em;
-}
-
 /* A field with its buttons beside it. Wraps, because the holder row carries two. */
 .camp-settings__row {
   display: flex;

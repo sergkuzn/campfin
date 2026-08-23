@@ -86,7 +86,7 @@ export function CampDashboard({
       </button>
 
       <header className="dashboard__header">
-        <h2 className="dashboard__name">{camp.name}</h2>
+        <h2 className="screen__title">{camp.name}</h2>
         <StatusPill status={campStatus(burn.window, todayIso)} />
         <button
           className="dashboard__settings"
@@ -108,7 +108,7 @@ export function CampDashboard({
   // is a wrong instruction rather than a flicker.
   if (!setUp && isLoading) {
     return (
-      <div className="dashboard">
+      <div className="screen dashboard">
         {header}
         <p className="slot-card__hint">{t.app.loading}</p>
       </div>
@@ -117,7 +117,7 @@ export function CampDashboard({
 
   if (!setUp) {
     return (
-      <div className="dashboard">
+      <div className="screen dashboard">
         {header}
         <CampSetup
           holder={camp.moneyHolder}
@@ -131,7 +131,7 @@ export function CampDashboard({
   }
 
   return (
-    <div className="dashboard">
+    <div className="screen dashboard">
       {header}
 
       <section className={burn.hasCurve ? 'slot-card slot-card--filled' : 'slot-card'}>

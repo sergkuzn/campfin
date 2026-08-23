@@ -223,13 +223,13 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   }
 
   return (
-    <div className="income">
+    <div className="screen income">
       <button className="screen-back" type="button" onClick={onBack}>
         {t.income.back}
       </button>
 
       <header className="income__header">
-        <h2 className="income__title">{t.income.title}</h2>
+        <h2 className="screen__title income__title">{t.income.title}</h2>
         {/* On demand rather than always on screen: "what is a pool" is a question you have
             once, and a permanent paragraph would cost every later visit a scroll. */}
         <button

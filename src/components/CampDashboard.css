@@ -1,20 +1,7 @@
-.dashboard {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-}
-
 .dashboard__header {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-}
-
-.dashboard__name {
-  margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: -0.02em;
 }
 
 /* The name and its status pill stay together on the left; settings is pushed to the far

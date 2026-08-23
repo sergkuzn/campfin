@@ -107,7 +107,7 @@ export function CampList({
   }
 
   return (
-    <div className="camp-list">
+    <div className="screen camp-list">
       {access.isAdmin && (
         <div className="camp-list__admin">
           <button className="camp-list__admin-link" type="button" onClick={onOpenAdmin}>

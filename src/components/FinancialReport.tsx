@@ -168,13 +168,13 @@ export function FinancialReport({
   }
 
   return (
-    <div className="report">
+    <div className="screen report">
       <button className="screen-back report__hide-print" type="button" onClick={onBack}>
         {t.report.back}
       </button>
 
       <header className="report__header">
-        <h2 className="report__title">{t.report.title}</h2>
+        <h2 className="screen__title">{t.report.title}</h2>
         <p className="report__camp">{camp.name}</p>
       </header>
 

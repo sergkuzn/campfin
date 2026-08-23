@@ -147,13 +147,13 @@ export function ReceiptsScreen({
   const filtering = shown.length !== rows.length
 
   return (
-    <div className="receipts">
+    <div className="screen receipts">
       <button className="screen-back" type="button" onClick={onBack}>
         {t.receipts.back}
       </button>
 
       <header className="receipts__header">
-        <h2 className="receipts__title">{t.receipts.title}</h2>
+        <h2 className="screen__title">{t.receipts.title}</h2>
         <button
           className="btn btn--primary"
           type="button"

@@ -79,13 +79,13 @@ export function MovementsScreen({
   }
 
   return (
-    <div className="movements">
+    <div className="screen movements">
       <button className="screen-back" type="button" onClick={onBack}>
         {t.movements.back}
       </button>
 
       <header className="movements__header">
-        <h2 className="movements__title">{labels.title}</h2>
+        <h2 className="screen__title">{labels.title}</h2>
         <button
           className="btn btn--primary"
           type="button"

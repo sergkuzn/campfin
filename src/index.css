@@ -107,6 +107,26 @@ body {
   white-space: nowrap;
 }
 
+/* Every screen is the same shape: a single full-width column of blocks, one gap between
+   them. One rule for all eight so the gap cannot drift apart screen by screen.
+
+   A screen carries its block class alongside it (`class="screen receipts"`): the global owns
+   the frame, the block class owns whatever is genuinely local to that screen. */
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+/* The <h2> a screen opens with — sized here rather than in each screen's stylesheet, for
+   the same reason as the frame above. */
+.screen__title {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
 /* The way back out of a sub-screen. Six screens use it, so it lives with the shell
    rather than in any one screen's stylesheet.
 

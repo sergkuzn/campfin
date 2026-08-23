@@ -1,16 +1,3 @@
-.admin {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-}
-
-.admin__title {
-  margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: -0.02em;
-}
-
 /* The address field and its button, side by side until the width runs out. */
 .admin__grant {
   display: flex;

@@ -39,11 +39,11 @@ export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
   }
 
   return (
-    <div className="admin">
+    <div className="screen admin">
       <button className="screen-back" type="button" onClick={onBack}>
         {t.admin.back}
       </button>
-      <h2 className="admin__title">{t.admin.title}</h2>
+      <h2 className="screen__title">{t.admin.title}</h2>
 
       <SlotPanel title={t.admin.peopleTitle}>
         <form className="admin__grant" onSubmit={handleGrant}>

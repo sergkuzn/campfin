@@ -111,12 +111,12 @@ export function CampSettingsScreen({
   }
 
   return (
-    <div className="camp-settings">
+    <div className="screen camp-settings">
       <button className="screen-back" type="button" onClick={onBack}>
         {t.campSettings.back}
       </button>
 
-      <h2 className="camp-settings__title">{t.campSettings.title}</h2>
+      <h2 className="screen__title">{t.campSettings.title}</h2>
 
       {error !== null && <Toast key={error} message={error} />}
 

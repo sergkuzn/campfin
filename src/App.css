@@ -3,8 +3,9 @@
    Class names use a light BEM-ish convention: block, block__element, block--modifier.
 
    The recurring shapes are global instead: src/styles/ owns .card, .field, .input and
-   .btn, imported once in main.tsx. Build a card, a form row or a button out of those and
-   keep the component stylesheet for what is genuinely local to the screen. */
+   .btn, imported once in main.tsx, and index.css owns the shell — .screen, .screen__title,
+   .screen-back. Build a screen, a card, a form row or a button out of those and keep the
+   component stylesheet for what is genuinely local to the screen. */
 
 .app {
   position: relative; /* the anchor `ThemeToggle` pins its corner to */

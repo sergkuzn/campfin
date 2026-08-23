@@ -1,20 +1,7 @@
-.report {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  width: 100%;
-}
-
 .report__header {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-}
-
-.report__title {
-  margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: -0.02em;
 }
 
 .report__camp {
