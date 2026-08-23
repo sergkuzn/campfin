@@ -19,6 +19,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { ExpenseDayList } from './ExpenseDayList'
 import { ExpenseForm } from './ExpenseForm'
 import { ReceiptFilters } from './ReceiptFilters'
+import { Toast } from './Toast'
 
 type Props = {
   campId: string
@@ -165,11 +166,7 @@ export function ReceiptsScreen({
 
       {/* A write that only failed to *sync* says nothing — Instant queues it. This is for
           a write the server actually rejected. */}
-      {expenses.error !== null && (
-        <p className="income__error" role="alert">
-          {expenses.error}
-        </p>
-      )}
+      {expenses.error !== null && <Toast key={expenses.error} message={expenses.error} />}
 
       {editing?.mode === 'new' && (
         <ExpenseForm

@@ -10,6 +10,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { JoinCodeCard } from './JoinCodeCard'
 import { ReceivedTotals } from './ReceivedTotals'
 import { SlotCard, SlotPanel } from './SlotCard'
+import { Toast } from './Toast'
 
 type Props = {
   camp: Camp
@@ -117,11 +118,7 @@ export function CampSettingsScreen({
 
       <h2 className="camp-settings__title">{t.campSettings.title}</h2>
 
-      {error !== null && (
-        <p className="dashboard__error" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== null && <Toast key={error} message={error} />}
 
       <SlotPanel title={t.campSettings.nameSection}>
         <form className="camp-settings__row" onSubmit={handleSubmit}>

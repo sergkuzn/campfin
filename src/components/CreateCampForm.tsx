@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './CreateCampForm.css'
 import { useT } from '../i18n'
+import { Toast } from './Toast'
 
 type Props = {
   error: string | null
@@ -38,11 +39,7 @@ export function CreateCampForm({ error, onCreate }: Props) {
           {t.camps.create}
         </button>
       </div>
-      {error !== null && (
-        <p className="create-camp__error" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== null && <Toast key={error} message={error} />}
     </form>
   )
 }

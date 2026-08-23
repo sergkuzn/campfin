@@ -14,6 +14,7 @@ import { FeeStrip } from './FeeStrip'
 import { PoolBars } from './PoolBars'
 import { SlotCard } from './SlotCard'
 import { StatusPill } from './StatusPill'
+import { Toast } from './Toast'
 
 type Props = {
   camp: Camp
@@ -103,11 +104,7 @@ export function CampDashboard({
         </button>
       </header>
 
-      {error !== null && (
-        <p className="dashboard__error" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== null && <Toast key={error} message={error} />}
     </>
   )
 

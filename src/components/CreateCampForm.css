@@ -11,12 +11,6 @@
   width: 100%;
 }
 
-.create-camp__error {
-  margin: 0;
-  color: var(--danger);
-  font-size: 0.875rem;
-}
-
 .create-camp__input {
   flex: 1; /* take all leftover width; the button keeps its natural size */
   min-width: 0; /* without this a flex item refuses to shrink below its content */

@@ -16,6 +16,7 @@ import { DepositsStrip } from './DepositsStrip'
 import { FeeStrip } from './FeeStrip'
 import { MovementForm } from './MovementForm'
 import { MovementList } from './MovementList'
+import { Toast } from './Toast'
 
 type Props = {
   campId: string
@@ -97,11 +98,7 @@ export function MovementsScreen({
 
       {/* A write that only failed to *sync* says nothing — Instant queues it. This is for
           a write the server actually rejected. */}
-      {movements.error !== null && (
-        <p className="income__error" role="alert">
-          {movements.error}
-        </p>
-      )}
+      {movements.error !== null && <Toast key={movements.error} message={movements.error} />}
 
       {focus === 'deposits' ? (
         <DepositsStrip statuses={custody.statuses} />

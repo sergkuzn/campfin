@@ -20,6 +20,7 @@ import { PoolColorDialog } from './PoolColorDialog'
 import { PoolForm } from './PoolForm'
 import { PoolTag } from './PoolTag'
 import { RowMenu, type RowMenuItem } from './RowMenu'
+import { Toast } from './Toast'
 
 type Props = {
   campId: string
@@ -254,11 +255,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
 
       {/* A write that only failed to *sync* says nothing — Instant queues it. This is for
           a write the server actually rejected. */}
-      {income.error !== null && (
-        <p className="income__error" role="alert">
-          {income.error}
-        </p>
-      )}
+      {income.error !== null && <Toast key={income.error} message={income.error} />}
 
       {editing?.mode === 'pool' && (
         <PoolForm campId={campId} onSave={handleSavePool} onCancel={() => setEditing(null)} />

@@ -33,12 +33,6 @@
   line-height: 1.5;
 }
 
-.income__error {
-  margin: 0;
-  color: var(--danger);
-  font-size: 0.875rem;
-}
-
 /* Shared form shell: the fields wrap on a phone and sit in a row on wider screens. */
 .income-form {
   display: flex;

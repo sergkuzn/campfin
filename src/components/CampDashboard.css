@@ -41,12 +41,6 @@
   color: var(--fg);
 }
 
-.dashboard__error {
-  margin: 0;
-  color: var(--danger);
-  font-size: 0.875rem;
-}
-
 /* A required-setup state, not an error: amber says "something is missing" without the
    alarm of red. */
 .dashboard__callout {
