@@ -18,8 +18,8 @@ describe('parseTheme', () => {
     expect(parseTheme('Dark')).toBe(DEFAULT_THEME)
   })
 
-  it('defaults to light, so a phone in night mode still opens the app in day mode', () => {
-    expect(DEFAULT_THEME).toBe('light')
+  it('defaults to dark, so a phone in day mode still opens the app in night mode', () => {
+    expect(DEFAULT_THEME).toBe('dark')
   })
 })
 

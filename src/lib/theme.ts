@@ -3,14 +3,14 @@
  * theme is in force and what to store for it, never what the theme looks like — the token
  * values live in `index.css`, keyed off the `data-theme` attribute this yields.
  *
- * Light is the default, and deliberately not the phone's `prefers-color-scheme`: the app
+ * Dark is the default, and deliberately not the phone's `prefers-color-scheme`: the app
  * opens the same way on both leaders' phones, and only an explicit tap changes that.
  */
 
 export type Theme = 'light' | 'dark'
 
 /** The default before anyone has chosen — also the fallback for anything unreadable. */
-export const DEFAULT_THEME: Theme = 'light'
+export const DEFAULT_THEME: Theme = 'dark'
 
 /** Where the choice is kept. Namespaced so it cannot collide with a draft or a token. */
 export const THEME_STORAGE_KEY = 'campfin.theme'
