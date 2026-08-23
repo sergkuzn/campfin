@@ -5,20 +5,16 @@ import { useFormat, useT } from '../i18n'
 import { spentTotalCents } from '../lib/budget'
 import type { CampWindow } from '../lib/camps'
 import { todayIso } from '../lib/dates'
-import {
-  arrangeExpenses,
-  type ExpenseSort,
-  filterExpensesByPools,
-  nextReceiptNumber,
-  type SaveExpenseInput,
-  takenReceiptNumbers,
-} from '../lib/expenses'
+import type { SaveExpenseInput } from '../lib/expenses'
+import { arrangeExpenses, type ExpenseSort, filterExpensesByPools } from '../lib/expenseViews'
 import { filterExpensesByDebt, unreimbursedTotalCents } from '../lib/payers'
 import { type PoolSummary, spendablePools } from '../lib/pools'
+import { nextReceiptNumber, takenReceiptNumbers } from '../lib/receiptNumbers'
 import { ConfirmDialog } from './ConfirmDialog'
 import { ExpenseDayList } from './ExpenseDayList'
 import { ExpenseForm } from './ExpenseForm'
 import { ReceiptFilters } from './ReceiptFilters'
+import { Screen } from './Screen'
 import { Toast } from './Toast'
 
 type Props = {
@@ -147,11 +143,7 @@ export function ReceiptsScreen({
   const filtering = shown.length !== rows.length
 
   return (
-    <div className="screen receipts">
-      <button className="screen-back" type="button" onClick={onBack}>
-        {t.receipts.back}
-      </button>
-
+    <Screen name="receipts" back={{ label: t.receipts.back, onClick: onBack }}>
       <header className="receipts__header">
         <h2 className="screen__title">{t.receipts.title}</h2>
         <button
@@ -309,6 +301,6 @@ export function ReceiptsScreen({
         onConfirm={handleConfirmDelete}
         onCancel={() => setPendingId(null)}
       />
-    </div>
+    </Screen>
   )
 }

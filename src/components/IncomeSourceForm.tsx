@@ -11,6 +11,7 @@ import {
   type SourceDraft,
 } from '../lib/drafts'
 import type { IncomeKind, IncomeSource, PerDiemBlock, Pool } from '../lib/types'
+import { FormIssues } from './FormIssues'
 import { PerDiemBlocksEditor } from './PerDiemBlocksEditor'
 import { RequiredMark } from './RequiredMark'
 
@@ -133,13 +134,7 @@ export function IncomeSourceForm({ campId, kind, pool, source, blocks, onSave, o
         </label>
       )}
 
-      {issues.length > 0 && (
-        <ul className="card__issues">
-          {issues.map((issue) => (
-            <li key={issue}>{t.income.issues[issue]}</li>
-          ))}
-        </ul>
-      )}
+      <FormIssues issues={issues} labels={t.income.issues} />
 
       <div className="card__actions">
         <button className="btn btn--ghost" type="button" onClick={onCancel}>

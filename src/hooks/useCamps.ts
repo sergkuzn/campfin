@@ -56,10 +56,6 @@ export function useCamps(userId: string, allCamps = false): UseCamps {
     data,
   } = db.useQuery({
     camps: {
-      // One query shape for both modes, because a ternary over whole `where` objects makes
-      // the result a union that Instant's inference collapses to `never`. So the flag varies
-      // a value instead: the second branch is "every row that has an id" — all of them —
-      // with the switch on, and "every row that has none" — not one — with it off.
       // The switch varies the *value*, not the shape of the clause: Instant's result type
       // is inferred from the query object, and a ternary over whole `where` objects (or an
       // `or` of two) makes it a union it collapses to `never`. So "every camp" is spelled

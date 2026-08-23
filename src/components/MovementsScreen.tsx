@@ -16,6 +16,7 @@ import { DepositsStrip } from './DepositsStrip'
 import { FeeStrip } from './FeeStrip'
 import { MovementForm } from './MovementForm'
 import { MovementList } from './MovementList'
+import { Screen } from './Screen'
 import { Toast } from './Toast'
 
 type Props = {
@@ -79,11 +80,7 @@ export function MovementsScreen({
   }
 
   return (
-    <div className="screen movements">
-      <button className="screen-back" type="button" onClick={onBack}>
-        {t.movements.back}
-      </button>
-
+    <Screen name="movements" back={{ label: t.movements.back, onClick: onBack }}>
       <header className="movements__header">
         <h2 className="screen__title">{labels.title}</h2>
         <button
@@ -179,6 +176,6 @@ export function MovementsScreen({
         onConfirm={handleConfirmDelete}
         onCancel={() => setPendingId(null)}
       />
-    </div>
+    </Screen>
   )
 }

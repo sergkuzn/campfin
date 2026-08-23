@@ -12,8 +12,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px; /* the usual minimum touch target, in both directions */
-  height: 44px;
+  /* Square, so the target is a thumb's width as well as its height. */
+  width: var(--tap);
+  height: var(--tap);
   padding: 0;
   border: 0;
   border-radius: 50%;

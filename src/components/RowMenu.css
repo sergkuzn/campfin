@@ -45,7 +45,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background-color: var(--surface);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+  box-shadow: var(--shadow-popover);
 }
 
 .row-menu__items--up {

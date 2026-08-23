@@ -9,6 +9,7 @@ import type { Camp, Expense } from '../lib/types'
 import { ConfirmDialog } from './ConfirmDialog'
 import { JoinCodeCard } from './JoinCodeCard'
 import { ReceivedTotals } from './ReceivedTotals'
+import { Screen } from './Screen'
 import { SlotCard, SlotPanel } from './SlotCard'
 import { Toast } from './Toast'
 
@@ -111,11 +112,7 @@ export function CampSettingsScreen({
   }
 
   return (
-    <div className="screen camp-settings">
-      <button className="screen-back" type="button" onClick={onBack}>
-        {t.campSettings.back}
-      </button>
-
+    <Screen name="camp-settings" back={{ label: t.campSettings.back, onClick: onBack }}>
       <h2 className="screen__title">{t.campSettings.title}</h2>
 
       {error !== null && <Toast key={error} message={error} />}
@@ -302,6 +299,6 @@ export function CampSettingsScreen({
         }}
         onCancel={() => setConfirmingDelete(false)}
       />
-    </div>
+    </Screen>
   )
 }

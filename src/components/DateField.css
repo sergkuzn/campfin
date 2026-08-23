@@ -10,7 +10,7 @@
   min-width: 0;
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border);
-  border-radius: var(--space-2);
+  border-radius: var(--radius-sm);
   background-color: var(--bg);
   color: var(--fg);
   font: inherit;
@@ -29,5 +29,5 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background-color: var(--surface);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+  box-shadow: var(--shadow-popover);
 }

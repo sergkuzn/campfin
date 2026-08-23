@@ -7,6 +7,7 @@ import type { PoolSummary } from '../lib/pools'
 import type { DifferenceLine, FinancialReport as Report } from '../lib/report'
 import type { Settlement, SettlementWarning } from '../lib/settlement'
 import type { Camp, Expense } from '../lib/types'
+import { Screen } from './Screen'
 
 type Props = {
   camp: Camp
@@ -168,11 +169,10 @@ export function FinancialReport({
   }
 
   return (
-    <div className="screen report">
-      <button className="screen-back report__hide-print" type="button" onClick={onBack}>
-        {t.report.back}
-      </button>
-
+    <Screen
+      name="report"
+      back={{ label: t.report.back, onClick: onBack, className: 'report__hide-print' }}
+    >
       <header className="report__header">
         <h2 className="screen__title">{t.report.title}</h2>
         <p className="report__camp">{camp.name}</p>
@@ -333,6 +333,6 @@ export function FinancialReport({
       {/* Printed too: the report leaves the phone as a document, and the caveat travels
           with it. */}
       <p className="report__disclaimer">{t.report.disclaimer}</p>
-    </div>
+    </Screen>
   )
 }

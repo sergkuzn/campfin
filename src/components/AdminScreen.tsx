@@ -4,6 +4,7 @@ import type { UseAdmin } from '../hooks/useAdmin'
 import { useT } from '../i18n'
 import { MAX_CAMP_QUOTA, type RosterEntry } from '../lib/accounts'
 import { ConfirmDialog } from './ConfirmDialog'
+import { Screen } from './Screen'
 import { SlotPanel } from './SlotCard'
 import { Toast } from './Toast'
 
@@ -39,10 +40,7 @@ export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
   }
 
   return (
-    <div className="screen admin">
-      <button className="screen-back" type="button" onClick={onBack}>
-        {t.admin.back}
-      </button>
+    <Screen name="admin" back={{ label: t.admin.back, onClick: onBack }}>
       <h2 className="screen__title">{t.admin.title}</h2>
 
       <SlotPanel title={t.admin.peopleTitle}>
@@ -112,7 +110,7 @@ export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
         onConfirm={handleRevoke}
         onCancel={() => setRevoking(null)}
       />
-    </div>
+    </Screen>
   )
 }
 

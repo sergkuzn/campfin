@@ -2,10 +2,11 @@
    top of the .tsx) keeps related things together — Vite bundles it automatically.
    Class names use a light BEM-ish convention: block, block__element, block--modifier.
 
-   The recurring shapes are global instead: src/styles/ owns .card, .field, .input and
-   .btn, imported once in main.tsx, and index.css owns the shell — .screen, .screen__title,
-   .screen-back. Build a screen, a card, a form row or a button out of those and keep the
-   component stylesheet for what is genuinely local to the screen. */
+   The recurring shapes are global instead: src/styles/ owns .card, .field, .input, .btn
+   and .dialog, imported once in main.tsx, and index.css owns the shell — .screen,
+   .screen__title, .screen-back, rendered by the <Screen> component. Build a screen, a card,
+   a form row, a button or a dialog out of those and keep the component stylesheet for what
+   is genuinely local to the screen. */
 
 .app {
   position: relative; /* the anchor `ThemeToggle` pins its corner to */

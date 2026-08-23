@@ -20,6 +20,7 @@ import { PoolColorDialog } from './PoolColorDialog'
 import { PoolForm } from './PoolForm'
 import { PoolTag } from './PoolTag'
 import { RowMenu, type RowMenuItem } from './RowMenu'
+import { Screen } from './Screen'
 import { Toast } from './Toast'
 
 type Props = {
@@ -223,11 +224,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   }
 
   return (
-    <div className="screen income">
-      <button className="screen-back" type="button" onClick={onBack}>
-        {t.income.back}
-      </button>
-
+    <Screen name="income" back={{ label: t.income.back, onClick: onBack }}>
       <header className="income__header">
         <h2 className="screen__title income__title">{t.income.title}</h2>
         {/* On demand rather than always on screen: "what is a pool" is a question you have
@@ -328,7 +325,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
         onConfirm={handleConfirm}
         onCancel={() => setPending(null)}
       />
-    </div>
+    </Screen>
   )
 }
 

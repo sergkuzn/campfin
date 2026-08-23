@@ -7,6 +7,7 @@ import { todayIso } from '../lib/dates'
 import type { Camp, PerDiemBlock } from '../lib/types'
 import { CreateCampForm } from './CreateCampForm'
 import { JoinCampForm } from './JoinCampForm'
+import { Screen } from './Screen'
 import { StatusPill } from './StatusPill'
 
 type CampCardProps = {
@@ -107,7 +108,7 @@ export function CampList({
   }
 
   return (
-    <div className="screen camp-list">
+    <Screen name="camp-list">
       {access.isAdmin && (
         <div className="camp-list__admin">
           <button className="camp-list__admin-link" type="button" onClick={onOpenAdmin}>
@@ -140,6 +141,6 @@ export function CampList({
       {renderCamps()}
 
       <JoinCampForm userId={userId} myCampIds={camps.map((camp) => camp.id)} />
-    </div>
+    </Screen>
   )
 }

@@ -16,7 +16,7 @@
   min-width: 0; /* without this a flex item refuses to shrink below its content */
   padding: var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--space-2);
+  border-radius: var(--radius-sm);
   background-color: var(--surface);
   color: inherit;
   font: inherit;

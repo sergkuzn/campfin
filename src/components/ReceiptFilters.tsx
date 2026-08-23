@@ -1,7 +1,7 @@
 import './ReceiptFilters.css'
 import './PoolTag.css'
 import { useT } from '../i18n'
-import type { ExpenseSort } from '../lib/expenses'
+import type { ExpenseSort } from '../lib/expenseViews'
 import { poolColorOf } from '../lib/poolColors'
 import type { Pool } from '../lib/types'
 

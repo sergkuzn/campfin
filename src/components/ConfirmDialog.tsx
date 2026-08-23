@@ -64,8 +64,8 @@ export function ConfirmDialog({
   return (
     // onCancel is React's handler for the dialog's native `cancel` event (Esc). Without
     // it the DOM would close the dialog behind React's back and `open` would go stale.
-    <dialog className="confirm" ref={ref} onCancel={onCancel}>
-      <h3 className="confirm__title">{title}</h3>
+    <dialog className="dialog confirm" ref={ref} onCancel={onCancel}>
+      <h3 className="dialog__title">{title}</h3>
       {lines.map((line) => (
         <p key={line} className="confirm__line">
           {line}
@@ -81,7 +81,7 @@ export function ConfirmDialog({
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => setTyped(event.target.value)}
         />
       )}
-      <div className="confirm__actions">
+      <div className="dialog__actions">
         <button className="btn btn--ghost" type="button" onClick={onCancel}>
           {t.confirm.cancel}
         </button>

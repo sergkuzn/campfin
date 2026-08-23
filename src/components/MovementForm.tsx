@@ -17,6 +17,7 @@ import {
 import { poolColorOf } from '../lib/poolColors'
 import type { PoolSummary } from '../lib/pools'
 import type { Movement, MovementKind } from '../lib/types'
+import { FormIssues } from './FormIssues'
 import './PoolTag.css'
 import './ReceiptFilters.css'
 import { DateField } from './DateField'
@@ -219,13 +220,7 @@ export function MovementForm({
         />
       </label>
 
-      {issues.length > 0 && (
-        <ul className="card__issues">
-          {issues.map((issue) => (
-            <li key={issue}>{t.movements.issues[issue]}</li>
-          ))}
-        </ul>
-      )}
+      <FormIssues issues={issues} labels={t.movements.issues} />
 
       <div className="card__actions">
         <button className="btn btn--ghost" type="button" onClick={onCancel}>

@@ -11,6 +11,7 @@ import { CampSetup } from './CampSetup'
 import { DepositsStrip } from './DepositsStrip'
 import { FeeStrip } from './FeeStrip'
 import { PoolBars } from './PoolBars'
+import { Screen } from './Screen'
 import { SlotCard } from './SlotCard'
 import { StatusPill } from './StatusPill'
 import { Toast } from './Toast'
@@ -81,10 +82,6 @@ export function CampDashboard({
 
   const header = (
     <>
-      <button className="screen-back" type="button" onClick={onBack}>
-        {t.dashboard.back}
-      </button>
-
       <header className="dashboard__header">
         <h2 className="screen__title">{camp.name}</h2>
         <StatusPill status={campStatus(burn.window, todayIso)} />
@@ -108,16 +105,16 @@ export function CampDashboard({
   // is a wrong instruction rather than a flicker.
   if (!setUp && isLoading) {
     return (
-      <div className="screen dashboard">
+      <Screen name="dashboard" back={{ label: t.dashboard.back, onClick: onBack }}>
         {header}
         <p className="slot-card__hint">{t.app.loading}</p>
-      </div>
+      </Screen>
     )
   }
 
   if (!setUp) {
     return (
-      <div className="screen dashboard">
+      <Screen name="dashboard" back={{ label: t.dashboard.back, onClick: onBack }}>
         {header}
         <CampSetup
           holder={camp.moneyHolder}
@@ -126,12 +123,12 @@ export function CampDashboard({
           onSaveHolder={onChangeHolder}
           onOpenIncome={onOpenIncome}
         />
-      </div>
+      </Screen>
     )
   }
 
   return (
-    <div className="screen dashboard">
+    <Screen name="dashboard" back={{ label: t.dashboard.back, onClick: onBack }}>
       {header}
 
       <section className={burn.hasCurve ? 'slot-card slot-card--filled' : 'slot-card'}>
@@ -194,6 +191,6 @@ export function CampDashboard({
       >
         <p className="slot-card__hint">{t.report.hint}</p>
       </SlotCard>
-    </div>
+    </Screen>
   )
 }

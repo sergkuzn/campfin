@@ -12,6 +12,7 @@ import {
 import { poolColorOf } from '../lib/poolColors'
 import type { PoolSummary } from '../lib/pools'
 import type { Expense } from '../lib/types'
+import { FormIssues } from './FormIssues'
 import './PoolTag.css'
 import './ReceiptFilters.css'
 import { DateField } from './DateField'
@@ -179,13 +180,7 @@ export function ExpenseForm({
         />
       </label>
 
-      {issues.length > 0 && (
-        <ul className="card__issues">
-          {issues.map((issue) => (
-            <li key={issue}>{t.receipts.issues[issue]}</li>
-          ))}
-        </ul>
-      )}
+      <FormIssues issues={issues} labels={t.receipts.issues} />
 
       <div className="card__actions">
         <button className="btn btn--ghost" type="button" onClick={onCancel}>

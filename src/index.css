@@ -12,7 +12,22 @@
   --space-4: 1rem;
   --space-6: 1.5rem;
 
+  /* Two radii, named rather than borrowed: --radius rounds a block — a card, a dialog, a
+     panel — and --radius-sm rounds a control sitting inside one. Controls used to reach for
+     --space-2, which happens to be the same length; a spacing token is not a radius, and
+     the two are free to move apart. */
   --radius: 1rem;
+  --radius-sm: 0.5rem;
+
+  /* The smallest comfortable touch target. Every control meant to be tapped rather than
+     read reserves at least this much height. */
+  --tap: 44px;
+
+  /* Elevation. Two heights: a layer that sits over the page until dismissed, and one that
+     floats above everything and leaves on its own. */
+  --shadow-popover: 0 8px 24px rgb(0 0 0 / 25%);
+  --shadow-toast: 0 4px 16px rgb(0 0 0 / 20%);
+
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* Day theme — the default, whatever the phone's own night mode says. The dark block
@@ -144,7 +159,7 @@ body {
   align-self: flex-end;
   display: inline-flex;
   align-items: center;
-  min-height: 44px; /* the usual minimum touch target */
+  min-height: var(--tap);
   padding: var(--space-2) 0;
   border: 0;
   background: none;

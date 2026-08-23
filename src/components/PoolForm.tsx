@@ -7,6 +7,7 @@ import {
   type SavePoolInput,
 } from '../lib/drafts'
 import type { CreatablePoolRole } from '../lib/types'
+import { FormIssues } from './FormIssues'
 import { RequiredMark } from './RequiredMark'
 
 type Props = {
@@ -79,13 +80,7 @@ export function PoolForm({ campId, onSave, onCancel }: Props) {
         ))}
       </fieldset>
 
-      {issues.length > 0 && (
-        <ul className="card__issues">
-          {issues.map((issue) => (
-            <li key={issue}>{t.income.issues[issue]}</li>
-          ))}
-        </ul>
-      )}
+      <FormIssues issues={issues} labels={t.income.issues} />
 
       <div className="card__actions">
         <button className="btn btn--ghost" type="button" onClick={onCancel}>

@@ -2,7 +2,7 @@
 // has to be loaded even though no PoolTag is rendered here.
 import './PoolTag.css'
 import { useFormat, useT } from '../i18n'
-import type { ExpenseView } from '../lib/expenses'
+import type { ExpenseView } from '../lib/expenseViews'
 import { isSamePayer, owedPayerName } from '../lib/payers'
 import { poolColorOf } from '../lib/poolColors'
 import type { Expense, Pool } from '../lib/types'

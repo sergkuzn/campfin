@@ -10,6 +10,7 @@ import {
   type SaveBlocksInput,
 } from '../lib/drafts'
 import type { PerDiemBlock } from '../lib/types'
+import { FormIssues } from './FormIssues'
 import { PerDiemBlocksEditor } from './PerDiemBlocksEditor'
 
 type Props = {
@@ -85,13 +86,7 @@ export function ActualBlocksForm({
         <strong>{format.euros(totalCents)}</strong>
       </p>
 
-      {issues.length > 0 && (
-        <ul className="card__issues">
-          {issues.map((issue) => (
-            <li key={issue}>{t.income.issues[issue]}</li>
-          ))}
-        </ul>
-      )}
+      <FormIssues issues={issues} labels={t.income.issues} />
 
       <div className="card__actions">
         <button className="btn btn--ghost" type="button" onClick={onCancel}>
