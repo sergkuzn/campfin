@@ -92,7 +92,11 @@ export function CampSetup({ holder, funded, summaries, onSaveHolder, onOpenIncom
                 <strong className="camp-setup__holder-name">{holderName}</strong>{' '}
                 {t.campSettings.holderHolds}
               </p>
-              <button className="camp-setup__ghost" type="button" onClick={() => setChanging(true)}>
+              <button
+                className="camp-setup__ghost camp-setup__ghost--end"
+                type="button"
+                onClick={() => setChanging(true)}
+              >
                 {t.campSettings.holderChange}
               </button>
             </>

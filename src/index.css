@@ -84,9 +84,12 @@ body {
 
    `min-height` rather than font size alone: the label is one small line, but the target
    has to be a thumb. The padding that makes up that height is inside the button, so the
-   tappable area grows around the text without pushing it off the content's left edge. */
+   tappable area grows around the text without pushing it off the content's right edge.
+
+   Right-aligned rather than left: on a phone held one-handed, the right edge is where a
+   thumb rests, and this is the control reached for on every screen. */
 .screen-back {
-  align-self: flex-start;
+  align-self: flex-end;
   display: inline-flex;
   align-items: center;
   min-height: 44px; /* the usual minimum touch target */

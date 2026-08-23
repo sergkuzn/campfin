@@ -146,3 +146,10 @@
 .camp-setup__ghost:hover {
   border-color: var(--accent);
 }
+
+/* The holder step's "Change" button stands alone on its own line (the readout paragraph
+   above it takes the line before) — push it right so it lands under the thumb on a phone
+   held one-handed. */
+.camp-setup__ghost--end {
+  align-self: flex-end;
+}

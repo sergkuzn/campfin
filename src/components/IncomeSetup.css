@@ -413,14 +413,16 @@
   font-size: 0.875rem;
 }
 
+/* Right-justified so both links sit under the thumb on a phone held one-handed, rather
+   than at the far side of the block list. */
 .blocks__add-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--space-3);
 }
 
 .blocks__add {
-  align-self: flex-start;
   border: 0;
   background: none;
   color: var(--muted);
