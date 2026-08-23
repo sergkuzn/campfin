@@ -19,6 +19,12 @@ type Props = {
   todayIso: string
 }
 
+/** Room reserved for the money labels, and the gap kept at the right edge. Shared by the
+ *  axis, the chart margin and the legend, which has to know where the plot area starts and
+ *  ends to sit over its middle rather than the whole SVG's. */
+const AXIS_WIDTH = 64
+const PLOT_MARGIN = { top: 4, right: 8, bottom: 0, left: 0 }
+
 /**
  * Cumulative allowance against cumulative spending, one point per camp day.
  *
@@ -55,7 +61,7 @@ export function BurnChart({ burn, todayIso }: Props) {
         {/* ResponsiveContainer measures its parent, so the chart has to be given a height
             in CSS or as a prop — an SVG has no intrinsic size to fall back on. */}
         <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={burn.points} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+          <LineChart data={burn.points} margin={PLOT_MARGIN}>
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="dayLabel"
@@ -74,7 +80,7 @@ export function BurnChart({ burn, todayIso }: Props) {
               axisLine={false}
               stroke="var(--muted)"
               fontSize={11}
-              width={64}
+              width={AXIS_WIDTH}
             />
             <Tooltip
               formatter={(value) => (typeof value === 'number' ? format.euros(value) : '')}
@@ -91,7 +97,19 @@ export function BurnChart({ burn, todayIso }: Props) {
                 fontSize: '0.75rem',
               }}
             />
-            <Legend iconType="plainline" wrapperStyle={{ fontSize: '0.75rem' }} />
+            {/* The legend's wrapper spans the whole SVG, so its centred text would sit over
+                the plot *plus* the money axis — visibly left of the curves. Padding the
+                wrapper by the axis width (and the plot's right margin) centres it over the
+                plot area without moving the box itself. */}
+            <Legend
+              iconType="plainline"
+              wrapperStyle={{
+                fontSize: '0.75rem',
+                boxSizing: 'border-box',
+                paddingLeft: AXIS_WIDTH,
+                paddingRight: PLOT_MARGIN.right,
+              }}
+            />
 
             {todayLabel !== undefined && (
               <ReferenceLine x={todayLabel} stroke="var(--muted)" strokeDasharray="2 4" />

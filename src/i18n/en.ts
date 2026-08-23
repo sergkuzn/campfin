@@ -366,7 +366,7 @@ export const en = {
   /** The day-by-day allowance: the headline number and the chart under it. */
   burn: {
     title: 'Daily burn',
-    allowedToday: 'Allowed today',
+    allowedToday: 'Left today',
     /** The headline goes red rather than negative-with-a-minus: "you are €40 over" is
      *  what a leader needs to read, not "−40 allowed". */
     overspentBy: (amount: string) => `${amount} over`,

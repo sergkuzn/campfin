@@ -35,9 +35,12 @@
   flex: 1 1 auto;
 }
 
+/* `min-content` breaks the label after its first word, so the headline reads on two lines
+   without a hard-coded newline in the string — a translation of any length still wraps at
+   its own word boundaries. The extra height is what the stats table stretches against. */
 .allowed__label {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -47,7 +50,7 @@
    jitter as digits change, and green until it isn't. */
 .allowed__amount {
   margin: 0;
-  font-size: 1.625rem;
+  font-size: 1.375rem;
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
@@ -74,6 +77,13 @@
   row-gap: var(--space-1);
   justify-content: start;
   align-items: baseline;
+  /* Stretch to the headline's full height so the table's vertical range runs from the top
+     of the label to the bottom of the amount, then centre the two rows inside it: the pair
+     stays tight (`row-gap`) and sits in the middle of that range rather than being pulled
+     apart to its edges. `.allowed`'s `align-items: flex-end` still governs the wrapped
+     layout, where the table sits on its own line under the headline. */
+  align-self: stretch;
+  align-content: center;
   white-space: nowrap;
   font-size: 0.6875rem;
 }
@@ -101,11 +111,11 @@
    just enough width to keep both on one row instead. */
 @media (max-width: 400px) {
   .allowed__amount {
-    font-size: 1.3rem;
+    font-size: 1.15rem;
   }
 
   .allowed__label {
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
   }
 
   .allowed__stats {
