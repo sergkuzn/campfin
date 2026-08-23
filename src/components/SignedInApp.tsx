@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { downloadCsv, downloadJson } from '../db/download'
+import { downloadCsv } from '../db/download'
 import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
@@ -10,18 +10,19 @@ import { useViewHistory } from '../hooks/useViewHistory'
 import { computeBurn, emptyBurn } from '../lib/burn'
 import { campWindow } from '../lib/camps'
 import { todayIso } from '../lib/dates'
-import { buildCampExport, exportFileName } from '../lib/exportJson'
+import { exportFileName } from '../lib/exportFile'
 import { isCampAdmin, memberCount } from '../lib/members'
 import { type CustodyFocus, custodyReading } from '../lib/movements'
 import { depositPools, everydayPool, summarisePools } from '../lib/pools'
+import { buildReport } from '../lib/report'
 import { computeSettlement } from '../lib/settlement'
 import { CampDashboard } from './CampDashboard'
 import { CampList } from './CampList'
 import { CampSettingsScreen } from './CampSettingsScreen'
+import { FinancialReport } from './FinancialReport'
 import { IncomeSetup } from './IncomeSetup'
 import { MovementsScreen } from './MovementsScreen'
 import { ReceiptsScreen } from './ReceiptsScreen'
-import { SettlementSheet } from './SettlementSheet'
 
 /**
  * Every screen, no router. `View` is a discriminated union rather than two independent
@@ -37,7 +38,7 @@ type View =
   // filter from it once and owns the chips from then on.
   | { screen: 'receipts'; campId: string; poolId: string | null }
   | { screen: 'movements'; campId: string; focus: CustodyFocus }
-  | { screen: 'settlement'; campId: string }
+  | { screen: 'report'; campId: string }
   | { screen: 'settings'; campId: string }
 
 type Props = {
@@ -103,8 +104,8 @@ export function SignedInApp({ session }: Props) {
   // saving a receipt outside them.
   const campSpan = useMemo(() => campWindow(blocks), [blocks])
 
-  // What goes back at the end. Derived from the same summaries as the bars, so the
-  // dashboard headline and the sheet behind it can never quote different totals.
+  // What goes back at the end, floored per pool. Derived from the same summaries as the
+  // bars, so the dashboard headline and the report behind it cannot quote different totals.
   const settlement = useMemo(
     () =>
       computeSettlement({
@@ -115,6 +116,20 @@ export function SignedInApp({ session }: Props) {
         moneyHolder: openCamp?.moneyHolder,
       }),
     [summaries, blocks, expenses.expenses, movements.movements, openCamp],
+  )
+
+  // The same figures read as a statement: income, expenses, and the difference between
+  // them. Separate from the settlement because the two answer different questions — this
+  // one balances to the cent, that one floors each pool before transferring anything back.
+  const report = useMemo(
+    () =>
+      buildReport({
+        summaries,
+        blocks,
+        expenses: expenses.expenses,
+        movements: movements.movements,
+      }),
+    [summaries, blocks, expenses.expenses, movements.movements],
   )
 
   // One clock read per render, shared by the status pill, the burn math and the chart's
@@ -159,20 +174,7 @@ export function SignedInApp({ session }: Props) {
     navigate({ screen: 'list' }, 'replace')
   }
 
-  const handleExportJson = () => {
-    if (openCamp === undefined) return
-    const exportedAt = new Date().toISOString()
-    const dump = buildCampExport(
-      openCamp,
-      { pools, sources, blocks },
-      expenses.expenses,
-      movements.movements,
-      exportedAt,
-    )
-    downloadJson(exportFileName(openCamp, exportedAt, 'json'), JSON.stringify(dump, null, 2))
-  }
-
-  // The sheet builds the CSV text, because the column labels are its business; the
+  // The report builds the CSV text, because the column labels are its business; the
   // filename and the download are the app's.
   const handleExportCsv = (text: string) => {
     if (openCamp === undefined) return
@@ -221,15 +223,15 @@ export function SignedInApp({ session }: Props) {
     )
   }
 
-  if (view.screen === 'settlement') {
+  if (view.screen === 'report') {
     return (
-      <SettlementSheet
+      <FinancialReport
         camp={openCamp}
+        report={report}
         settlement={settlement}
         expenses={expenses.expenses}
         summaries={summaries}
         onBack={goBack}
-        onExportJson={handleExportJson}
         onExportCsv={handleExportCsv}
       />
     )
@@ -269,13 +271,12 @@ export function SignedInApp({ session }: Props) {
       error={error ?? income.error ?? expenses.error ?? movements.error}
       hasExpenses={expenses.expenses.length > 0}
       custody={custody}
-      settlement={settlement}
       onBack={goBack}
       onOpenIncome={() => navigate({ screen: 'income', campId: openCamp.id })}
       onChangeHolder={(name: string) => setMoneyHolder(openCamp.id, name)}
       onOpenReceipts={(poolId) => navigate({ screen: 'receipts', campId: openCamp.id, poolId })}
       onOpenMovements={(focus) => navigate({ screen: 'movements', campId: openCamp.id, focus })}
-      onOpenSettlement={() => navigate({ screen: 'settlement', campId: openCamp.id })}
+      onOpenReport={() => navigate({ screen: 'report', campId: openCamp.id })}
       onOpenSettings={() => navigate({ screen: 'settings', campId: openCamp.id })}
     />
   )

@@ -54,10 +54,3 @@
 
 /* The number the whole camp ends on. Big, because it is the one figure that gets typed
    into a transfer form. */
-.dashboard__to-return {
-  margin: var(--space-2) 0 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}

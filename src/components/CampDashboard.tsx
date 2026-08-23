@@ -1,10 +1,9 @@
 import './CampDashboard.css'
-import { useFormat, useT } from '../i18n'
+import { useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus, isCampSetUp } from '../lib/camps'
 import type { CustodyFocus, CustodyReading } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
-import type { Settlement } from '../lib/settlement'
 import type { Camp } from '../lib/types'
 import { AllowedToday } from './AllowedToday'
 import { BurnChart } from './BurnChart'
@@ -32,8 +31,6 @@ type Props = {
   hasExpenses: boolean
   /** Cash held rather than spent: the deposits and the participation fees. */
   custody: CustodyReading
-  /** The end-of-camp reading. Only its total shows here; the sheet explains it. */
-  settlement: Settlement
   onBack: () => void
   onOpenIncome: () => void
   /** Names the money holder from the setup checklist. A name only: the wallet can change
@@ -44,7 +41,7 @@ type Props = {
   onOpenReceipts: (poolId: string | null) => void
   /** Opens the movements screen on one half of the custody money. */
   onOpenMovements: (focus: CustodyFocus) => void
-  onOpenSettlement: () => void
+  onOpenReport: () => void
   onOpenSettings: () => void
 }
 
@@ -60,17 +57,15 @@ export function CampDashboard({
   error,
   hasExpenses,
   custody,
-  settlement,
   onBack,
   onOpenIncome,
   onChangeHolder,
   onOpenReceipts,
   onOpenMovements,
-  onOpenSettlement,
+  onOpenReport,
   onOpenSettings,
 }: Props) {
   const t = useT()
-  const format = useFormat()
 
   // Every camp has an everyday pool, so "nothing here yet" means no *income*, not no pools.
   const funded = summaries.some((summary) => summary.sources.length > 0)
@@ -192,12 +187,12 @@ export function CampDashboard({
       </SlotCard>
 
       <SlotCard
-        title={t.settlement.toReturn}
-        action={t.settlement.open}
-        onOpen={onOpenSettlement}
-        filled={settlement.toReturnCents > 0}
+        title={t.report.title}
+        action={t.report.open}
+        onOpen={onOpenReport}
+        filled={funded || hasExpenses}
       >
-        <p className="dashboard__to-return">{format.euros(settlement.toReturnCents)}</p>
+        <p className="slot-card__hint">{t.report.hint}</p>
       </SlotCard>
     </div>
   )

@@ -1,0 +1,218 @@
+.report {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+}
+
+.report__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.report__title {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.report__camp {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Each table is its own card: three statements, not one long list of numbers. */
+.report__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  /* The three tables are read as one statement, so none of them may be split across a
+     printed page halfway down. */
+  break-inside: avoid;
+}
+
+.report__section-title {
+  margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--border);
+  font-size: 1rem;
+}
+
+.report__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.report__table th {
+  text-align: left;
+  font-weight: 600;
+}
+
+.report__table thead th {
+  padding-bottom: var(--space-1);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.report__table th,
+.report__table td {
+  padding: var(--space-2) 0;
+  vertical-align: top;
+}
+
+/* A hairline under every item row: on a long table it is what carries the eye from a name
+   on the left to its amount on the right. Dotted and faint, so the solid subtotal rules
+   still read as the structure. */
+.report__table tbody th,
+.report__table tbody td {
+  padding-top: var(--space-1);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px dotted var(--border);
+}
+
+/* A heading inside the table body — "Cash advance", "Participation fee". It introduces the
+   rows under it rather than closing anything off, so it carries no rule of its own. */
+.report__table .report__group th {
+  padding-top: var(--space-4);
+  border-bottom: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+/* The first group heading sits right under the column headings and needs no extra air. */
+.report__table tbody tr:first-child.report__group th {
+  padding-top: var(--space-2);
+}
+
+.report__table .report__subtotal th,
+.report__table .report__subtotal td {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.report__amount {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums; /* digits line up column-wise */
+}
+
+/* The table's own total, set apart from the subtotals above it by a double rule. */
+.report__table tfoot th,
+.report__table tfoot td {
+  padding-top: var(--space-3);
+  border-top: 3px double var(--fg);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.report__empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* Warnings are part of the report, not footnotes: they say the cash rest is not final. */
+.report__warnings {
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--warn);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background-color: color-mix(in srgb, var(--warn) 10%, transparent);
+}
+
+.report__warnings-title {
+  margin: 0 0 var(--space-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.report__warning-list {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: 0.875rem;
+}
+
+.report__warning-list li + li {
+  margin-top: var(--space-1);
+}
+
+.report__actions {
+  display: flex;
+  flex-wrap: wrap; /* three buttons still fit a 320 px phone, on two lines if need be */
+  gap: var(--space-2);
+}
+
+.report__action {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.report__disclaimer {
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Printed, the report is the deliverable: black on white, no buttons, no app chrome. */
+@media print {
+  .report__hide-print {
+    display: none;
+  }
+
+  .report {
+    color: #000;
+  }
+
+  /* On paper the card borders are noise; the rules inside each table already separate
+     them, and a blank band between sections does the rest. */
+  .report__section {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .report__warnings {
+    border: 1px solid #000;
+    border-radius: 0;
+    background: none;
+  }
+
+  .report__section-title,
+  .report__table tbody th,
+  .report__table tbody td,
+  .report__table .report__subtotal th,
+  .report__table .report__subtotal td {
+    border-color: #999;
+  }
+
+  .report__table tfoot th,
+  .report__table tfoot td {
+    border-color: #000;
+  }
+
+  .report__disclaimer {
+    border-color: #999;
+    color: #000;
+  }
+}

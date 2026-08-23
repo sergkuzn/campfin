@@ -5,7 +5,6 @@ import { en } from '../i18n/en'
 import { I18nProvider } from '../i18n/I18nProvider'
 import { emptyBurn } from '../lib/burn'
 import type { PoolSummary } from '../lib/pools'
-import type { Settlement } from '../lib/settlement'
 import type { Camp } from '../lib/types'
 import { CampDashboard } from './CampDashboard'
 
@@ -60,21 +59,12 @@ const depositPool: PoolSummary = {
   remainingCents: 20_000,
 }
 
-const settlement: Settlement = {
-  receivedTotalCents: 0,
-  spentTotalCents: 0,
-  toReturnCents: 0,
-  rows: [],
-  warnings: [],
-  pools: [],
-}
-
 function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboard>> = {}) {
   const onOpenIncome = vi.fn()
   const onOpenSettings = vi.fn()
   const onOpenReceipts = vi.fn()
   const onOpenMovements = vi.fn()
-  const onOpenSettlement = vi.fn()
+  const onOpenReport = vi.fn()
   const onChangeHolder = vi.fn()
   const user = userEvent.setup()
   render(
@@ -88,13 +78,12 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
         error={null}
         hasExpenses={false}
         custody={{ statuses: [], feeHeldCents: 0, feeCount: 0 }}
-        settlement={settlement}
         onBack={vi.fn()}
         onOpenIncome={onOpenIncome}
         onChangeHolder={onChangeHolder}
         onOpenReceipts={onOpenReceipts}
         onOpenMovements={onOpenMovements}
-        onOpenSettlement={onOpenSettlement}
+        onOpenReport={onOpenReport}
         onOpenSettings={onOpenSettings}
         {...props}
       />
@@ -105,7 +94,7 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
     onOpenSettings,
     onOpenReceipts,
     onOpenMovements,
-    onOpenSettlement,
+    onOpenReport,
     onChangeHolder,
     user,
   }
@@ -125,7 +114,7 @@ describe('CampDashboard', () => {
     // The blocks that would all be empty stay away until there is something in them.
     expect(screen.queryByText(en.dashboard.spending)).not.toBeInTheDocument()
     expect(screen.queryByText(en.burn.title)).not.toBeInTheDocument()
-    expect(screen.queryByText(en.settlement.toReturn)).not.toBeInTheDocument()
+    expect(screen.queryByText(en.report.title)).not.toBeInTheDocument()
   })
 
   it('keeps a funded camp on the checklist while nobody holds the money', () => {
@@ -174,7 +163,7 @@ describe('CampDashboard', () => {
     renderDashboard({ summaries: [fundedPool] })
 
     expect(screen.getByText(en.dashboard.spending)).toBeInTheDocument()
-    expect(screen.getByText(en.settlement.toReturn)).toBeInTheDocument()
+    expect(screen.getByText(en.report.title)).toBeInTheDocument()
     expect(screen.queryByText(en.setup.title)).not.toBeInTheDocument()
   })
 
@@ -246,7 +235,7 @@ describe('CampDashboard', () => {
   })
 
   it('opens each block’s screen from its title row', async () => {
-    const { user, onOpenReceipts, onOpenMovements, onOpenSettlement } = renderDashboard({
+    const { user, onOpenReceipts, onOpenMovements, onOpenReport } = renderDashboard({
       summaries: [fundedPool],
     })
 
@@ -261,8 +250,8 @@ describe('CampDashboard', () => {
     await user.click(slotHeader(en.custody.fee.open))
     expect(onOpenMovements).toHaveBeenLastCalledWith('fee')
 
-    await user.click(slotHeader(en.settlement.open))
-    expect(onOpenSettlement).toHaveBeenCalledOnce()
+    await user.click(slotHeader(en.report.open))
+    expect(onOpenReport).toHaveBeenCalledOnce()
   })
 
   it('leaves the chart block with no way in — it has no screen of its own', () => {

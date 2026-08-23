@@ -557,57 +557,61 @@ export const en = {
   },
 
   /**
-   * The end-of-camp sheet. Every row says *why* an amount is on it — the sheet is read once,
-   * by someone who has to justify the transfer back to the organisation.
+   * The end-of-camp report: income, expenses, and the difference between them. Read once,
+   * by someone who has to justify the transfer back to the organisation — so every
+   * difference line says *why* it is on the report.
    */
-  settlement: {
-    title: 'Settle up',
+  report: {
+    title: 'Financial report',
     back: '← Back to camp',
-    open: 'Open the settlement sheet',
-    /** The dashboard block's title, above the figure the sheet explains. */
-    toReturn: 'To return',
-    intro: 'What goes back, and where each amount comes from.',
-    columnCategory: 'Category',
+    open: 'Open the financial report',
+    /** On the dashboard card, in place of a figure: the report is three tables, and no one
+     *  of them is the headline. */
+    hint: 'Income, expenses and what is left over.',
+    /** Column headings, shared by all three tables. */
+    columnItem: 'Item',
     columnAmount: 'Amount',
-    columnWhy: 'Why',
-    received: 'Received',
-    spent: 'Spent',
-    total: 'Total to return',
-    empty: 'Nothing goes back — every pot is spent to the cent.',
-    rows: {
-      poolUnspent: (pool: string) => `${pool} — unspent`,
-      poolUnusable: (pool: string) => `${pool} — not ours to spend`,
-      depositReturn: (pool: string) => `Deposit ${pool} — coming back`,
-      fee: 'Participation fee to hand over',
+    income: {
+      title: 'Income',
+      /** Everything the organisation sent: the daily grant, the fixed grants, the deposits. */
+      advance: 'Cash advance',
+      advanceTotal: 'Cash advance total',
+      fee: 'Participation fee',
+      feeTotal: 'Participation fee total',
+      total: 'Total income',
+      empty: 'No income recorded yet.',
     },
-    why: {
-      poolUnspent: 'What arrived, minus what was spent from it',
-      poolUnusable: 'Granted for people who never came',
-      depositReturn: 'The deposit, minus what was kept for damage',
-      fee: 'Collected from participants, passed on to the organisation',
+    expenses: {
+      title: 'Expenses',
+      /** A receipt whose pool was deleted: still money out, so still on the report. */
+      unknownPool: 'Deleted pool',
+      total: 'Total expenses',
+      empty: 'No receipts yet.',
     },
-    warningsTitle: 'Check these before you transfer',
-    warnings: {
-      depositAtVendor: (pool: string, amount: string) =>
-        `${amount} of ${pool} is still with the counterparty — get it back first.`,
-      poolOverspent: (pool: string, amount: string) => `${pool} is ${amount} over budget.`,
-      overAttended: (pool: string, amount: string) =>
-        `${pool}: ${amount} more was used than granted — more people came than were funded.`,
-      /** Not money for the organisation — an IOU between the leaders. It still belongs on
-       *  the sheet: until it is settled, the cash box holds somebody else's money. */
-      owedToPayer: (name: string, amount: string) =>
-        `${name} is still owed ${amount} for receipts they paid themselves.`,
+    difference: {
+      title: 'Cash rest',
+      total: 'Total cash rest',
+      empty: 'Nothing left over — every pot is spent to the cent.',
+      rows: {
+        poolUnspent: (pool: string) => `${pool} — unspent`,
+        poolUnusable: (pool: string) => `${pool} — not eligible for spending`,
+        depositReturn: (pool: string) => `Deposit ${pool} — to be refunded`,
+        fee: 'Participation fee to hand over',
+        orphanSpent: 'Spent from a deleted pool',
+      },
     },
-    exportJson: '⤓ Export JSON',
+    /** The report is arithmetic over what was typed in, which is not the same as what
+     *  happened — so it says so, on screen and in print. */
+    disclaimer:
+      'These figures are only as good as what was entered in the app, and not every accounting case is covered yet — check the report against your receipts and bank statements before filling the forms.',
     exportCsv: '⤓ Export CSV',
     print: '⎙ Print',
-    /** Column headings inside the CSV file, for whoever opens it in a spreadsheet. */
+    /** Headings inside the CSV file, for whoever opens it in a spreadsheet. */
     csv: {
-      category: 'Category',
+      item: 'Item',
       amount: 'Amount (EUR)',
-      why: 'Why',
       receiptsTitle: 'Receipts',
-      /** First column, so a printed sheet can be read against the numbered paper folder. */
+      /** First column, so a printed report can be read against the numbered paper folder. */
       number: 'No.',
       date: 'Date',
       pool: 'Pool',
@@ -618,6 +622,26 @@ export const en = {
        *  fronted the money. */
       repaid: 'Repaid',
       repaidNo: 'no',
+    },
+  },
+
+  /**
+   * What actually goes back to the organisation: each pool floored on its own, so an
+   * overspend in one pot cannot eat another's leftover. The dashboard headline and the
+   * checks under the report's difference table.
+   */
+  settlement: {
+    warningsTitle: 'Check these',
+    warnings: {
+      depositAtVendor: (pool: string, amount: string) =>
+        `${amount} of ${pool} is still with the counterparty — get it back first.`,
+      poolOverspent: (pool: string, amount: string) => `${pool} is ${amount} over budget.`,
+      overAttended: (pool: string, amount: string) =>
+        `${pool}: ${amount} more was used than granted — more people came than were funded.`,
+      /** Not money for the organisation — an IOU between the leaders. It still belongs on
+       *  the report: until it is settled, the cash box holds somebody else's money. */
+      owedToPayer: (name: string, amount: string) =>
+        `${name} is still owed ${amount} for receipts they paid themselves.`,
     },
   },
 }

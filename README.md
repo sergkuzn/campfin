@@ -16,8 +16,8 @@ them in step. No personal data is stored — only counts, days, amounts and cate
   against real spending.
 - **Deposits & fees** — a deposit handed over and returned, and participation fees held for
   the organisation. Neither consumes budget.
-- **Settle up** — a breakdown table that explains what goes back, exportable as JSON (a
-  full backup, restorable) or CSV, and printable for accounting.
+- **Financial report** — income, expenses and the cash rest, each as its own table, with the
+  receipts itemised. Exportable as CSV and printable for accounting.
 
 Every amount is stored as **integer cents**; euros exist only at the display edge.
 
@@ -131,9 +131,9 @@ is back online.
 ## Data safety
 
 Everything lives in InstantDB's cloud copy plus each phone's IndexedDB cache. iOS evicts
-IndexedDB for apps it considers unused, so the habit that matters is **Export JSON from the
-settlement sheet** at the end of camp. That file restores as a complete camp through
-_Restore from a file_ on the camp list.
+IndexedDB for apps it considers unused, but the cloud copy survives that — a re-installed
+app signs in and pulls the camp back. The report's **Export CSV** is a record for
+accounting, not a restorable backup: it holds the numbers, not the camp.
 
 ## Licence
 
