@@ -110,14 +110,6 @@ export const en = {
     create: 'Create',
     empty: 'No camps yet. Create one above.',
     nameTaken: (name: string) => `A camp named "${name}" already exists.`,
-    /** Restoring an exported dump. It always lands as a *new* camp, never a merge. */
-    import: '⤒ Restore from a file',
-    importHint: 'Reads a JSON file exported from campfin and adds it as a new camp.',
-    importFailed: {
-      json: 'That file is not readable — pick the .json file campfin exported.',
-      format: 'That file is not a campfin export.',
-      version: 'That file was written by a newer version of campfin. Update this app first.',
-    },
     /** Only the dated statuses: an undated camp shows no pill at all. */
     status: {
       upcoming: 'Upcoming',

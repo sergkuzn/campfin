@@ -57,22 +57,6 @@ export function campNameExists(camps: Camp[], name: string, excludeCampId?: stri
   return camps.some((camp) => camp.name === name && camp.id !== excludeCampId)
 }
 
-/**
- * A name no other camp holds: "Moorwiese" → "Moorwiese (2)" → "Moorwiese (3)". Used when
- * importing a dump next to the camp it came from, where refusing the write would be worse
- * than a suffix — the user asked for a copy and can rename it afterwards.
- */
-export function uniqueCampName(camps: Camp[], name: string): string {
-  if (!campNameExists(camps, name)) return name
-  // Bounded by the number of camps: with n camps at most n suffixes can be taken, so the
-  // n+1st is always free and this cannot loop forever.
-  for (let suffix = 2; suffix <= camps.length + 1; suffix++) {
-    const candidate = `${name} (${suffix})`
-    if (!campNameExists(camps, candidate)) return candidate
-  }
-  return name
-}
-
 /** Newest first. Must not mutate the input — `.sort()` sorts in place. */
 export function sortCampsByRecent(camps: Camp[]): Camp[] {
   return camps.toSorted((a, b) => b.createdAt - a.createdAt)

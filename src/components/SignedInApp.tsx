@@ -57,7 +57,6 @@ export function SignedInApp({ session }: Props) {
     isLoading,
     error,
     createCamp,
-    importCamp,
     renameCamp,
     setMoneyHolder,
     deleteCamp,
@@ -180,14 +179,6 @@ export function SignedInApp({ session }: Props) {
     downloadCsv(exportFileName(openCamp, new Date().toISOString(), 'csv'), text)
   }
 
-  const handleImport = (text: string): boolean => {
-    const camp = importCamp(text)
-    // Null means the file was refused; the reason is already in `error` on the list.
-    if (camp === null) return false
-    navigate({ screen: 'dashboard', campId: camp.id })
-    return true
-  }
-
   if (openCamp === undefined) {
     return (
       <CampList
@@ -198,7 +189,6 @@ export function SignedInApp({ session }: Props) {
         error={error}
         onOpen={handleOpen}
         onCreate={handleCreate}
-        onImport={handleImport}
       />
     )
   }
