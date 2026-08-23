@@ -2,12 +2,12 @@
   <!-- A tent with a euro coin in front of it: camp + money, the two halves of the app.
        Every shape is a path — no <text> — so the euro sign renders identically on both
        phones instead of depending on whatever font the OS hands the SVG. Colours are the
-       literal hex of the app's --ok / --warn tokens and the PWA theme_color; an SVG here
+       literal hex of the app's ok/warn custom-property tokens and the PWA theme_color; an SVG here
        cannot read the CSS custom properties defined in the document. -->
   <rect width="64" height="64" rx="14" fill="#0f172a"/>
   <path d="M25 10 L45 44 H5 Z" fill="#22c55e"/>
   <path d="M25 21 L34 44 H16 Z" fill="#0f172a"/>
-  <rect x="3" y="43" width="42" height="3.5" rx="1.75" fill="#334155"/>
+  <rect x="3" y="41.5" width="42" height="6" rx="3" fill="#334155"/>
   <circle cx="45" cy="44" r="14" fill="#b45309"/>
   <circle cx="45" cy="43.4" r="13.1" fill="#f59e0b"/>
   <g fill="none" stroke="#0f172a" stroke-width="2.95" stroke-linecap="round">

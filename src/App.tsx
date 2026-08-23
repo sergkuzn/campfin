@@ -33,7 +33,10 @@ export default function App() {
   return (
     <main className="app">
       <header className="app__header">
-        <h1 className="app__title">{t.app.title}</h1>
+        <div className="app__brand">
+          <img className="app__logo" src="/favicon.svg" alt="" width={32} height={32} />
+          <h1 className="app__title">{t.app.title}</h1>
+        </div>
         <p className="app__subtitle">{t.app.subtitle}</p>
         {session !== null && (
           <p className="app__session">
