@@ -18,6 +18,7 @@
 
 import { i } from '@instantdb/react'
 import type {
+  AccountRole,
   IncomeKind,
   MemberRole,
   MovementKind,
@@ -33,6 +34,18 @@ const _schema = i.schema({
     // $users is managed by Instant's auth; declaring it here only types the email.
     $users: i.entity({
       email: i.string().unique().indexed(),
+    }),
+
+    // Permission to start camps, handed out one person at a time. Not a field on $users:
+    // that namespace is Instant's, and a grant has to be writable before the person it
+    // names has signed in.
+    accounts: i.entity({
+      // Unique so one address cannot collect two grants, and indexed because the admin
+      // screen looks a person up by it.
+      email: i.string().unique().indexed(),
+      role: i.string<AccountRole>().indexed(),
+      campQuota: i.number(),
+      grantedAt: i.number(),
     }),
 
     camps: i.entity({
@@ -132,6 +145,27 @@ const _schema = i.schema({
   },
 
   links: {
+    /**
+     * The grant, attached to the person it grants. Cardinality one-to-one, so nobody can
+     * end up holding two quotas.
+     *
+     * This link is what makes the whole model enforceable: a permission rule can only walk
+     * links, and `auth.ref('$user.account.role')` is how a rule asks "what may the caller
+     * do?" without the client being able to answer for itself.
+     */
+    accountUser: {
+      forward: { on: 'accounts', has: 'one', label: 'user', onDelete: 'cascade' },
+      reverse: { on: '$users', has: 'one', label: 'account' },
+    },
+    /**
+     * Who started a camp. The camp-creation quota is the *size* of this link from the
+     * caller's side, which is the only way a rule can count anything — no cascade in
+     * either direction, since losing a grant must never take a camp's money with it.
+     */
+    campCreator: {
+      forward: { on: 'camps', has: 'one', label: 'creator' },
+      reverse: { on: '$users', has: 'many', label: 'createdCamps' },
+    },
     // `onDelete: 'cascade'` sits on the row's side of each link: deleting the camp on the
     // other end takes the row with it.
     membershipCamp: {

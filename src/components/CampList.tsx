@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import './CampList.css'
+import type { CampAccess } from '../hooks/useAccount'
 import { useT } from '../i18n'
 import { type CampWindow, campStatus, campWindow, sortCampsByRecent } from '../lib/camps'
 import { todayIso } from '../lib/dates'
@@ -38,13 +39,31 @@ type Props = {
   blocks: PerDiemBlock[]
   /** Needed by the join form: a membership is always created for the user joining. */
   userId: string
+  /** What this account may start. Decides whether the create form appears at all. */
+  access: CampAccess
+  /** Admin only: whether the list is currently showing every camp in the database. */
+  showAllCamps: boolean
   isLoading: boolean
   error: string | null
   onOpen: (campId: string) => void
   onCreate: (name: string) => boolean
+  onToggleAllCamps: (showAll: boolean) => void
+  onOpenAdmin: () => void
 }
 
-export function CampList({ camps, blocks, userId, isLoading, error, onOpen, onCreate }: Props) {
+export function CampList({
+  camps,
+  blocks,
+  userId,
+  access,
+  showAllCamps,
+  isLoading,
+  error,
+  onOpen,
+  onCreate,
+  onToggleAllCamps,
+  onOpenAdmin,
+}: Props) {
   const t = useT()
   // Reading the clock at the edge, then passing it down: `campStatus` stays pure.
   const today = todayIso()
@@ -89,7 +108,34 @@ export function CampList({ camps, blocks, userId, isLoading, error, onOpen, onCr
 
   return (
     <div className="camp-list">
-      <CreateCampForm error={error} onCreate={onCreate} />
+      {access.isAdmin && (
+        <div className="camp-list__admin">
+          <button className="camp-list__admin-link" type="button" onClick={onOpenAdmin}>
+            {t.admin.open}
+          </button>
+          <label className="camp-list__admin-toggle">
+            <input
+              type="checkbox"
+              checked={showAllCamps}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                onToggleAllCamps(event.target.checked)
+              }
+            />
+            {t.admin.showAllCamps}
+          </label>
+        </div>
+      )}
+
+      {/* No grant, no create form. The join form below stays either way: being invited to
+          somebody else's camp is not something this app's owner has to approve. */}
+      {access.account === null ? (
+        <section className="camp-list__locked">
+          <h2 className="camp-list__locked-title">{t.access.lockedTitle}</h2>
+          <p className="camp-list__locked-body">{t.access.lockedBody}</p>
+        </section>
+      ) : (
+        <CreateCampForm error={error} campsLeft={access.campsLeft} onCreate={onCreate} />
+      )}
 
       {renderCamps()}
 

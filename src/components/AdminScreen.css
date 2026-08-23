@@ -1,0 +1,184 @@
+.admin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.admin__title {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+/* The address field and its button, side by side until the width runs out. */
+.admin__grant {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.admin__input {
+  flex: 1;
+  min-width: 0; /* without this a flex item refuses to shrink below its content */
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background-color: var(--bg);
+  color: inherit;
+  font: inherit;
+}
+
+.admin__grant-button {
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--space-2);
+  background-color: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin__grant-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin__empty {
+  margin: 0;
+  padding: var(--space-4);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.admin__people,
+.admin__camps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One person per row: address on the left, whatever can be done about them on the right.
+   Wraps rather than squeezing — a quota stepper next to a long address needs the width. */
+.admin__person {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.admin__person:last-child {
+  border-bottom: 0;
+}
+
+.admin__person-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.admin__email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9375rem;
+}
+
+.admin__state {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.admin__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin__step {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background: none;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin__step:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.admin__quota {
+  min-width: 6.5rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.admin__action {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--space-2);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.admin__action--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* The whole row is the button, as on the camp list. */
+.admin__camp {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin__camp:hover {
+  background-color: var(--bg);
+}
+
+.admin__camps li:last-child .admin__camp {
+  border-bottom: 0;
+}
+
+.admin__camp-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin__camp-code {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}

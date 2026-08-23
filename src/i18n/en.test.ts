@@ -33,10 +33,16 @@ describe('the English dictionary', () => {
     expect(en.pools.deleteSources(2, '€1')).toContain('2 income sources ')
     expect(en.receipts.count(1)).toBe('1 receipt')
     expect(en.receipts.count(3)).toBe('3 receipts')
+    expect(en.admin.quotaLabel(1)).toBe('1 camp allowed')
+    expect(en.admin.quotaLabel(2)).toBe('2 camps allowed')
+    expect(en.access.left(1)).toContain('1 more camp ')
+    expect(en.access.left(3)).toContain('3 more camps ')
   })
 
   it('interpolates its arguments rather than dropping them', () => {
     expect(en.camps.nameTaken('Moorwerder')).toContain('Moorwerder')
+    expect(en.admin.revokeConfirm('a@b.com')).toContain('a@b.com')
+    expect(en.admin.alreadyGranted('a@b.com')).toContain('a@b.com')
     expect(en.campSettings.deleteConfirm('Moorwerder')).toContain('Moorwerder')
     expect(en.pools.sourceDeleteLine('€20,00', 'Everyday')).toContain('€20,00')
     expect(en.pools.sourceDeleteLine('€20,00', 'Everyday')).toContain('Everyday')

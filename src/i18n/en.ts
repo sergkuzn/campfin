@@ -125,6 +125,44 @@ export const en = {
     },
   },
 
+  /** What a signed-in account may do app-wide: start camps, and how many more. Joining a
+   *  camp by code needs none of this, so nothing here ever blocks an invited co-leader. */
+  access: {
+    lockedTitle: 'Your account is not activated yet',
+    lockedBody:
+      'You can join any camp whose code you have been given. Starting a camp of your own needs to be switched on for you.',
+    left: (n: number) => `${n} more ${n === 1 ? 'camp' : 'camps'} you can start.`,
+    usedUp: 'You have started as many camps as your account allows. Ask for a higher limit.',
+  },
+
+  admin: {
+    open: 'Admin',
+    title: 'Admin',
+    back: '← All camps',
+    /** On the camp list, not in here: it changes what that list shows. */
+    showAllCamps: 'Show every camp',
+    peopleTitle: 'People',
+    peopleEmpty: 'Nobody has signed in yet.',
+    grantLabel: 'Email to activate',
+    grantPlaceholder: 'them@example.com',
+    grant: 'Activate',
+    badEmail: 'That does not look like an email address.',
+    alreadyGranted: (email: string) => `${email} is already activated.`,
+    /** Someone with a grant written to their address who has never signed in. */
+    pending: 'Invited — not signed in yet',
+    notActivated: 'Not activated',
+    adminBadge: 'Admin — no limit',
+    quotaLabel: (n: number) => `${n} ${n === 1 ? 'camp' : 'camps'} allowed`,
+    quotaUp: 'Allow one more camp',
+    quotaDown: 'Allow one camp fewer',
+    revoke: 'Revoke',
+    revokeTitle: 'Revoke access',
+    revokeConfirm: (email: string) =>
+      `Revoke ${email}? They keep every camp they are already in — this only stops them starting new ones.`,
+    campsTitle: (n: number) => `All camps (${n})`,
+    campsEmpty: 'No camps in the database.',
+  },
+
   dashboard: {
     back: '← All camps',
     receivedTotal: 'Received total',

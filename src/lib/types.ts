@@ -32,6 +32,34 @@ export type Camp = {
 export type MemberRole = 'admin' | 'editor'
 
 /**
+ * What an account may do *across the app*, as opposed to `MemberRole`, which only ever
+ * describes one camp. `leader` starts camps of their own up to a quota; `admin` runs the
+ * instance — sees every camp and hands out the grants.
+ */
+export type AccountRole = 'admin' | 'leader'
+
+/**
+ * Permission to start camps at all: the row that turns a signed-in stranger into a leader.
+ *
+ * Signing up cannot be closed — an invited co-leader has to be able to create an account
+ * before anyone knows who they are — so the gate sits here instead. No account row means
+ * the app is inert: you may still join a camp whose code you were given, which keeps
+ * inviting a co-leader a matter between the two leaders and nobody else.
+ *
+ * The email is the one address this app stores itself. It has to be: a grant can be
+ * written before that person has ever signed in, so there is no user row to read it from
+ * yet, and the admin screen has nothing else to name a person by.
+ */
+export type Account = {
+  id: string
+  email: string
+  role: AccountRole
+  /** How many camps this person may create. Ignored for `admin`, who is never metered. */
+  campQuota: number
+  grantedAt: number
+}
+
+/**
  * Who may see and edit a camp. No name, no email — a user id and a role, which is all the
  * permission rules need and all this app is allowed to know about a person.
  */

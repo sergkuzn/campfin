@@ -36,7 +36,13 @@ export function createCamp(args: CreateCampArgs): { camp: Camp; done: Promise<un
   const campId = id()
 
   const done = db.transact([
-    chunk(db.tx.camps[campId]).update({ name, joinCode, createdAt: now }),
+    chunk(db.tx.camps[campId])
+      .update({ name, joinCode, createdAt: now })
+      // The creator link is what the camp-creation quota is measured on: a permission rule
+      // cannot count rows, but it can take the size of a link from the caller's own row.
+      // Distinct from the admin membership below, which is about this camp; this is about
+      // how many camps one person has started.
+      .link({ creator: userId }),
     chunk(db.tx.pools[id()])
       // The camp's first pool takes the first hue; every pool added later picks the next
       // one nobody is using.

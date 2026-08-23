@@ -10,12 +10,22 @@
  * `importJson.ts` face the same problem, so they share one definition of it.
  */
 
+import { isAccount } from './accounts'
 import { isCamp } from './camps'
 import { isExpense } from './expenses'
 import { isIncomeSource, isMovement, isPerDiemBlock, isPool } from './income'
 import { isMembership } from './members'
 import { isPoolColor } from './poolColors'
-import type { Camp, Expense, IncomeSource, Membership, Movement, PerDiemBlock, Pool } from './types'
+import type {
+  Account,
+  Camp,
+  Expense,
+  IncomeSource,
+  Membership,
+  Movement,
+  PerDiemBlock,
+  Pool,
+} from './types'
 
 /**
  * An optional attribute nobody has set can come back as `null`, while the domain types
@@ -46,6 +56,13 @@ export function toCamp(row: unknown): Camp | null {
   if (!isCamp(value)) return null
   const { id, name, joinCode, moneyHolder, createdAt } = value
   return { id, name, joinCode, moneyHolder, createdAt }
+}
+
+export function toAccount(row: unknown): Account | null {
+  const value = withoutNulls(row)
+  if (!isAccount(value)) return null
+  const { id, email, role, campQuota, grantedAt } = value
+  return { id, email, role, campQuota, grantedAt }
 }
 
 export function toMembership(row: unknown): Membership | null {

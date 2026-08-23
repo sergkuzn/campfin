@@ -38,7 +38,12 @@ export type UseCamps = {
   clearError: () => void
 }
 
-export function useCamps(userId: string): UseCamps {
+/**
+ * @param allCamps drops the membership filter, for the admin's "every camp" switch. The
+ *   server still decides: `camps.view` returns the whole table to an admin account and
+ *   only your own camps to anyone else, so this widens the request, never the answer.
+ */
+export function useCamps(userId: string, allCamps = false): UseCamps {
   const t = useT()
   // Validation failures and rejected writes are a UI concern, not query state.
   const [error, setError] = useState<string | null>(null)
@@ -51,7 +56,20 @@ export function useCamps(userId: string): UseCamps {
     error: queryError,
     data,
   } = db.useQuery({
-    camps: { $: { where: { 'members.user.id': userId } }, members: {}, perDiemBlocks: {} },
+    camps: {
+      // One query shape for both modes, because a ternary over whole `where` objects makes
+      // the result a union that Instant's inference collapses to `never`. So the flag varies
+      // a value instead: the second branch is "every row that has an id" — all of them —
+      // with the switch on, and "every row that has none" — not one — with it off.
+      // The switch varies the *value*, not the shape of the clause: Instant's result type
+      // is inferred from the query object, and a ternary over whole `where` objects (or an
+      // `or` of two) makes it a union it collapses to `never`. So "every camp" is spelled
+      // as "every camp with a member", which every camp this app creates has — its author's
+      // membership is written in the same transaction.
+      $: { where: { 'members.user.id': allCamps ? { $isNull: false } : userId } },
+      members: {},
+      perDiemBlocks: {},
+    },
   })
 
   const camps = useMemo(() => mapRows(data?.camps, toCamp), [data])

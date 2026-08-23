@@ -1,5 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { downloadCsv } from '../db/download'
+import { useAccount } from '../hooks/useAccount'
+import { useAdmin } from '../hooks/useAdmin'
 import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
@@ -16,6 +18,7 @@ import { type CustodyFocus, custodyReading } from '../lib/movements'
 import { depositPools, everydayPool, summarisePools } from '../lib/pools'
 import { buildReport } from '../lib/report'
 import { computeSettlement } from '../lib/settlement'
+import { AdminScreen } from './AdminScreen'
 import { CampDashboard } from './CampDashboard'
 import { CampList } from './CampList'
 import { CampSettingsScreen } from './CampSettingsScreen'
@@ -32,6 +35,7 @@ import { ReceiptsScreen } from './ReceiptsScreen'
  */
 type View =
   | { screen: 'list' }
+  | { screen: 'admin' }
   | { screen: 'dashboard'; campId: string }
   | { screen: 'income'; campId: string }
   // `poolId` is where the receipt list *opens*, not a lasting setting: the screen seeds its
@@ -51,6 +55,13 @@ type Props = {
  * has to cope with "no user yet" would leak that state into every screen.
  */
 export function SignedInApp({ session }: Props) {
+  // What this account may do app-wide, as opposed to what it may do inside one camp.
+  const { access } = useAccount(session.userId)
+  // Admin only, and off by default: your own camps are the ones you came here for, so
+  // everyone else's stay behind a switch rather than burying them.
+  const [showAllCamps, setShowAllCamps] = useState(false)
+  const admin = useAdmin(access.isAdmin)
+
   const {
     camps,
     memberships,
@@ -62,7 +73,7 @@ export function SignedInApp({ session }: Props) {
     setMoneyHolder,
     deleteCamp,
     clearError,
-  } = useCamps(session.userId)
+  } = useCamps(session.userId, access.isAdmin && showAllCamps)
   // Backed by session history, so the phone's own back gesture steps up a screen exactly
   // as the ← buttons do. `navigate` replaces `setView` and takes the same values; the
   // callback clears any pending error whichever way the screen was left, so a rejected
@@ -75,8 +86,9 @@ export function SignedInApp({ session }: Props) {
 
   // `find` returns `Camp | undefined`; if the open camp was just deleted — by us, or by the
   // other leader mid-sync — we fall back to the list automatically, with no effect and no
-  // stale state to clean up.
-  const openCamp = view.screen === 'list' ? undefined : camps.find((c) => c.id === view.campId)
+  // stale state to clean up. `'campId' in view` narrows the union to the screens that have
+  // one, so adding a camp-less screen never needs this line touched again.
+  const openCamp = 'campId' in view ? camps.find((c) => c.id === view.campId) : undefined
   const openCampId = openCamp?.id ?? ''
 
   // Three queries per open camp: passing '' skips them entirely while the list is showing.
@@ -181,16 +193,35 @@ export function SignedInApp({ session }: Props) {
     downloadCsv(exportFileName(openCamp, new Date().toISOString(), 'csv'), text)
   }
 
+  if (view.screen === 'admin') {
+    return (
+      <AdminScreen
+        admin={admin}
+        onBack={goBack}
+        onOpenCamp={(campId) => {
+          // Another leader's camp is only in `camps` while the switch is on, so opening one
+          // from here turns it on: the dashboard reads the camp out of that same list.
+          setShowAllCamps(true)
+          navigate({ screen: 'dashboard', campId })
+        }}
+      />
+    )
+  }
+
   if (openCamp === undefined) {
     return (
       <CampList
         camps={camps}
         blocks={campBlocks}
         userId={session.userId}
+        access={access}
+        showAllCamps={showAllCamps}
         isLoading={isLoading}
         error={error}
         onOpen={handleOpen}
         onCreate={handleCreate}
+        onToggleAllCamps={setShowAllCamps}
+        onOpenAdmin={() => navigate({ screen: 'admin' })}
       />
     )
   }

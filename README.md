@@ -123,6 +123,14 @@ needed.
    `dist`.
 3. Set `VITE_INSTANT_APP_ID` and `VITE_APP_ENV` in the host's environment variables — the
    build reads them (see **Environments** above for the per-environment split).
+4. Sign in once, then insert your own admin grant by hand, once per app: in the InstantDB
+   dashboard's Explorer, add a row to `accounts` with your `email`, `role` set to `admin`,
+   any `campQuota`, a `grantedAt` timestamp, and link `user` to your `$users` row. Nothing
+   else can create it — `accounts.create` is admin-only, which is what stops an account
+   from granting itself. Everyone else is then activated from the app's **Admin** screen.
+
+Without step 4 nobody, including you, can create a camp: `camps.create` requires a grant.
+Joining an existing camp by its code keeps working regardless.
 
 Serve over HTTPS: the service worker (and therefore offline use) will not install
 otherwise. After the first visit the app runs offline; writes queue and sync when the phone
