@@ -3,19 +3,15 @@
        Every shape is a path — no <text> — so the euro sign renders identically on both
        phones instead of depending on whatever font the OS hands the SVG.
 
-       Drawn as one dark tile in both themes, the way a launcher icon is: an <img> cannot
-       read the page's custom properties, so it cannot follow the day/night toggle. The
-       hexes are therefore literal, and they are the night-theme values, because the tile
-       itself is dark and the shapes on it need the light end of each ramp.
-
-       The tile is the neutral-900 used for foreground ink rather than an off-palette
-       navy, which is what makes it work unchanged in both: in day mode it reads as one
-       more piece of ink beside the title, and in night mode it sinks into the page and
-       leaves the tent and coin floating. -->
-  <rect width="64" height="64" rx="14" fill="#171717"/>
-  <path d="M25 10 L45 44 H5 Z" fill="#4ade80"/>
+       No background tile: the shapes sit straight on whatever page is behind them. An
+       <img> cannot read the page's custom properties, so it cannot follow the day/night
+       toggle — the hexes below are therefore literal, chosen once rather than per theme,
+       and picked so the tent and the plank (the only two shapes that touch the page
+       directly, rather than sitting inside the coin) hold contrast against both a
+       near-white day background and a near-black night one. -->
+  <path d="M25 10 L45 44 H5 Z" fill="#18a53b"/>
   <path d="M25 21 L34 44 H16 Z" fill="#171717"/>
-  <rect x="3" y="41.5" width="42" height="6" rx="3" fill="#525252"/>
+  <rect x="3" y="41.5" width="42" height="6" rx="3" fill="#78716c"/>
   <circle cx="45" cy="44" r="14" fill="#b45309"/>
   <circle cx="45" cy="43.4" r="13.1" fill="#fbbf24"/>
   <g fill="none" stroke="#171717" stroke-width="2.95" stroke-linecap="round">
