@@ -102,12 +102,7 @@ export function toMovement(row: unknown): Movement | null {
   // give a participation fee a pool it does not have.
   return value.kind === 'volunteer_in'
     ? { ...common, kind: value.kind }
-    : {
-        ...common,
-        kind: value.kind,
-        poolId: value.poolId,
-        completesDeposit: value.completesDeposit,
-      }
+    : { ...common, kind: value.kind, poolId: value.poolId }
 }
 
 export function toExpense(row: unknown): Expense | null {

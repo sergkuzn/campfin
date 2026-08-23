@@ -90,7 +90,7 @@ export const en = {
     members: (count: number) =>
       `${count} ${count === 1 ? 'person shares' : 'people share'} this camp.`,
     /** On the join-code button itself, under the code — it has to say what the tap does. */
-    copy: '⧉ Tap to copy join code',
+    copy: '⧉ Copy join code',
     copied: '✓ Copied',
     /** The clipboard API is missing outside a secure context; reading the code aloud
      *  still works, so say that rather than showing a dead end. */
@@ -491,17 +491,19 @@ export const en = {
       empty: 'No deposit handed over or returned yet.',
       /** Shown instead of the form: without a deposit source there is no Kaution to move. */
       noDeposits: 'Add a deposit under income first — then you can hand it over here.',
-      nameLabel: 'Where?',
+      nameLabel: 'Counterparty',
       namePlaceholder: 'e.g. Bike shop',
     },
     fee: {
       title: 'Participation fee',
       add: '＋ Record a fee collected',
       empty: 'No participation fee collected yet.',
-      nameLabel: 'Who?',
+      nameLabel: 'Paid by',
       namePlaceholder: 'e.g. Alex',
     },
     kindLabel: 'What happened?',
+    /** The two radios on the deposits form: which way this money went. */
+    directionLabel: 'Direction',
     kinds: {
       deposit_out: 'Deposit handed over',
       deposit_in: 'Deposit came back',
@@ -511,8 +513,10 @@ export const en = {
     amountLabel: 'Amount (€)',
     amountPlaceholder: 'e.g. 200,00',
     poolLabel: 'Which deposit',
-    completesLabel: 'This is the full deposit',
-    completesHint: 'Tick when the counterparty asked for less than the deposit you were given.',
+    /** A soft warning, not a blocked save: topping a Kaution up out of camp cash is fine
+     *  as long as all of it comes back. */
+    overDeposit: (amount: string) =>
+      `${amount} more than this deposit holds. Fine if all of it comes back — check the amount.`,
     noteLabel: 'Note',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',

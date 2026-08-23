@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useT } from '../i18n'
+import { useFormat, useT } from '../i18n'
 import type { CampWindow } from '../lib/camps'
 import {
   blankMovementDraft,
   type CustodyFocus,
+  type DepositStatus,
   draftFromMovement,
+  handoverExcessCents,
   isDepositKind,
   kindsForFocus,
   type MovementDraft,
@@ -12,8 +14,11 @@ import {
   movementIssues,
   type SaveMovementInput,
 } from '../lib/movements'
+import { poolColorOf } from '../lib/poolColors'
 import type { PoolSummary } from '../lib/pools'
 import type { Movement, MovementKind } from '../lib/types'
+import './PoolTag.css'
+import './ReceiptFilters.css'
 import { DateField } from './DateField'
 import { RequiredMark } from './RequiredMark'
 
@@ -25,6 +30,8 @@ type Props = {
   movement: Movement | null
   /** Deposit pools only — the two deposit kinds are the only ones that name a pool. */
   deposits: PoolSummary[]
+  /** Each deposit's custody reading, so a handover can say when it outgrows its pool. */
+  statuses: DepositStatus[]
   /** Today, local. Passed in so the form has no clock of its own. */
   todayIso: string
   /** The camp's known span, derived from its per-diem blocks. Highlights those days on the
@@ -35,22 +42,31 @@ type Props = {
   onCancel: () => void
 }
 
-/** One movement being typed. Same lock model as the receipt form: one draft, Save commits. */
+/**
+ * One movement being typed. Same lock model as the receipt form: one draft, Save commits.
+ *
+ * The deposit side asks its two questions in the order the answer is decided — which
+ * Kaution, then which way it moved — and borrows the receipt form's controls for both: pool
+ * chips, then radios like "paid by". Nothing else on the form has more than one answer, so
+ * the fee side drops both.
+ */
 export function MovementForm({
   campId,
   focus,
   movement,
   deposits,
+  statuses,
   todayIso,
   campWindow,
   onSave,
   onCancel,
 }: Props) {
   const t = useT()
+  const format = useFormat()
 
   // The screen has already narrowed the choice to one half of the custody money; on the
-  // cash side that leaves a single kind, so the picker is dropped rather than shown with
-  // one option.
+  // fee side that leaves a single kind, so the direction question is dropped rather than
+  // shown with one option.
   const kinds = kindsForFocus(focus, deposits.length > 0)
   const firstPoolId = deposits[0]?.pool.id ?? ''
 
@@ -69,9 +85,12 @@ export function MovementForm({
   const handleKind = (kind: MovementKind) =>
     patch({ kind, poolId: isDepositKind(kind) && draft.poolId === '' ? firstPoolId : draft.poolId })
 
-  // Derived during render, never stored: `issues` in state could drift out of step with
-  // the draft it describes.
+  // Both derived during render, never stored: in state they could drift out of step with
+  // the draft they describe.
   const issues = movementIssues(draft)
+  // A warning rather than an issue — handing over more than the deposit holds is allowed,
+  // and balances as long as all of it comes back.
+  const excessCents = handoverExcessCents(draft, statuses, movement)
 
   // A deposit names a counterparty (a shop, a venue); a participation fee names a person.
   // Same field, different question, so the copy follows the screen's focus rather than
@@ -89,46 +108,49 @@ export function MovementForm({
 
   return (
     <form className="card card--editing" onSubmit={handleSubmit}>
-      {kinds.length > 1 && (
-        <label className="field">
-          <span className="field__label">{t.movements.kindLabel}</span>
-          <select
-            className="income-form__input"
-            value={draft.kind}
-            onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-              handleKind(event.target.value as MovementKind)
-            }
-          >
-            {kinds.map((kind) => (
-              <option key={kind} value={kind}>
-                {t.movements.kinds[kind]}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-
       {isDepositKind(draft.kind) && (
-        <label className="field">
+        <div className="field">
           <span className="field__label">
             {t.movements.poolLabel}
             <RequiredMark />
           </span>
-          <select
-            className="income-form__input"
-            aria-required="true"
-            value={draft.poolId}
-            onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-              patch({ poolId: event.target.value })
-            }
-          >
+          <div className="filters__chips">
             {deposits.map((summary) => (
-              <option key={summary.pool.id} value={summary.pool.id}>
+              <button
+                key={summary.pool.id}
+                type="button"
+                className={`filters__chip pool-tag--${poolColorOf(summary.pool)}`}
+                // A single choice rather than a multi-select filter: picking one deposit
+                // switches to it instead of toggling it on top of the one already lit.
+                aria-pressed={draft.poolId === summary.pool.id}
+                onClick={() => patch({ poolId: summary.pool.id })}
+              >
+                <span className="pool-tag__dot" aria-hidden="true" />
                 {summary.pool.name}
-              </option>
+              </button>
             ))}
-          </select>
-        </label>
+          </div>
+        </div>
+      )}
+
+      {kinds.length > 1 && (
+        <fieldset className="movement-direction">
+          <legend className="field__label">
+            {t.movements.directionLabel}
+            <RequiredMark />
+          </legend>
+          {kinds.map((kind) => (
+            <label className="field field--check" key={kind}>
+              <input
+                type="radio"
+                name="movement-kind"
+                checked={draft.kind === kind}
+                onChange={() => handleKind(kind)}
+              />
+              <span className="field__check-label">{t.movements.kinds[kind]}</span>
+            </label>
+          ))}
+        </fieldset>
       )}
 
       <div className="field">
@@ -178,25 +200,12 @@ export function MovementForm({
             patch({ amount: event.target.value })
           }
         />
-      </label>
-
-      {/* Only a handover can be "the whole deposit" — a return is measured against what
-          actually went out, so the box would mean nothing there. */}
-      {draft.kind === 'deposit_out' && (
-        <label className="field field--check">
-          <input
-            type="checkbox"
-            checked={draft.completesDeposit}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              patch({ completesDeposit: event.target.checked })
-            }
-          />
-          <span>
-            <span className="field__check-label">{t.movements.completesLabel}</span>
-            <span className="field__hint">{t.movements.completesHint}</span>
+        {excessCents > 0 && (
+          <span className="field__hint field__hint--warn">
+            {t.movements.overDeposit(format.euros(excessCents))}
           </span>
-        </label>
-      )}
+        )}
+      </label>
 
       <label className="field">
         <span className="field__label">{t.movements.noteLabel}</span>

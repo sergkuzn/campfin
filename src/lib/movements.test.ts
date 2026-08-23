@@ -8,6 +8,7 @@ import {
   depositSteps,
   draftFromMovement,
   feeHeldCents,
+  handoverExcessCents,
   kindsForFocus,
   type MovementDraft,
   movementDraftToInput,
@@ -76,7 +77,6 @@ const validDraft: MovementDraft = {
   name: 'Bike shop',
   amount: '200,00',
   poolId: bikePool.id,
-  completesDeposit: false,
   note: ' left in cash ',
 }
 
@@ -202,27 +202,21 @@ describe('depositSteps', () => {
     expect(steps.back).toEqual({ state: 'done', doneCents: 0, targetCents: 0 })
   })
 
-  it('completes the handover at a short amount marked as the full deposit', () => {
-    // €150 asked for out of a €200 grant: the step is done, measured against what went out.
-    const short = { ...out(15_000), completesDeposit: true }
-    const steps = depositSteps(depositStatus(summary(bikePool, 20_000), [short]))
-    expect(steps.out).toEqual({ state: 'done', doneCents: 15_000, targetCents: 15_000 })
-    // And only that €150 has to come back.
+  it('leaves a short handover partial and asks only that much back', () => {
+    // €150 out of a €200 grant: the handover is measured against the grant, so it stays
+    // partial — but only the €150 that actually left has to come back.
+    const steps = depositSteps(depositStatus(summary(bikePool, 20_000), [out(15_000)]))
+    expect(steps.out).toEqual({ state: 'partial', doneCents: 15_000, targetCents: 20_000 })
     expect(steps.back).toEqual({ state: 'todo', doneCents: 0, targetCents: 15_000 })
   })
 
-  it('lets the last instalment complete a handover paid in parts', () => {
-    const movements = [
-      out(5_000),
-      { ...out(10_000, bikePool.id, 'm-out-2'), completesDeposit: true },
-    ]
-    const status = depositStatus(summary(bikePool, 20_000), movements)
-    expect(status.handoverCompleted).toBe(true)
-    expect(depositSteps(status).out).toEqual({
-      state: 'done',
-      doneCents: 15_000,
-      targetCents: 15_000,
-    })
+  it('closes an over-sized handover once all of it comes back', () => {
+    // €250 handed over on a €200 grant is flagged, not blocked; returning all €250 settles it.
+    const status = depositStatus(summary(bikePool, 20_000), [out(25_000), back(25_000)])
+    const steps = depositSteps(status)
+    expect(steps.out.state).toBe('over')
+    expect(steps.back).toEqual({ state: 'done', doneCents: 25_000, targetCents: 25_000 })
+    expect(status.atVendorCents).toBe(0)
   })
 
   it('flags more money out or back than expected as over', () => {
@@ -240,6 +234,51 @@ describe('depositSteps', () => {
     const steps = depositSteps(depositStatus(summary(bikePool, 0), []))
     expect(steps.out.state).toBe('done')
     expect(steps.back.state).toBe('done')
+  })
+})
+
+describe('handoverExcessCents', () => {
+  const statuses = (movements: Movement[]) =>
+    depositStatuses([summary(bikePool, 20_000), summary(toolPool, 5_000)], movements)
+
+  const handover = (amount: string, poolId = bikePool.id): MovementDraft => ({
+    ...validDraft,
+    kind: 'deposit_out',
+    amount,
+    poolId,
+  })
+
+  it('is 0 for a handover that fits inside the deposit', () => {
+    expect(handoverExcessCents(handover('150,00'), statuses([]), null)).toBe(0)
+  })
+
+  it('is 0 for a handover that matches the deposit exactly', () => {
+    expect(handoverExcessCents(handover('200,00'), statuses([]), null)).toBe(0)
+  })
+
+  it('reports the surplus over the deposit', () => {
+    expect(handoverExcessCents(handover('250,00'), statuses([]), null)).toBe(5_000)
+  })
+
+  it('counts what already went out of the same pool', () => {
+    // €150 out already; another €100 puts the pool €50 past its €200 deposit.
+    expect(handoverExcessCents(handover('100,00'), statuses([out(15_000)]), null)).toBe(5_000)
+  })
+
+  it('does not double-count the row being edited', () => {
+    const existing = out(25_000)
+    // Re-saving the same €250 row must read as €50 over, not €300 over.
+    expect(handoverExcessCents(handover('250,00'), statuses([existing]), existing)).toBe(5_000)
+  })
+
+  it('is 0 for a return, a fee, an unknown pool and an unparseable amount', () => {
+    const over = statuses([])
+    expect(handoverExcessCents({ ...handover('250,00'), kind: 'deposit_in' }, over, null)).toBe(0)
+    expect(
+      handoverExcessCents({ ...handover('250,00'), kind: 'volunteer_in', poolId: '' }, over, null),
+    ).toBe(0)
+    expect(handoverExcessCents(handover('250,00', everyday.id), over, null)).toBe(0)
+    expect(handoverExcessCents(handover('abc'), over, null)).toBe(0)
   })
 })
 

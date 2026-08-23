@@ -119,8 +119,9 @@ const _schema = i.schema({
       // `src/lib/types.ts` is what makes that check compile-time on the client.
       poolId: i.string().optional().indexed(),
       kind: i.string<MovementKind>().indexed(),
-      // Only a handover carries it: "this is the whole Kaution, even though it is less
-      // than the deposit the organisation granted".
+      // Legacy: a handover once carried "this is the whole Kaution, even though it is less
+      // than the deposit granted". Deposit steps now measure against the pool instead, and
+      // nothing reads this. Kept so rows written before that still load; new writes null it.
       completesDeposit: i.boolean().optional(),
       name: i.string(),
       amountCents: i.number(),

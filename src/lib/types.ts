@@ -170,12 +170,6 @@ type MovementBase = {
 export type DepositMovement = MovementBase & {
   kind: 'deposit_out' | 'deposit_in'
   poolId: string // → a Pool with role 'deposit'
-  /**
-   * Set on a handover the leader declares final: the counterparty asked for less than the
-   * organisation granted, so nothing more is owed even though the amount is short of the
-   * deposit. Without it a €150 Kaution out of a €200 grant would look forever half-paid.
-   */
-  completesDeposit?: boolean
 }
 
 /**

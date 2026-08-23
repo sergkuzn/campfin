@@ -62,8 +62,6 @@ export type MovementDraft = {
   name: string
   amount: string // euros as typed
   poolId: string // '' for a participation fee, which belongs to no pool
-  /** Handovers only: this is the whole Kaution, even if it is less than the deposit. */
-  completesDeposit: boolean
   note: string
 }
 
@@ -97,8 +95,6 @@ export type DepositStatus = {
   /** The Kaution as granted — the deposit source's amount. */
   fundedCents: number
   handedOverCents: number
-  /** A handover was marked final: what went out *is* the whole Kaution, short or not. */
-  handoverCompleted: boolean
   returnedCents: number
   /** Kept by the counterparty for damage, booked as an ordinary expense on this pool. */
   forfeitedCents: number
@@ -114,7 +110,7 @@ export function blankMovementDraft(
   kind: MovementKind,
   poolId: string,
 ): MovementDraft {
-  return { kind, date: todayIso, name: '', amount: '', poolId, completesDeposit: false, note: '' }
+  return { kind, date: todayIso, name: '', amount: '', poolId, note: '' }
 }
 
 /** Seed the editor from a persisted row. */
@@ -126,7 +122,6 @@ export function draftFromMovement(movement: Movement): MovementDraft {
     amount: (movement.amountCents / 100).toFixed(2).replace('.', ','),
     name: movement.name,
     poolId: isDepositMovement(movement) ? movement.poolId : '',
-    completesDeposit: isDepositMovement(movement) && movement.completesDeposit === true,
     note: movement.note ?? '',
   }
 }
@@ -177,9 +172,6 @@ export function movementDraftToInput(
         ...common,
         kind: draft.kind,
         poolId: draft.poolId,
-        // Only a handover can end the handover step; a return carrying the flag would
-        // silently tick a step it knows nothing about.
-        completesDeposit: draft.kind === 'deposit_out' && draft.completesDeposit,
       }
     : { ...common, kind: draft.kind }
 
@@ -207,16 +199,11 @@ export function sortMovements(movements: Movement[]): Movement[] {
 export function depositStatus(summary: PoolSummary, movements: Movement[]): DepositStatus {
   let handedOverCents = 0
   let returnedCents = 0
-  let handoverCompleted = false
 
   for (const movement of movements) {
     if (!isDepositMovement(movement) || movement.poolId !== summary.pool.id) continue
-    if (movement.kind === 'deposit_out') {
-      handedOverCents += movement.amountCents
-      // Any one handover may close the step: the last instalment is the one that carries
-      // the flag, whatever the instalments before it added up to.
-      handoverCompleted ||= movement.completesDeposit === true
-    } else returnedCents += movement.amountCents
+    if (movement.kind === 'deposit_out') handedOverCents += movement.amountCents
+    else returnedCents += movement.amountCents
   }
 
   // The pool's expenses *are* the forfeited money: a deposit pool has no other spending.
@@ -226,7 +213,6 @@ export function depositStatus(summary: PoolSummary, movements: Movement[]): Depo
     pool: summary.pool,
     fundedCents: summary.fundedCents,
     handedOverCents,
-    handoverCompleted,
     returnedCents,
     forfeitedCents,
     atVendorCents: handedOverCents - returnedCents - forfeitedCents,
@@ -280,11 +266,10 @@ function step(doneCents: number, targetCents: number): DepositStep {
  * so counting it as an outstanding return would leave the step permanently short.
  */
 export function depositSteps(status: DepositStatus): DepositSteps {
-  // A handover declared final measures itself: the counterparty wanted less than the
-  // organisation granted, so the step is complete at the amount that actually went out.
-  const out = status.handoverCompleted
-    ? step(status.handedOverCents, status.handedOverCents)
-    : step(status.handedOverCents, status.fundedCents)
+  // Always measured against the deposit the pool holds. A handover short of it stays
+  // `partial` rather than being declared finished: what has to balance by the end is the
+  // return, and the second step is where that is checked.
+  const out = step(status.handedOverCents, status.fundedCents)
 
   // A deposit that has not left yet has no amount to come back either, but the step is
   // still ahead of you — `step` would read that empty target as finished.
@@ -330,4 +315,37 @@ export function feeHeldCents(movements: Movement[]): number {
  *  not cancel out another one that is genuinely still outstanding. */
 export function custodyOutstandingCents(statuses: DepositStatus[]): number {
   return statuses.reduce((sum, s) => sum + Math.max(0, s.atVendorCents), 0)
+}
+
+/**
+ * How much a handover being typed would push past the deposit its pool holds, in cents;
+ * 0 when it fits, and 0 for anything that is not a handover.
+ *
+ * Deliberately *not* a `MovementIssue`: topping a Kaution up out of camp cash is a real
+ * thing to do, and it balances as long as the money comes back. The form says so and lets
+ * the save through.
+ *
+ * `existing` is the row being edited, if any. Its old amount is already inside
+ * `handedOverCents`, so it is subtracted back out — otherwise re-saving an untouched row
+ * would read as a second handover of the same money.
+ */
+export function handoverExcessCents(
+  draft: MovementDraft,
+  statuses: DepositStatus[],
+  existing: Movement | null,
+): number {
+  if (draft.kind !== 'deposit_out') return 0
+
+  const amountCents = parseEurosToCents(draft.amount)
+  if (amountCents === null || amountCents <= 0) return 0
+
+  const status = statuses.find((s) => s.pool.id === draft.poolId)
+  if (status === undefined) return 0
+
+  const alreadyOut =
+    existing !== null && existing.kind === 'deposit_out' && existing.poolId === draft.poolId
+      ? status.handedOverCents - existing.amountCents
+      : status.handedOverCents
+
+  return Math.max(0, alreadyOut + amountCents - status.fundedCents)
 }

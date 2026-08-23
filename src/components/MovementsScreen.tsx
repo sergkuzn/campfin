@@ -119,6 +119,7 @@ export function MovementsScreen({
           focus={focus}
           movement={null}
           deposits={deposits}
+          statuses={custody.statuses}
           // Read at the edge and passed down, so nothing below here touches the clock.
           todayIso={todayIso()}
           campWindow={campWindow}
@@ -149,6 +150,7 @@ export function MovementsScreen({
             focus={focus}
             movement={editingRow}
             deposits={deposits}
+            statuses={custody.statuses}
             todayIso={todayIso()}
             campWindow={campWindow}
             onSave={handleSave}
