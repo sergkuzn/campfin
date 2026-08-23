@@ -491,11 +491,15 @@ export const en = {
       empty: 'No deposit handed over or returned yet.',
       /** Shown instead of the form: without a deposit source there is no Kaution to move. */
       noDeposits: 'Add a deposit under income first — then you can hand it over here.',
+      nameLabel: 'Where?',
+      namePlaceholder: 'e.g. Bike shop',
     },
     fee: {
       title: 'Participation fee',
       add: '＋ Record a fee collected',
       empty: 'No participation fee collected yet.',
+      nameLabel: 'Who?',
+      namePlaceholder: 'e.g. Alex',
     },
     kindLabel: 'What happened?',
     kinds: {
@@ -504,8 +508,6 @@ export const en = {
       volunteer_in: 'Participation fee collected',
     },
     dateLabel: 'Date',
-    nameLabel: 'Who?',
-    namePlaceholder: 'e.g. Alex',
     amountLabel: 'Amount (€)',
     amountPlaceholder: 'e.g. 200,00',
     poolLabel: 'Which deposit',

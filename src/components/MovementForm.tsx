@@ -73,6 +73,11 @@ export function MovementForm({
   // the draft it describes.
   const issues = movementIssues(draft)
 
+  // A deposit names a counterparty (a shop, a venue); a participation fee names a person.
+  // Same field, different question, so the copy follows the screen's focus rather than
+  // sharing one generic label.
+  const nameCopy = focus === 'deposits' ? t.movements.deposits : t.movements.fee
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const input = movementDraftToInput(draft, campId, movement)
@@ -142,14 +147,14 @@ export function MovementForm({
 
       <label className="field">
         <span className="field__label">
-          {t.movements.nameLabel}
+          {nameCopy.nameLabel}
           <RequiredMark />
         </span>
         <input
           className="income-form__input"
           aria-required="true"
           value={draft.name}
-          placeholder={t.movements.namePlaceholder}
+          placeholder={nameCopy.namePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             patch({ name: event.target.value })
           }
