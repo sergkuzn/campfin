@@ -289,7 +289,16 @@ export function CampSettingsScreen({
       <ConfirmDialog
         open={confirmingDelete}
         title={t.campSettings.deleteTitle}
-        lines={[t.campSettings.deleteConfirm(camp.name), t.campSettings.deleteLine]}
+        lines={[
+          t.campSettings.deleteConfirm(camp.name),
+          t.campSettings.deleteLine,
+          t.campSettings.deleteTypeLabel(camp.name),
+        ]}
+        requireText={{
+          value: camp.name,
+          label: t.campSettings.deleteTypeLabel(camp.name),
+          placeholder: camp.name,
+        }}
         confirmLabel={t.campSettings.deleteConfirmLabel}
         onConfirm={() => {
           setConfirmingDelete(false)

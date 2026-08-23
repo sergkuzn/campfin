@@ -113,7 +113,7 @@ describe('CampSettingsScreen', () => {
     expect(screen.getByRole('button', { name: t.save })).toBeDisabled()
   })
 
-  it('deletes only after the confirmation is accepted', async () => {
+  it('deletes only after the camp name is typed and the confirmation is accepted', async () => {
     const { user, onDelete } = renderScreen()
     await user.click(screen.getByRole('button', { name: t.delete }))
 
@@ -121,8 +121,26 @@ describe('CampSettingsScreen', () => {
     expect(screen.getByText(t.deleteConfirm('Moorwerder'))).toBeInTheDocument()
     expect(onDelete).not.toHaveBeenCalled()
 
-    await user.click(screen.getByRole('button', { name: t.deleteConfirmLabel }))
+    // A GitHub-style guard: the button stays disabled until the name is typed back.
+    const deleteButton = screen.getByRole('button', { name: t.deleteConfirmLabel })
+    expect(deleteButton).toBeDisabled()
+
+    await user.type(screen.getByLabelText(t.deleteTypeLabel('Moorwerder')), 'Moorwerder')
+    expect(deleteButton).toBeEnabled()
+
+    await user.click(deleteButton)
     expect(onDelete).toHaveBeenCalledOnce()
+  })
+
+  it('keeps the delete button disabled for a name that does not match', async () => {
+    const { user, onDelete } = renderScreen()
+    await user.click(screen.getByRole('button', { name: t.delete }))
+
+    // Case-sensitive, like GitHub's own repo-delete guard.
+    await user.type(screen.getByLabelText(t.deleteTypeLabel('Moorwerder')), 'moorwerder')
+
+    expect(screen.getByRole('button', { name: t.deleteConfirmLabel })).toBeDisabled()
+    expect(onDelete).not.toHaveBeenCalled()
   })
 
   it('drops a delete that was cancelled', async () => {

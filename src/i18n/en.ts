@@ -200,6 +200,7 @@ export const en = {
     deleteTitle: 'Delete camp',
     deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
     deleteLine: 'Its income, receipts and movements go with it.',
+    deleteTypeLabel: (name: string) => `Type "${name}" to confirm`,
     deleteConfirmLabel: 'Delete',
   },
 
