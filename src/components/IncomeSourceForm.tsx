@@ -142,10 +142,10 @@ export function IncomeSourceForm({ campId, kind, pool, source, blocks, onSave, o
       )}
 
       <div className="card__actions">
-        <button className="card__button" type="button" onClick={onCancel}>
+        <button className="btn btn--ghost" type="button" onClick={onCancel}>
           {t.income.cancel}
         </button>
-        <button className="btn" type="submit" disabled={issues.length > 0}>
+        <button className="btn btn--primary" type="submit" disabled={issues.length > 0}>
           {t.income.save}
         </button>
       </div>

@@ -39,7 +39,7 @@ export function JoinCampForm({ userId, myCampIds }: Props) {
           autoCapitalize="characters"
           spellCheck={false}
         />
-        <button className="join-camp__button" type="submit" disabled={status !== 'found'}>
+        <button className="btn btn--ghost" type="submit" disabled={status !== 'found'}>
           {t.join.join}
         </button>
       </div>

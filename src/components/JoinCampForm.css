@@ -26,7 +26,7 @@
   min-width: 0;
   padding: var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--space-2);
   background-color: var(--surface);
   color: inherit;
   font: inherit;
@@ -40,22 +40,6 @@
 .join-camp__input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
-}
-
-.join-camp__button {
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background-color: var(--surface);
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.join-camp__button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .join-camp__status {

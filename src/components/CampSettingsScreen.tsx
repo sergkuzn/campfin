@@ -131,7 +131,7 @@ export function CampSettingsScreen({
             value={name}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)}
           />
-          <button className="camp-settings__save" type="submit" disabled={!canSave}>
+          <button className="btn btn--primary" type="submit" disabled={!canSave}>
             {t.campSettings.save}
           </button>
         </form>
@@ -197,15 +197,11 @@ export function CampSettingsScreen({
                 setNewHolder(event.target.value)
               }
             />
-            <button
-              className="camp-settings__save"
-              type="submit"
-              disabled={trimmedNewHolder === ''}
-            >
+            <button className="btn btn--primary" type="submit" disabled={trimmedNewHolder === ''}>
               {t.campSettings.holderSave}
             </button>
             <button
-              className="camp-settings__ghost"
+              className="btn btn--ghost"
               type="button"
               onClick={() => {
                 setChangingHolder(false)
@@ -220,7 +216,7 @@ export function CampSettingsScreen({
             {/* Only ever a hand-over: the wallet cannot be put down, so there is no
                 counterpart to this button. */}
             <button
-              className="camp-settings__ghost"
+              className="btn btn--ghost"
               type="button"
               onClick={() => setChangingHolder(true)}
             >
@@ -248,7 +244,7 @@ export function CampSettingsScreen({
       {isAdmin && (
         <SlotPanel title={t.campSettings.dangerSection} className="camp-settings__danger">
           <button
-            className="camp-settings__delete"
+            className="btn btn--danger camp-settings__delete"
             type="button"
             onClick={() => setConfirmingDelete(true)}
           >

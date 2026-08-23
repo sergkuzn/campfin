@@ -16,7 +16,7 @@
   min-width: 0; /* without this a flex item refuses to shrink below its content */
   padding: var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--space-2);
   background-color: var(--surface);
   color: inherit;
   font: inherit;
@@ -25,22 +25,6 @@
 .create-camp__input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
-}
-
-.create-camp__button {
-  padding: var(--space-3) var(--space-4);
-  border: 0;
-  border-radius: var(--radius);
-  background-color: var(--accent);
-  color: var(--on-accent);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.create-camp__button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .create-camp__input:disabled {

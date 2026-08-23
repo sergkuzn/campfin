@@ -82,11 +82,11 @@ export function ConfirmDialog({
         />
       )}
       <div className="confirm__actions">
-        <button className="confirm__button" type="button" onClick={onCancel}>
+        <button className="btn btn--ghost" type="button" onClick={onCancel}>
           {t.confirm.cancel}
         </button>
         <button
-          className="confirm__button confirm__button--danger"
+          className="btn btn--danger-fill"
           type="button"
           disabled={confirmDisabled}
           onClick={onConfirm}

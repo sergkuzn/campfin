@@ -105,48 +105,6 @@
   font: inherit;
 }
 
-.camp-setup__save,
-.camp-setup__go {
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid transparent;
-  border-radius: var(--space-2);
-  background-color: var(--accent);
-  color: var(--on-accent);
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-/* The one step still to do carries the full-width call to action; a ghost button would
-   make the list read as two equal options rather than a queue. */
-.camp-setup__go {
-  width: 100%;
-  padding: var(--space-3);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.camp-setup__save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Outlined: revisiting a finished step is available, never the thing to do next. */
-.camp-setup__ghost {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--space-2);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.camp-setup__ghost:hover {
-  border-color: var(--accent);
-}
-
 /* The holder step's "Change" button stands alone on its own line (the readout paragraph
    above it takes the line before) — push it right so it lands under the thumb on a phone
    held one-handed. */

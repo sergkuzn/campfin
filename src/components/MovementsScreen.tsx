@@ -87,7 +87,7 @@ export function MovementsScreen({
       <header className="movements__header">
         <h2 className="movements__title">{labels.title}</h2>
         <button
-          className="btn"
+          className="btn btn--primary"
           type="button"
           disabled={locked || missingDeposits}
           onClick={() => setEditing({ mode: 'new' })}

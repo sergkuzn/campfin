@@ -29,36 +29,9 @@
   font: inherit;
 }
 
-.camp-settings__save {
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid transparent;
-  border-radius: var(--space-2);
-  background-color: var(--accent);
-  color: var(--on-accent);
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.camp-settings__save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
+/* Spans the card it ends: the only action in the danger zone, so nothing sits beside it. */
 .camp-settings__delete {
   width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--danger);
-  border-radius: var(--space-2);
-  background: none;
-  color: var(--danger);
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.camp-settings__delete:hover {
-  background-color: color-mix(in srgb, var(--danger) 10%, transparent);
 }
 
 /* Red border, not a red button in a plain box: the frame is what makes it read as a
@@ -111,21 +84,4 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-2);
-}
-
-/* Outlined rather than accent-filled: these sit next to each other, and two solid buttons
-   would both claim to be the main one. */
-.camp-settings__ghost {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--space-2);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.camp-settings__ghost:hover {
-  border-color: var(--accent);
 }

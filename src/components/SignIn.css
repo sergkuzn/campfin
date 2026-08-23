@@ -27,23 +27,7 @@
   color: inherit;
   background-color: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.sign-in__button {
-  padding: var(--space-3);
-  font: inherit;
-  font-weight: 600;
-  color: var(--on-accent);
-  background-color: var(--accent);
-  border: none;
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-
-.sign-in__button:disabled {
-  opacity: 0.5;
-  cursor: default;
+  border-radius: var(--space-2);
 }
 
 /* A button that reads as a link: it navigates within the form rather than submitting. */

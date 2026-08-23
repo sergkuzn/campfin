@@ -57,7 +57,7 @@ export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
             autoComplete="off"
             spellCheck={false}
           />
-          <button className="admin__grant-button" type="submit" disabled={email.trim() === ''}>
+          <button className="btn btn--primary" type="submit" disabled={email.trim() === ''}>
             {t.admin.grant}
           </button>
         </form>
@@ -146,7 +146,7 @@ function PersonRow({ entry, onGrant, onQuota, onRevoke }: PersonRowProps) {
       </div>
 
       {account === null ? (
-        <button className="admin__action" type="button" onClick={onGrant}>
+        <button className="btn btn--ghost" type="button" onClick={onGrant}>
           {t.admin.grant}
         </button>
       ) : account.role === 'admin' ? (
@@ -172,7 +172,7 @@ function PersonRow({ entry, onGrant, onQuota, onRevoke }: PersonRowProps) {
           >
             ＋
           </button>
-          <button className="admin__action admin__action--danger" type="button" onClick={onRevoke}>
+          <button className="btn btn--danger" type="button" onClick={onRevoke}>
             {t.admin.revoke}
           </button>
         </div>

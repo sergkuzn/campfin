@@ -40,7 +40,7 @@ export function CreateCampForm({ error, campsLeft, onCreate }: Props) {
           aria-label={t.camps.nameLabel}
           disabled={usedUp}
         />
-        <button className="create-camp__button" type="submit" disabled={usedUp || trimmed === ''}>
+        <button className="btn btn--primary" type="submit" disabled={usedUp || trimmed === ''}>
           {t.camps.create}
         </button>
       </div>

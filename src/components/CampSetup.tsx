@@ -70,12 +70,12 @@ export function CampSetup({ holder, funded, summaries, onSaveHolder, onOpenIncom
                   setName(event.target.value)
                 }
               />
-              <button className="camp-setup__save" type="submit" disabled={trimmed === ''}>
+              <button className="btn btn--primary" type="submit" disabled={trimmed === ''}>
                 {t.campSettings.holderSave}
               </button>
               {holderDone && (
                 <button
-                  className="camp-setup__ghost"
+                  className="btn btn--ghost"
                   type="button"
                   onClick={() => {
                     setChanging(false)
@@ -93,7 +93,7 @@ export function CampSetup({ holder, funded, summaries, onSaveHolder, onOpenIncom
                 {t.campSettings.holderHolds}
               </p>
               <button
-                className="camp-setup__ghost camp-setup__ghost--end"
+                className="btn btn--ghost camp-setup__ghost--end"
                 type="button"
                 onClick={() => setChanging(true)}
               >
@@ -112,8 +112,11 @@ export function CampSetup({ holder, funded, summaries, onSaveHolder, onOpenIncom
           ) : (
             <p className="camp-setup__readout">{t.setup.incomeTodo}</p>
           )}
+          {/* The step still to do carries a full-width call to action; once it is done the
+              same button drops to a ghost, so the list reads as a queue rather than as two
+              equal options. */}
           <button
-            className={funded ? 'camp-setup__ghost' : 'camp-setup__go'}
+            className={funded ? 'btn btn--ghost' : 'btn btn--primary btn--block'}
             type="button"
             onClick={onOpenIncome}
           >

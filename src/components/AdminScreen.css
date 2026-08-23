@@ -31,23 +31,6 @@
   font: inherit;
 }
 
-.admin__grant-button {
-  padding: var(--space-2) var(--space-4);
-  border: 0;
-  border-radius: var(--space-2);
-  background-color: var(--accent);
-  color: var(--on-accent);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.admin__grant-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .admin__empty {
   margin: 0;
   padding: var(--space-4);
@@ -126,22 +109,6 @@
   text-align: center;
   font-size: 0.8125rem;
   color: var(--muted);
-}
-
-.admin__action {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--space-2);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: 0.8125rem;
-  cursor: pointer;
-}
-
-.admin__action--danger {
-  border-color: var(--danger);
-  color: var(--danger);
 }
 
 /* The whole row is the button, as on the camp list. */

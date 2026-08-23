@@ -64,7 +64,7 @@ export function PoolColorDialog({ pool, onPick, onClose }: Props) {
           </div>
 
           <div className="colors__actions">
-            <button className="confirm__button" type="button" onClick={() => ref.current?.close()}>
+            <button className="btn btn--ghost" type="button" onClick={() => ref.current?.close()}>
               {t.pools.colorDone}
             </button>
           </div>
