@@ -32,7 +32,7 @@
   border: 0;
   border-radius: var(--radius);
   background-color: var(--accent);
-  color: #ffffff;
+  color: var(--on-accent);
   font: inherit;
   font-weight: 600;
   cursor: pointer;

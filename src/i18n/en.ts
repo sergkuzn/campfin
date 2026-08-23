@@ -46,6 +46,13 @@ export const en = {
     delete: 'Delete',
   },
 
+  /** The day/night switch in the shell's corner. Each label names where a tap goes,
+   *  which is what the icon shows — not the theme currently in force. */
+  theme: {
+    switchToDark: 'Switch to night mode',
+    switchToLight: 'Switch to day mode',
+  },
+
   app: {
     title: 'campfin',
     subtitle: 'Camp budget tracker',

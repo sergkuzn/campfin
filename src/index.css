@@ -1,7 +1,8 @@
 /* Global styles + design tokens (plain CSS — no framework).
    Custom properties (CSS variables) declared on :root are the project's design
    tokens: define a value once here, reference it everywhere as var(--name).
-   Overriding them inside a media query (below) re-themes the whole app for free. */
+   Redeclaring them under a `data-theme` selector (below) re-themes the whole app for
+   free — which is all the day/night toggle does. */
 
 :root {
   /* Spacing scale — reference as var(--space-4) etc. Keeps rhythm consistent. */
@@ -14,35 +15,66 @@
   --radius: 1rem;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  /* Light theme (default). Dark overrides these same names in the media query. */
-  --bg: #fafafa; /* neutral-50 */
+  /* Day theme — the default, whatever the phone's own night mode says. The dark block
+     below overrides these same names when the user has flipped the toggle.
+
+     Every colour here clears 4.5:1 against --bg and --surface, the ratio small text needs
+     to stay readable. That bar is why the accents sit a step darker than the obvious
+     choice: this app draws its greens and ambers as 12–14px labels on a near-white card,
+     not as large headings, and a phone screen at camp is often read in daylight. */
+  --bg: #f5f5f5; /* neutral-100 — a shade off white, so a --surface card reads as raised */
   --fg: #171717; /* neutral-900 */
-  --muted: #737373; /* neutral-500 */
-  --border: #e5e5e5; /* neutral-200 */
+  /* neutral-700 — secondary text: the small labels (the burn table's 11px figures, the
+     "Paid from" field captions, the one-line hints under a control) are drawn in this, and
+     neutral-600 left them faint on a bright screen even at 7:1. 9.5:1 against the page,
+     still a clear step lighter than --fg so the hierarchy survives. */
+  --muted: #404040;
+  --border: #a3a3a3; /* neutral-400 — a hairline you can actually see on near-white */
   --surface: #ffffff;
 
   /* Semantic accents — named for meaning, not hue, so a re-theme is one edit. */
   --accent: #2563eb; /* blue-600  — interactive / upcoming */
-  --ok: #16a34a; /* green-600 — running, under budget */
-  --warn: #d97706; /* amber-600 — most of a pool is gone, but nothing is wrong yet */
-  --danger: #dc2626; /* red-600   — destructive, over budget */
+  --ok: #15803d; /* green-700 — running, under budget */
+  --warn: #b45309; /* amber-700 — most of a pool is gone, but nothing is wrong yet */
+  --danger: #b91c1c; /* red-700   — destructive, over budget */
 
-  color-scheme: light dark; /* native controls/scrollbars follow the theme */
+  /* Ink for text and glyphs sitting *on* a solid --accent / --ok / --danger fill, where
+     the page's --fg would vanish. It inverts with the theme: the fills are dark in day
+     mode and light in night mode, so what stays legible on them flips too. */
+  --on-accent: #ffffff;
+
+  /* Tells the browser which way to draw what the page does not style itself —
+     scrollbars, form controls, the date picker. Pinned per theme rather than left as
+     `light dark`, so those follow the toggle and not the operating system. */
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+/* Night theme. Selected by the attribute `useTheme` writes onto <html>, not by
+   `prefers-color-scheme`: the choice is the user's tap, and it has to outrank the phone.
+
+   Confined to `screen` so that printing falls back to the day tokens above. Paper is
+   white whichever theme the phone is in, and the financial report's pale night greys
+   would print as ink you cannot read. */
+@media screen {
+  :root[data-theme="dark"] {
     --bg: #0a0a0a; /* neutral-950 */
     --fg: #f5f5f5; /* neutral-100 */
     --muted: #a3a3a3; /* neutral-400 */
-    --border: #262626; /* neutral-800 */
+    --border: #404040; /* neutral-700 — dark enough to sit back, light enough to be a line */
     --surface: #141414;
 
-    /* Lighter variants: the 600s are too dark to read on a near-black surface. */
+    /* The 400s, not the 600s and 700s day mode uses: a dark colour on a near-black card
+       is unreadable, so each accent moves to the light end of its ramp instead. */
     --accent: #60a5fa; /* blue-400 */
     --ok: #4ade80; /* green-400 */
     --warn: #fbbf24; /* amber-400 */
     --danger: #f87171; /* red-400 */
+
+    /* Near-black rather than white: these fills are pale here, and white on a blue-400
+       button is roughly 2.5:1 — the reverse of what the day theme needs. */
+    --on-accent: #0a0a0a;
+
+    color-scheme: dark;
   }
 }
 

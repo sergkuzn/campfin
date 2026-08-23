@@ -34,7 +34,7 @@
   padding: var(--space-3);
   font: inherit;
   font-weight: 600;
-  color: var(--surface);
+  color: var(--on-accent);
   background-color: var(--accent);
   border: none;
   border-radius: var(--radius);

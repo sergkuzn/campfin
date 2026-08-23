@@ -3,6 +3,7 @@ import { AppVersion } from './components/AppVersion'
 import { ReloadPrompt } from './components/ReloadPrompt'
 import { SignedInApp } from './components/SignedInApp'
 import { SignIn } from './components/SignIn'
+import { ThemeToggle } from './components/ThemeToggle'
 import { useSession } from './hooks/useSession'
 import { useT } from './i18n'
 
@@ -32,6 +33,8 @@ export default function App() {
 
   return (
     <main className="app">
+      <ThemeToggle />
+
       <header className="app__header">
         <div className="app__brand">
           <img className="app__logo" src="/favicon.svg" alt="" width={32} height={32} />

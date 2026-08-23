@@ -1,15 +1,16 @@
 /* The pool palette. Each hue is two custom properties — an ink for text and the dot, a
    tint for the pill behind it — so a component only ever asks for `--pool-ink` and
-   `--pool-tint` and never knows which colour it got.
+   `--pool-tint` and never knows which colour it got. Every pair clears 4.5:1: a pool name
+   is small text, and it has to be as readable as the amount beside it.
 
    Deliberately separate from the status colours (--ok / --warn / --danger): a pool's hue
    says *which pot*, the status colours say *how bad*, and one channel cannot carry both. */
 .pool-tag--blue {
-  --pool-ink: #2563eb;
+  --pool-ink: #1d4ed8;
   --pool-tint: #dbeafe;
 }
 .pool-tag--teal {
-  --pool-ink: #0d9488;
+  --pool-ink: #0f766e;
   --pool-tint: #ccfbf1;
 }
 .pool-tag--green {
@@ -29,7 +30,7 @@
   --pool-tint: #ffe4e6;
 }
 .pool-tag--violet {
-  --pool-ink: #7c3aed;
+  --pool-ink: #6d28d9;
   --pool-tint: #ede9fe;
 }
 .pool-tag--slate {
@@ -37,40 +38,42 @@
   --pool-tint: #e2e8f0;
 }
 
-/* Dark mode needs a lighter ink and a dim tint rather than the same pair dimmed: the
-   light tints are near-white and would glow on a near-black card. */
-@media (prefers-color-scheme: dark) {
-  .pool-tag--blue {
+/* Night mode needs a lighter ink and a dim tint rather than the same pair dimmed: the
+   day tints are near-white and would glow on a near-black card. Keyed off the same
+   `data-theme` attribute as the global tokens, so pool hues flip with the toggle — and,
+   like them, confined to `screen`, so a report printed at night keeps the day inks. */
+@media screen {
+  [data-theme="dark"] .pool-tag--blue {
     --pool-ink: #60a5fa;
-    --pool-tint: #1e3a8a;
+    --pool-tint: #172554;
   }
-  .pool-tag--teal {
+  [data-theme="dark"] .pool-tag--teal {
     --pool-ink: #2dd4bf;
-    --pool-tint: #134e4a;
+    --pool-tint: #042f2e;
   }
-  .pool-tag--green {
+  [data-theme="dark"] .pool-tag--green {
     --pool-ink: #4ade80;
-    --pool-tint: #14532d;
+    --pool-tint: #052e16;
   }
-  .pool-tag--amber {
+  [data-theme="dark"] .pool-tag--amber {
     --pool-ink: #fbbf24;
-    --pool-tint: #78350f;
+    --pool-tint: #451a03;
   }
-  .pool-tag--orange {
+  [data-theme="dark"] .pool-tag--orange {
     --pool-ink: #fb923c;
-    --pool-tint: #7c2d12;
+    --pool-tint: #431407;
   }
-  .pool-tag--rose {
+  [data-theme="dark"] .pool-tag--rose {
     --pool-ink: #fb7185;
-    --pool-tint: #881337;
+    --pool-tint: #4c0519;
   }
-  .pool-tag--violet {
+  [data-theme="dark"] .pool-tag--violet {
     --pool-ink: #a78bfa;
-    --pool-tint: #4c1d95;
+    --pool-tint: #2e1065;
   }
-  .pool-tag--slate {
+  [data-theme="dark"] .pool-tag--slate {
     --pool-ink: #94a3b8;
-    --pool-tint: #334155;
+    --pool-tint: #1e293b;
   }
 }
 

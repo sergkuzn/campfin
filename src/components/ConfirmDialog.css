@@ -61,5 +61,5 @@
 .confirm__button--danger {
   border-color: transparent;
   background-color: var(--danger);
-  color: var(--surface);
+  color: var(--on-accent);
 }

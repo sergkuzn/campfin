@@ -81,7 +81,7 @@
 
 .calendar__day[data-selected="true"] {
   background-color: var(--accent);
-  color: white;
+  color: var(--on-accent);
 }
 
 /* Only the two ends of a run are rounded, so the days between stay square and the stripe

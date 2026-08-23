@@ -1,16 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="campfin">
   <!-- A tent with a euro coin in front of it: camp + money, the two halves of the app.
        Every shape is a path — no <text> — so the euro sign renders identically on both
-       phones instead of depending on whatever font the OS hands the SVG. Colours are the
-       literal hex of the app's ok/warn custom-property tokens and the PWA theme_color; an SVG here
-       cannot read the CSS custom properties defined in the document. -->
-  <rect width="64" height="64" rx="14" fill="#0f172a"/>
-  <path d="M25 10 L45 44 H5 Z" fill="#22c55e"/>
-  <path d="M25 21 L34 44 H16 Z" fill="#0f172a"/>
-  <rect x="3" y="41.5" width="42" height="6" rx="3" fill="#334155"/>
+       phones instead of depending on whatever font the OS hands the SVG.
+
+       Drawn as one dark tile in both themes, the way a launcher icon is: an <img> cannot
+       read the page's custom properties, so it cannot follow the day/night toggle. The
+       hexes are therefore literal, and they are the night-theme values, because the tile
+       itself is dark and the shapes on it need the light end of each ramp.
+
+       The tile is the neutral-900 used for foreground ink rather than an off-palette
+       navy, which is what makes it work unchanged in both: in day mode it reads as one
+       more piece of ink beside the title, and in night mode it sinks into the page and
+       leaves the tent and coin floating. -->
+  <rect width="64" height="64" rx="14" fill="#171717"/>
+  <path d="M25 10 L45 44 H5 Z" fill="#4ade80"/>
+  <path d="M25 21 L34 44 H16 Z" fill="#171717"/>
+  <rect x="3" y="41.5" width="42" height="6" rx="3" fill="#525252"/>
   <circle cx="45" cy="44" r="14" fill="#b45309"/>
-  <circle cx="45" cy="43.4" r="13.1" fill="#f59e0b"/>
-  <g fill="none" stroke="#0f172a" stroke-width="2.95" stroke-linecap="round">
+  <circle cx="45" cy="43.4" r="13.1" fill="#fbbf24"/>
+  <g fill="none" stroke="#171717" stroke-width="2.95" stroke-linecap="round">
     <path d="M50.7,36.4 A8.2,8.2 0 1 0 50.7,49.6"/>
     <path d="M36.0,41.0 H47.5"/>
     <path d="M36.0,45.0 H45.8"/>

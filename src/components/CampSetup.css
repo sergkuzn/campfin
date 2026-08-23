@@ -56,7 +56,7 @@
 .camp-setup__step--done .camp-setup__marker {
   border-color: transparent;
   background-color: var(--ok);
-  color: var(--surface);
+  color: var(--on-accent);
 }
 
 .camp-setup__body {
@@ -111,7 +111,7 @@
   border: 1px solid transparent;
   border-radius: var(--space-2);
   background-color: var(--accent);
-  color: var(--surface);
+  color: var(--on-accent);
   font: inherit;
   font-size: 0.875rem;
   cursor: pointer;

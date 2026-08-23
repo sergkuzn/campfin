@@ -3,6 +3,7 @@
    Class names use a light BEM-ish convention: block, block__element, block--modifier. */
 
 .app {
+  position: relative; /* the anchor `ThemeToggle` pins its corner to */
   min-height: 100dvh; /* dvh = dynamic viewport height, correct on mobile with browser chrome */
   max-width: 28rem;
   margin-inline: auto; /* logical shorthand for margin-left + margin-right: centers it */
