@@ -39,23 +39,31 @@ import type { AppSchema } from './instant.schema'
 const isAdmin = "'admin' in auth.ref('$user.account.role')"
 
 /**
- * May this caller start another camp? Two conditions, and the order matters because CEL's
- * `&&` short-circuits: there must *be* a grant before its quota can be read, or the index
- * on the second clause would blow up for every unactivated account.
- *
- * `size(auth.ref('$user.createdCamps.id'))` counts the camps this user has created — the
- * only kind of counting a rule can do. Camps written before the `creator` link existed
- * count for nobody, so an old camp never eats into a quota.
- *
- * The comparison is `<` on the assumption that the camp being created is not yet part of
- * that count. Instant's own quota example writes `<= 2` for "at most 2", which reads as the
- * opposite, and the two differ by exactly one camp — so this is worth pinning down against
- * the dev app: grant an account a quota of 1, and see whether it is the first camp or the
- * second that gets refused. If the first, this becomes `<=`.
+ * Has this caller been activated at all? An `accounts` row exists only where the admin has
+ * written one, so this is the whole invite-only boundary: it is what stops a stranger who
+ * signed up from filling the database with their own camps.
  */
-const withinCampQuota =
-  "size(auth.ref('$user.account.id')) != 0 && " +
-  "size(auth.ref('$user.createdCamps.id')) < auth.ref('$user.account.campQuota')[0]"
+const hasGrant = "size(auth.ref('$user.account.id')) != 0"
+
+/**
+ * How many camps a grant allows is *not* enforced here, and the expression that tried to is
+ * kept below rather than in history, because restoring it is a two-line change:
+ *
+ *     hasGrant && size(auth.ref('$user.createdCamps.id'))
+ *                   < auth.ref('$user.account.campQuota')[0]
+ *
+ * Evaluating that inside `camps.create` fails on the server with "Could not evaluate
+ * permission rule" for every caller that reaches it — which is only ever a non-admin, since
+ * `isAdmin` short-circuits the `||` before it is read. That is why the failure stayed
+ * invisible for as long as the admin was the only one creating camps. Which sub-expression
+ * throws is still unidentified: both ref paths are ones the client queries successfully
+ * elsewhere, which leaves comparing a `size()` against a ref'd number as the untested part.
+ *
+ * The quota is meanwhile counted on the client, in `src/lib/accounts.ts`. That is a real
+ * downgrade — a hand-written transaction could exceed it — but it only caps how many camps
+ * an already-invited leader starts. Nothing is readable or writable by anyone who was never
+ * granted an account, which is the boundary that matters.
+ */
 
 const rules = {
   // Anything not named below is closed, for every action.
@@ -101,7 +109,7 @@ const rules = {
   camps: {
     bind: {
       isAdmin,
-      withinCampQuota,
+      hasGrant,
       isMember: "auth.id in data.ref('members.user.id')",
       // `ruleParams.joinCode` is null unless the caller passes it, and joinCode is a
       // required string, so this is false for every query that doesn't name a code.
@@ -117,9 +125,10 @@ const rules = {
       // good way to make camp creation unexplainably fail. A camp created without a
       // membership is invisible to everyone, including its creator — harmless, not a leak.
       //
-      // The quota replaces the old `auth.id != null`: being signed in is no longer enough,
-      // because signing in is something anyone can do unaided.
-      create: 'isAdmin || withinCampQuota',
+      // `hasGrant` replaces the old `auth.id != null`: being signed in is no longer enough,
+      // because signing in is something anyone can do unaided. How *many* camps the grant
+      // allows is counted on the client for now — see `_withinCampQuota` above.
+      create: 'isAdmin || hasGrant',
       update: 'isAdmin || isMember',
       delete: 'isAdmin || isMember',
     },
@@ -151,11 +160,25 @@ const rules = {
   // block: are you in this camp, or are you the admin. Written out rather than generated:
   // a permission file should be readable as data, and `instant-cli push` reads the object,
   // not the code that built it.
+  // Pools carry an extra `create` branch the other camp-scoped namespaces do not need. A
+  // camp's everyday pool is written in the same transaction as the camp and the creator's
+  // membership, so whether `isCampMember` can see that membership yet depends on how much
+  // of its own transaction a rule observes — untested, because `camps.create` threw before
+  // any pool was reached. `isCampCreator` reaches the same person one hop earlier, by the
+  // link the camp itself carries.
+  //
+  // Precautionary rather than diagnosed, and cheap either way: it only ever admits the
+  // person who is about to become the camp's admin member. Every other pool is added to a
+  // camp that already exists, so membership alone is enough for them.
   pools: {
-    bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')" },
+    bind: {
+      isAdmin,
+      isCampMember: "auth.id in data.ref('camp.members.user.id')",
+      isCampCreator: "auth.id in data.ref('camp.creator.id')",
+    },
     allow: {
       view: 'isAdmin || isCampMember',
-      create: 'isAdmin || isCampMember',
+      create: 'isAdmin || isCampMember || isCampCreator',
       update: 'isAdmin || isCampMember',
       delete: 'isAdmin || isCampMember',
     },

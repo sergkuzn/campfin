@@ -135,7 +135,12 @@ export function CampList({
           <p className="camp-list__locked-body">{t.access.lockedBody}</p>
         </section>
       ) : (
-        <CreateCampForm error={error} campsLeft={access.campsLeft} onCreate={onCreate} />
+        <CreateCampForm
+          error={error}
+          campsLeft={access.campsLeft}
+          quotaIsZero={access.account?.campQuota === 0}
+          onCreate={onCreate}
+        />
       )}
 
       {renderCamps()}
