@@ -33,15 +33,16 @@
   list-style: none;
 }
 
-/* One person per row: address on the left, whatever can be done about them on the right.
-   Wraps rather than squeezing — a quota stepper next to a long address needs the width. */
+/* One person per row: address and their camps stacked on the left, the ⋮ that acts on them
+   in the corner. `nowrap` keeps the trigger out of the address column, which shrinks and
+   ellipses instead of pushing anything onto a second line. */
 .admin__person {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-wrap: nowrap;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--border);
 }
 
@@ -52,7 +53,7 @@
 .admin__person-main {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  /* No gap: the stacked lines are one block of text, and line-height already spaces them. */
   min-width: 0;
 }
 
@@ -63,38 +64,13 @@
   font-size: 0.9375rem;
 }
 
+/* A state, or one camp name, on its own line under the address. */
 .admin__state {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.admin__controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.admin__step {
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: none;
-  color: inherit;
-  font: inherit;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.admin__step:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.admin__quota {
-  min-width: 6.5rem;
-  text-align: center;
-  font-size: 0.8125rem;
+  line-height: 1.5;
   color: var(--muted);
 }
 
@@ -105,7 +81,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border: 0;
   border-bottom: 1px solid var(--border);
   background: none;
@@ -127,7 +103,6 @@
 .admin__camp-main {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -137,12 +112,14 @@
   white-space: nowrap;
 }
 
-/* One line of addresses, clipped rather than wrapped — the camp row stays a row. */
+/* One address per line, each clipped rather than wrapped: a full address rarely fits a
+   phone's width, and a wrapped one reads as two people. */
 .admin__members {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.75rem;
+  line-height: 1.5;
   color: var(--muted);
 }
 

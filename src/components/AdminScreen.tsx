@@ -6,6 +6,7 @@ import type { CampMembers } from '../lib/access'
 import { MAX_CAMP_QUOTA, type RosterEntry } from '../lib/accounts'
 import type { Camp } from '../lib/types'
 import { ConfirmDialog } from './ConfirmDialog'
+import { RowMenu, type RowMenuItem } from './RowMenu'
 import { Screen } from './Screen'
 import { SlotPanel } from './SlotCard'
 import { Toast } from './Toast'
@@ -96,9 +97,11 @@ export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
                 <button className="admin__camp" type="button" onClick={() => onOpenCamp(camp.id)}>
                   <span className="admin__camp-main">
                     <span className="admin__camp-name">{camp.name}</span>
-                    <span className="admin__members">
-                      {memberLine(access.byCamp.get(camp.id), t)}
-                    </span>
+                    {memberLines(access.byCamp.get(camp.id), t).map((line) => (
+                      <span className="admin__members" key={line}>
+                        {line}
+                      </span>
+                    ))}
                   </span>
                   <span className="admin__camp-code">{camp.joinCode}</span>
                 </button>
@@ -123,16 +126,16 @@ export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
 }
 
 /**
- * Who can open a camp, as one line: the addresses, plus any member the roster cannot name.
- * A plain function rather than a component — it produces a string, and a string is what
- * the ellipsis in `.admin__members` needs to work on.
+ * Who can open a camp: one address per line, plus any member the roster cannot name. One
+ * line each rather than a comma-joined string, because two addresses never fit across a
+ * phone and the second would be cut off by the ellipsis.
  */
-function memberLine(members: CampMembers | undefined, t: Dict): string {
-  const parts = members === undefined ? [] : [...members.emails]
+function memberLines(members: CampMembers | undefined, t: Dict): string[] {
+  const lines = members === undefined ? [] : [...members.emails]
   if (members !== undefined && members.unknownCount > 0) {
-    parts.push(t.admin.unknownMembers(members.unknownCount))
+    lines.push(t.admin.unknownMembers(members.unknownCount))
   }
-  return parts.length === 0 ? t.admin.campMembersEmpty : parts.join(', ')
+  return lines.length === 0 ? [t.admin.campMembersEmpty] : lines
 }
 
 type PersonRowProps = {
@@ -148,10 +151,31 @@ type PersonRowProps = {
  * One person: their address, what they may do, and the controls that change it. Split out
  * because the three states — admin, activated leader, not activated — each want different
  * controls, and branching inside the list above would bury the list itself.
+ *
+ * Everything readable is a line under the address; everything actionable is behind the ⋮,
+ * as on the receipt and pool rows. Spelled out as buttons, four controls were wider than
+ * an email address, which is the one thing this row exists to show.
  */
 function PersonRow({ entry, campsIn, onGrant, onQuota, onRevoke }: PersonRowProps) {
   const t = useT()
   const { account } = entry
+
+  // The bounds decide whether a step is *offered* at all: the menu has no disabled state,
+  // and a choice that would do nothing is better left off it.
+  const items: RowMenuItem[] =
+    account === null
+      ? [{ label: t.admin.grant, onSelect: onGrant }]
+      : account.role === 'admin'
+        ? [] // The admin's own row: no quota to meter, and no revoking yourself.
+        : [
+            ...(account.campQuota < MAX_CAMP_QUOTA
+              ? [{ label: t.admin.quotaUp, onSelect: () => onQuota(account.campQuota + 1) }]
+              : []),
+            ...(account.campQuota > 0
+              ? [{ label: t.admin.quotaDown, onSelect: () => onQuota(account.campQuota - 1) }]
+              : []),
+            { label: t.admin.revoke, danger: true, onSelect: onRevoke },
+          ]
 
   return (
     <li className="admin__person">
@@ -164,51 +188,29 @@ function PersonRow({ entry, campsIn, onGrant, onQuota, onRevoke }: PersonRowProp
         ) : entry.userId === null ? (
           <span className="admin__state">{t.admin.pending}</span>
         ) : null}
+        {account !== null && (
+          <span className="admin__state">
+            {account.role === 'admin' ? t.admin.adminBadge : t.admin.quotaLabel(account.campQuota)}
+          </span>
+        )}
         {/* Which camps they can open — memberships, not the grant: joining by code needs no
             grant at all, so this is the only honest answer to "what can they see?".
             Skipped for an address that has never signed in, since it can have no
             memberships and the line above already says why. */}
-        {entry.userId !== null && (
-          <span className="admin__state">
-            {campsIn.length === 0
-              ? t.admin.inNoCamps
-              : t.admin.inCamps(campsIn.map((camp) => camp.name))}
-          </span>
-        )}
+        {entry.userId !== null &&
+          (campsIn.length === 0 ? (
+            <span className="admin__state">{t.admin.inNoCamps}</span>
+          ) : (
+            campsIn.map((camp) => (
+              <span className="admin__state" key={camp.id}>
+                {camp.name}
+              </span>
+            ))
+          ))}
       </div>
 
-      {account === null ? (
-        <button className="btn btn--ghost" type="button" onClick={onGrant}>
-          {t.admin.grant}
-        </button>
-      ) : account.role === 'admin' ? (
-        <span className="admin__state">{t.admin.adminBadge}</span>
-      ) : (
-        <div className="admin__controls">
-          <button
-            className="admin__step"
-            type="button"
-            aria-label={t.admin.quotaDown}
-            disabled={account.campQuota <= 0}
-            onClick={() => onQuota(account.campQuota - 1)}
-          >
-            −
-          </button>
-          <span className="admin__quota">{t.admin.quotaLabel(account.campQuota)}</span>
-          <button
-            className="admin__step"
-            type="button"
-            aria-label={t.admin.quotaUp}
-            disabled={account.campQuota >= MAX_CAMP_QUOTA}
-            onClick={() => onQuota(account.campQuota + 1)}
-          >
-            ＋
-          </button>
-          <button className="btn btn--danger" type="button" onClick={onRevoke}>
-            {t.admin.revoke}
-          </button>
-        </div>
-      )}
+      {/* The admin's own row has nothing to choose, so it gets no trigger to open. */}
+      {items.length > 0 && <RowMenu label={entry.email} disabled={false} items={items} />}
     </li>
   )
 }

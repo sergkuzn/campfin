@@ -35,6 +35,8 @@ describe('the English dictionary', () => {
     expect(en.receipts.count(3)).toBe('3 receipts')
     expect(en.admin.quotaLabel(1)).toBe('1 camp allowed')
     expect(en.admin.quotaLabel(2)).toBe('2 camps allowed')
+    expect(en.admin.unknownMembers(1)).toBe('1 unknown member')
+    expect(en.admin.unknownMembers(2)).toBe('2 unknown members')
     expect(en.access.left(1)).toContain('1 more camp ')
     expect(en.access.left(3)).toContain('3 more camps ')
   })

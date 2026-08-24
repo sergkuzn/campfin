@@ -68,6 +68,13 @@
   color: var(--on-accent);
 }
 
+/* Compact: a button that sits inside a dense list row, where the standard padding would
+   set the height of the whole row. */
+.btn--sm {
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.8125rem;
+}
+
 /* A call to action that owns its line: full width, and heavier so it carries the weight
    a wide button needs to keep. */
 .btn--block {

@@ -152,6 +152,8 @@ export const en = {
     pending: 'Invited — not signed in yet',
     notActivated: 'Not activated',
     adminBadge: 'Admin — no limit',
+    /** A line under the address, not a control: the two ways to change it live in the row's
+     *  ⋮ menu, so this has to say what the number means on its own. */
     quotaLabel: (n: number) => `${n} ${n === 1 ? 'camp' : 'camps'} allowed`,
     quotaUp: 'Allow one more camp',
     quotaDown: 'Allow one camp fewer',
@@ -161,9 +163,8 @@ export const en = {
       `Revoke ${email}? They keep every camp they are already in — this only stops them starting new ones.`,
     campsTitle: (n: number) => `All camps (${n})`,
     campsEmpty: 'No camps in the database.',
-    /** Which camps this person can open. Addresses come from memberships, so a grant
-     *  nobody has signed in against yet has none of this. */
-    inCamps: (names: string[]) => `In ${names.join(', ')}`,
+    /** Under a person's address, when they are in no camp at all. The camps they are in
+     *  are listed by name, one per line, and need no wording of their own. */
     inNoCamps: 'In no camps',
     /** Who can open this camp. */
     campMembersEmpty: 'Nobody has joined yet',
