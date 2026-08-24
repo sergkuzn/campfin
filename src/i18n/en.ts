@@ -130,9 +130,10 @@ export const en = {
   access: {
     lockedTitle: 'Your account is not activated yet',
     lockedBody:
-      'You can join any camp whose code you have been given. Starting a camp of your own needs to be switched on for you.',
+      'You can join any camp whose code you have been given. Starting a camp of your own needs permission from the admin.',
     left: (n: number) => `${n} more ${n === 1 ? 'camp' : 'camps'} you can start.`,
     usedUp: 'You have started as many camps as your account allows. Ask for a higher limit.',
+    notAllowed: 'Your account is not allowed to start any camps. Ask the admin for a quota.',
   },
 
   admin: {

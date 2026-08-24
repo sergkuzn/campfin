@@ -35,6 +35,9 @@ export function createCamp(args: CreateCampArgs): { camp: Camp; done: Promise<un
   const { name, joinCode, userId, now, everydayPoolName } = args
   const campId = id()
 
+  // Order matters: the membership comes before the pool. `pools.create` asks whether the
+  // caller is a member of the pool's camp, so the row that makes them one has to be written
+  // first — a pool evaluated ahead of it belongs to a camp with no members at all.
   const done = db.transact([
     chunk(db.tx.camps[campId])
       .update({ name, joinCode, createdAt: now })
@@ -43,6 +46,7 @@ export function createCamp(args: CreateCampArgs): { camp: Camp; done: Promise<un
       // Distinct from the admin membership below, which is about this camp; this is about
       // how many camps one person has started.
       .link({ creator: userId }),
+    membershipChunk({ campId, userId, role: 'admin', now }),
     chunk(db.tx.pools[id()])
       // The camp's first pool takes the first hue; every pool added later picks the next
       // one nobody is using.
@@ -54,7 +58,6 @@ export function createCamp(args: CreateCampArgs): { camp: Camp; done: Promise<un
         createdAt: now,
       })
       .link({ camp: campId }),
-    membershipChunk({ campId, userId, role: 'admin', now }),
   ])
 
   return { camp: { id: campId, name, joinCode, createdAt: now }, done }

@@ -33,7 +33,13 @@ export function useWriteState(queryError?: { message: string }): WriteState {
   const run = useCallback(
     (work: Promise<unknown>): void => {
       setWriteError(null)
-      void work.catch(() => setWriteError(t.sync.writeFailed))
+      // One sentence on screen, the server's own reason in the console: a rejected write is
+      // almost always a permission rule, and the rule that refused is the thing worth
+      // knowing when a write fails for one account and not another.
+      void work.catch((cause: unknown) => {
+        console.error('A write was refused', cause)
+        setWriteError(t.sync.writeFailed)
+      })
     },
     [t],
   )

@@ -12,7 +12,7 @@ import type { Account, AccountRole } from './types'
  * What a newly granted leader starts with. Two is the shape of the real job — this year's
  * camp and next year's, being planned side by side — and the admin raises it per person.
  */
-export const DEFAULT_CAMP_QUOTA = 2
+export const DEFAULT_CAMP_QUOTA = 1
 
 /** Nobody is granted a negative quota, and no stepper goes past this. */
 export const MAX_CAMP_QUOTA = 20

@@ -8,10 +8,13 @@ type Props = {
   /** How many more camps this account may start. `null` is unlimited — the admin — and is
    *  why this is not a plain number: 0 would then have to mean both "none" and "no limit". */
   campsLeft: number | null
+  /** True for a grant of zero — never allowed to start a camp — as opposed to one that
+   *  started some and used them all up. Same `campsLeft === 0`, different sentence. */
+  quotaIsZero: boolean
   onCreate: (name: string) => boolean
 }
 
-export function CreateCampForm({ error, campsLeft, onCreate }: Props) {
+export function CreateCampForm({ error, campsLeft, quotaIsZero, onCreate }: Props) {
   const t = useT()
   // A *controlled input*: React state is the single source of truth for the value,
   // and every keystroke round-trips through setName. The DOM never holds state we
@@ -46,7 +49,9 @@ export function CreateCampForm({ error, campsLeft, onCreate }: Props) {
       </div>
       {/* The allowance, only once it is worth mentioning: an admin has none, and a fresh
           grant with plenty left is noise on the busiest screen in the app. */}
-      {usedUp && <p className="create-camp__quota">{t.access.usedUp}</p>}
+      {usedUp && (
+        <p className="create-camp__quota">{quotaIsZero ? t.access.notAllowed : t.access.usedUp}</p>
+      )}
       {campsLeft !== null && campsLeft > 0 && campsLeft <= 2 && (
         <p className="create-camp__quota">{t.access.left(campsLeft)}</p>
       )}

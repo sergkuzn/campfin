@@ -103,9 +103,14 @@ export function useCamps(userId: string, allCamps = false): UseCamps {
         everydayPoolName: t.pools.everydayDefault,
       })
       // A refused creation reads differently from a refused edit: it is usually the camp
-      // quota, not a lost connection.
+      // quota, not a lost connection. The screen gets that plain sentence; the console gets
+      // the server's own reason, which names the namespace and rule that refused — the
+      // difference between "a permission said no" and knowing which one.
       clearError()
-      void done.catch(() => fail(t.sync.createFailed))
+      void done.catch((cause: unknown) => {
+        console.error('Camp creation was refused', cause)
+        fail(t.sync.createFailed)
+      })
       return camp
     },
     [camps, clearError, fail, t, userId],
