@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import './AdminScreen.css'
 import type { UseAdmin } from '../hooks/useAdmin'
-import { useT } from '../i18n'
+import { type Dict, useT } from '../i18n'
+import type { CampMembers } from '../lib/access'
 import { MAX_CAMP_QUOTA, type RosterEntry } from '../lib/accounts'
+import type { Camp } from '../lib/types'
 import { ConfirmDialog } from './ConfirmDialog'
 import { Screen } from './Screen'
 import { SlotPanel } from './SlotCard'
@@ -21,7 +23,7 @@ type Props = {
  */
 export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
   const t = useT()
-  const { roster, camps, isLoading, error, grant, setQuota, revoke } = admin
+  const { roster, camps, access, isLoading, error, grant, setQuota, revoke } = admin
   const [email, setEmail] = useState('')
   // Which grant is being revoked, if any. The entry itself rather than a boolean, so the
   // dialog can name the person it is about.
@@ -72,6 +74,7 @@ export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
                 // or both, so neither id is present for every entry.
                 key={entry.email}
                 entry={entry}
+                campsIn={access.byEmail.get(entry.email) ?? []}
                 onGrant={() => grant(entry.email)}
                 onQuota={(quota) => {
                   if (entry.account !== null) setQuota(entry.account.id, quota)
@@ -91,7 +94,12 @@ export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
             {camps.map((camp) => (
               <li key={camp.id}>
                 <button className="admin__camp" type="button" onClick={() => onOpenCamp(camp.id)}>
-                  <span className="admin__camp-name">{camp.name}</span>
+                  <span className="admin__camp-main">
+                    <span className="admin__camp-name">{camp.name}</span>
+                    <span className="admin__members">
+                      {memberLine(access.byCamp.get(camp.id), t)}
+                    </span>
+                  </span>
                   <span className="admin__camp-code">{camp.joinCode}</span>
                 </button>
               </li>
@@ -114,8 +122,23 @@ export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
   )
 }
 
+/**
+ * Who can open a camp, as one line: the addresses, plus any member the roster cannot name.
+ * A plain function rather than a component — it produces a string, and a string is what
+ * the ellipsis in `.admin__members` needs to work on.
+ */
+function memberLine(members: CampMembers | undefined, t: Dict): string {
+  const parts = members === undefined ? [] : [...members.emails]
+  if (members !== undefined && members.unknownCount > 0) {
+    parts.push(t.admin.unknownMembers(members.unknownCount))
+  }
+  return parts.length === 0 ? t.admin.campMembersEmpty : parts.join(', ')
+}
+
 type PersonRowProps = {
   entry: RosterEntry
+  /** The camps this address is a member of — empty for a grant nobody has used yet. */
+  campsIn: Camp[]
   onGrant: () => void
   onQuota: (quota: number) => void
   onRevoke: () => void
@@ -126,7 +149,7 @@ type PersonRowProps = {
  * because the three states — admin, activated leader, not activated — each want different
  * controls, and branching inside the list above would bury the list itself.
  */
-function PersonRow({ entry, onGrant, onQuota, onRevoke }: PersonRowProps) {
+function PersonRow({ entry, campsIn, onGrant, onQuota, onRevoke }: PersonRowProps) {
   const t = useT()
   const { account } = entry
 
@@ -141,6 +164,17 @@ function PersonRow({ entry, onGrant, onQuota, onRevoke }: PersonRowProps) {
         ) : entry.userId === null ? (
           <span className="admin__state">{t.admin.pending}</span>
         ) : null}
+        {/* Which camps they can open — memberships, not the grant: joining by code needs no
+            grant at all, so this is the only honest answer to "what can they see?".
+            Skipped for an address that has never signed in, since it can have no
+            memberships and the line above already says why. */}
+        {entry.userId !== null && (
+          <span className="admin__state">
+            {campsIn.length === 0
+              ? t.admin.inNoCamps
+              : t.admin.inCamps(campsIn.map((camp) => camp.name))}
+          </span>
+        )}
       </div>
 
       {account === null ? (

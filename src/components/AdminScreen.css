@@ -123,10 +123,27 @@
   border-bottom: 0;
 }
 
+/* Name over members, so a long list of addresses cannot push the join code off the row. */
+.admin__camp-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
 .admin__camp-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* One line of addresses, clipped rather than wrapped — the camp row stays a row. */
+.admin__members {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--muted);
 }
 
 .admin__camp-code {

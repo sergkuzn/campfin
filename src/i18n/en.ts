@@ -161,6 +161,14 @@ export const en = {
       `Revoke ${email}? They keep every camp they are already in — this only stops them starting new ones.`,
     campsTitle: (n: number) => `All camps (${n})`,
     campsEmpty: 'No camps in the database.',
+    /** Which camps this person can open. Addresses come from memberships, so a grant
+     *  nobody has signed in against yet has none of this. */
+    inCamps: (names: string[]) => `In ${names.join(', ')}`,
+    inNoCamps: 'In no camps',
+    /** Who can open this camp. */
+    campMembersEmpty: 'Nobody has joined yet',
+    /** Members whose account no longer exists — named by nothing but their membership. */
+    unknownMembers: (n: number) => `${n} unknown ${n === 1 ? 'member' : 'members'}`,
   },
 
   dashboard: {

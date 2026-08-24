@@ -12,6 +12,7 @@ import { useCallback, useMemo } from 'react'
 import * as accountsDb from '../db/accountsDb'
 import { db } from '../db/instant'
 import { useT } from '../i18n'
+import { type AccessMap, buildAccessMap } from '../lib/access'
 import {
   accountForEmail,
   buildRoster,
@@ -22,7 +23,7 @@ import {
   type RosterEntry,
   type RosterUser,
 } from '../lib/accounts'
-import { mapRows, toAccount, toCamp } from '../lib/rows'
+import { mapRows, toAccount, toCamp, toMembership } from '../lib/rows'
 import type { Account, Camp } from '../lib/types'
 import { useWriteState } from './useWriteState'
 
@@ -31,6 +32,8 @@ export type UseAdmin = {
   roster: RosterEntry[]
   /** Every camp in the database, however it got there. */
   camps: Camp[]
+  /** Who can reach what: the memberships of every camp, joined to the roster's addresses. */
+  access: AccessMap
   isLoading: boolean
   error: string | null
   /** Activate an address. Returns false — with an error on screen — if it is malformed or
@@ -50,7 +53,11 @@ export function useAdmin(enabled: boolean): UseAdmin {
     isLoading,
     error: queryError,
     data,
-  } = db.useQuery(enabled ? { $users: { account: {} }, accounts: {}, camps: {} } : null)
+  } = db.useQuery(
+    // `camps.members` rides along in the same subscription: memberships are what say who
+    // can reach a camp, and they are a handful of rows per camp.
+    enabled ? { $users: { account: {} }, accounts: {}, camps: { members: {} } } : null,
+  )
 
   // A failed load outranks a stale write or validation message: with no roster on screen,
   // nothing else said about it is trustworthy either.
@@ -70,6 +77,15 @@ export function useAdmin(enabled: boolean): UseAdmin {
   )
 
   const roster = useMemo(() => buildRoster(users, accounts), [users, accounts])
+
+  const memberships = useMemo(
+    () => (data?.camps ?? []).flatMap((camp) => mapRows(camp.members, toMembership)),
+    [data],
+  )
+  const access = useMemo(
+    () => buildAccessMap(camps, memberships, users),
+    [camps, memberships, users],
+  )
 
   const grant = useCallback(
     (email: string): boolean => {
@@ -109,6 +125,7 @@ export function useAdmin(enabled: boolean): UseAdmin {
   return {
     roster,
     camps,
+    access,
     isLoading,
     error,
     grant,
