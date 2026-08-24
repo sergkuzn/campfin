@@ -6,9 +6,6 @@ import { PoolTag } from './PoolTag'
 type Props = {
   /** This camp's pools. Deposit pools are filtered out here, not by the caller. */
   summaries: PoolSummary[]
-  /** Open the receipt list narrowed to one pool. The bar is where a leader reads how much
-   *  is left, so it is also where the question "on what?" is asked. */
-  onOpenPool: (poolId: string) => void
 }
 
 /**
@@ -16,13 +13,13 @@ type Props = {
  * percentage rather than a chart library — it has to be readable at 3 cm wide, and the
  * geometry is already a tested pure function (`poolBar`).
  */
-export function PoolBars({ summaries, onOpenPool }: Props) {
+export function PoolBars({ summaries }: Props) {
   const spendable = spendablePools(summaries)
 
   return (
     <div className="bars">
       {spendable.map((summary) => (
-        <PoolBarRow key={summary.pool.id} summary={summary} onOpenPool={onOpenPool} />
+        <PoolBarRow key={summary.pool.id} summary={summary} />
       ))}
     </div>
   )
@@ -37,13 +34,7 @@ function segmentWidth(units: number, overPercent: number): string {
   return `${(units / (100 + overPercent)) * 100}%`
 }
 
-function PoolBarRow({
-  summary,
-  onOpenPool,
-}: {
-  summary: PoolSummary
-  onOpenPool: (poolId: string) => void
-}) {
+function PoolBarRow({ summary }: { summary: PoolSummary }) {
   const t = useT()
   const format = useFormat()
   // Measured against what may be spent, not against what arrived: money for people who
@@ -57,11 +48,10 @@ function PoolBarRow({
       : t.bars.left(format.euros(summary.remainingCents))
 
   return (
-    // The whole row is the button — the reading and the way into its receipts are the same
-    // thing, so there is nothing on the row a thumb can miss. No aria-label: that would
-    // replace the figures inside, and they are what the row is for. The destination is
-    // added as hidden text instead, like every block header on this screen.
-    <button className="bars__row" type="button" onClick={() => onOpenPool(summary.pool.id)}>
+    // A readout, not a control: the whole card around it is the button into the receipts,
+    // and a control inside a <button> would be both invalid and a second tap target on a
+    // row that is only there to be read.
+    <div className="bars__row">
       <div className="bars__body">
         <div className="bars__head">
           <span className="bars__name">
@@ -103,11 +93,6 @@ function PoolBarRow({
               )}
         </p>
       </div>
-
-      <span className="visually-hidden">{t.bars.openPool}</span>
-      <span className="bars__chevron" aria-hidden="true">
-        ›
-      </span>
-    </button>
+    </div>
   )
 }

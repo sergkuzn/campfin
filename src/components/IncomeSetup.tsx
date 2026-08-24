@@ -1,24 +1,27 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import './IncomeSetup.css'
 import type { UseIncome } from '../hooks/useIncome'
 import { type Dict, useFormat, useT } from '../i18n'
 import { blocksOf, perDiemTotals } from '../lib/budget'
-import type { SaveBlocksInput, SaveSourceInput } from '../lib/drafts'
-import { hasPerDiemSource, INCOME_KINDS } from '../lib/income'
+import type { SaveBlocksInput, SavePoolInput, SaveSourceInput } from '../lib/drafts'
+import { addableKinds, sourceLabel } from '../lib/income'
 import {
-  everydayPool,
   type PoolSummary,
   receivedTotalCents,
   sourceAmountCents,
   summarisePools,
 } from '../lib/pools'
-import type { IncomeKind, IncomeSource, PerDiemBlock, PoolColor } from '../lib/types'
+import type { IncomeKind, IncomeSource, PerDiemBlock, Pool, PoolColor } from '../lib/types'
 import { ActualBlocksForm } from './ActualBlocksForm'
 import { ConfirmDialog } from './ConfirmDialog'
-import { IncomeSourceCard } from './IncomeSourceCard'
+import { IncomeSourceBody, IncomeSourceCard } from './IncomeSourceCard'
 import { IncomeSourceForm } from './IncomeSourceForm'
 import { PoolColorDialog } from './PoolColorDialog'
+import { PoolForm } from './PoolForm'
 import { PoolTag } from './PoolTag'
+import { RowMenu, type RowMenuItem } from './RowMenu'
+import { Screen } from './Screen'
+import { Toast } from './Toast'
 
 type Props = {
   campId: string
@@ -27,12 +30,13 @@ type Props = {
 }
 
 /**
- * Which card is unlocked. Only one at a time — that is the whole lock model. `actual` opens
+ * Which form is open. Only one at a time — that is the whole lock model. `actual` opens
  * the attendance editor rather than the source form; `seedFromGranted` remembers whether the
  * user got there via "Copy from granted".
  */
 type Editing =
-  | { mode: 'new'; kind: IncomeKind }
+  | { mode: 'pool' }
+  | { mode: 'new'; poolId: string; kind: IncomeKind }
   | { mode: 'edit'; sourceId: string }
   | { mode: 'actual'; sourceId: string; seedFromGranted: boolean }
 
@@ -55,15 +59,18 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   )
 
   const [editing, setEditing] = useState<Editing | null>(null)
-  const [picking, setPicking] = useState(false)
+  const [showPoolHint, setShowPoolHint] = useState(false)
+  /** The pool whose "which kind?" menu is open — only ever the everyday pool, and only
+   *  while its per-diem grant doesn't exist yet. */
+  const [pickingPoolId, setPickingPoolId] = useState<string | null>(null)
   const [pending, setPending] = useState<Pending | null>(null)
   // The pool whose colour is being picked, by id — looked up fresh on every render, so a
   // pool renamed or deleted by the other leader mid-sync retitles or closes the dialog.
   const [coloringPoolId, setColoringPoolId] = useState<string | null>(null)
   const coloringPool = pools.find((pool) => pool.id === coloringPoolId) ?? null
 
-  // One card open at a time: every other Edit, Delete and ＋ Add income goes inert.
-  // This single flag replaces every "you have unsaved changes" dialog.
+  // One form open at a time: every other action on the screen goes inert. This single
+  // flag replaces every "you have unsaved changes" dialog.
   const locked = editing !== null
 
   const handleSave = (input: SaveSourceInput) => {
@@ -76,9 +83,30 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
     setEditing(null)
   }
 
-  const handleAdd = (kind: IncomeKind) => {
-    setPicking(false)
-    setEditing({ mode: 'new', kind })
+  /**
+   * A new pool, then straight into its income form. The write is local-first and mints the
+   * id up front, so the second step needs no round trip — and a pool with nothing in it is
+   * not what anyone opened the form for.
+   */
+  const handleSavePool = (input: SavePoolInput) => {
+    const poolId = income.createPool(input)
+    setEditing({ mode: 'new', poolId, kind: input.role === 'deposit' ? 'deposit' : 'fixed' })
+  }
+
+  /** ＋ on a pool. The pool decides the kind, so the user is only asked in the one case
+   *  where two answers are genuinely open — see `addableKinds`. */
+  const handleAddIncome = (pool: Pool) => {
+    const kinds = addableKinds(pool, sources)
+    const only = kinds.length === 1 ? kinds[0] : undefined
+    // Only one picker at a time: tapping ＋ on a second pool must not leave the first
+    // pool's menu hanging open behind it.
+    setPickingPoolId(only === undefined ? pool.id : null)
+    if (only !== undefined) setEditing({ mode: 'new', poolId: pool.id, kind: only })
+  }
+
+  const handlePickKind = (poolId: string, kind: IncomeKind) => {
+    setPickingPoolId(null)
+    setEditing({ mode: 'new', poolId, kind })
   }
 
   const handleRenamePool = (poolId: string, currentName: string) => {
@@ -104,11 +132,14 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   const confirmContent = describePending(pending, summaries, blocks, t, format.euros)
 
   /**
-   * One saved source: the locked card, the source form, or — for the per-diem source — the
-   * card with its attendance tabs. Written here rather than inside `PoolSection` because
-   * everything it needs (which card is unlocked, the save handlers) lives in this component.
+   * One saved income: either the source form in its place, or the income itself. Written
+   * here rather than inside `PoolSection` because everything it needs — which form is
+   * open, the save handlers — lives in this component.
+   *
+   * `merged` says the pool holds this one income alone, so the pool header is already
+   * showing its name, amount and menu and only the body belongs here.
    */
-  const renderSource = (source: IncomeSource, summary: PoolSummary): React.ReactNode => {
+  const renderSource = (source: IncomeSource, pool: Pool, merged: boolean): React.ReactNode => {
     // Granted blocks only. The actual-attendance rows have their own tab and must never
     // appear as extra rows in the grant's editor.
     const grantedBlocks = blocksOf(blocks, source.id, 'granted')
@@ -120,10 +151,9 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
           key={source.id}
           campId={campId}
           kind={source.kind}
+          pool={pool}
           source={source}
           blocks={grantedBlocks}
-          pools={pools}
-          defaultPool={summary.pool}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
         />
@@ -135,93 +165,102 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
     const editingActual =
       editing?.mode === 'actual' && editing.sourceId === source.id ? editing : null
 
+    const body = {
+      source,
+      pool,
+      blocks: grantedBlocks,
+      attendance:
+        source.kind !== 'per_diem'
+          ? undefined
+          : {
+              actualBlocks: blocksOf(blocks, source.id, 'actual'),
+              totals: perDiemTotals(blocks, source.id),
+              editing: editingActual !== null,
+              renderForm: () => (
+                <ActualBlocksForm
+                  key={source.id}
+                  campId={campId}
+                  sourceId={source.id}
+                  grantedBlocks={grantedBlocks}
+                  actualBlocks={blocksOf(blocks, source.id, 'actual')}
+                  seedFromGranted={editingActual?.seedFromGranted ?? false}
+                  onSave={handleSaveBlocks}
+                  onCancel={() => setEditing(null)}
+                />
+              ),
+            },
+    }
+
+    if (merged) return <IncomeSourceBody key={source.id} {...body} namedAbove={false} />
+
     return (
       <IncomeSourceCard
         key={source.id}
-        source={source}
-        blocks={grantedBlocks}
-        amountCents={sourceAmountCents(source, blocks)}
+        {...body}
         disabled={locked}
-        attendance={
-          source.kind !== 'per_diem'
-            ? undefined
-            : {
-                actualBlocks: blocksOf(blocks, source.id, 'actual'),
-                totals: perDiemTotals(blocks, source.id),
-                editing: editingActual !== null,
-                onEdit: (seedFromGranted) =>
-                  setEditing({ mode: 'actual', sourceId: source.id, seedFromGranted }),
-                renderForm: () => (
-                  <ActualBlocksForm
-                    key={source.id}
-                    campId={campId}
-                    sourceId={source.id}
-                    grantedBlocks={grantedBlocks}
-                    actualBlocks={blocksOf(blocks, source.id, 'actual')}
-                    seedFromGranted={editingActual?.seedFromGranted ?? false}
-                    onSave={handleSaveBlocks}
-                    onCancel={() => setEditing(null)}
-                  />
-                ),
-              }
-        }
-        onEdit={() => setEditing({ mode: 'edit', sourceId: source.id })}
-        onDelete={() => setPending({ target: 'source', sourceId: source.id })}
+        amountCents={sourceAmountCents(source, blocks)}
+        menu={[
+          {
+            label: t.rowMenu.edit,
+            onSelect: () => setEditing({ mode: 'edit', sourceId: source.id }),
+          },
+          ...(source.kind === 'per_diem'
+            ? [
+                {
+                  label: t.rowMenu.editActual,
+                  onSelect: () =>
+                    setEditing({ mode: 'actual', sourceId: source.id, seedFromGranted: false }),
+                },
+              ]
+            : []),
+          {
+            label: t.rowMenu.delete,
+            danger: true,
+            onSelect: () => setPending({ target: 'source', sourceId: source.id }),
+          },
+        ]}
       />
     )
   }
 
-  // The per-diem grant is the camp's spine and there is exactly one of it, so the menu
-  // stops offering it once it exists rather than letting a second one be created.
-  const offeredKinds = INCOME_KINDS.filter(
-    (kind) => kind !== 'per_diem' || !hasPerDiemSource(sources),
-  )
-
   return (
-    <div className="income">
-      <button className="screen-back" type="button" onClick={onBack}>
-        {t.income.back}
-      </button>
-
+    <Screen name="income" back={{ label: t.income.back, onClick: onBack }}>
       <header className="income__header">
-        <h2 className="income__title">{t.income.title}</h2>
+        <h2 className="screen__title income__title">{t.income.title}</h2>
+        {/* On demand rather than always on screen: "what is a pool" is a question you have
+            once, and a permanent paragraph would cost every later visit a scroll. */}
         <button
-          className="income-form__button"
+          className="info-button"
+          type="button"
+          aria-expanded={showPoolHint}
+          aria-label={t.pools.aboutLabel}
+          onClick={() => setShowPoolHint((shown) => !shown)}
+        >
+          ⓘ
+        </button>
+        <button
+          className="btn btn--primary"
           type="button"
           disabled={locked}
-          onClick={() => setPicking((open) => !open)}
+          onClick={() => setEditing({ mode: 'pool' })}
         >
-          {t.income.add}
+          {t.pools.add}
         </button>
       </header>
 
+      {showPoolHint && <p className="income__hint">{t.pools.about}</p>}
+
       {/* A write that only failed to *sync* says nothing — Instant queues it. This is for
           a write the server actually rejected. */}
-      {income.error !== null && (
-        <p className="income__error" role="alert">
-          {income.error}
-        </p>
+      {income.error !== null && <Toast key={income.error} message={income.error} />}
+
+      {editing?.mode === 'pool' && (
+        <PoolForm campId={campId} onSave={handleSavePool} onCancel={() => setEditing(null)} />
       )}
 
-      {picking && (
-        <div className="type-menu">
-          {offeredKinds.map((kind) => (
-            <button
-              key={kind}
-              className="type-menu__option"
-              type="button"
-              onClick={() => handleAdd(kind)}
-            >
-              <span className="type-menu__label">{t.income.kinds[kind].label}</span>
-              <span className="type-menu__hint">{t.income.kinds[kind].hint}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* "Nothing here yet" would be a lie for the first second, so the loading line wins
-          while the query is still out. */}
-      {sources.length === 0 && !picking && editing === null && (
+      {/* Every camp is born with its everyday pool, so an empty list means the query is
+          still out — "nothing here yet" would be a lie for that first second. */}
+      {pools.length === 0 && (
         <p className="income__empty">{income.isLoading ? t.app.loading : t.income.empty}</p>
       )}
 
@@ -230,29 +269,40 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
           key={summary.pool.id}
           summary={summary}
           locked={locked}
+          kinds={addableKinds(summary.pool, sources)}
+          // A picker left open behind a form would offer choices that go nowhere.
+          picking={!locked && pickingPoolId === summary.pool.id}
+          onAddIncome={() => handleAddIncome(summary.pool)}
+          onPickKind={(kind) => handlePickKind(summary.pool.id, kind)}
+          onEditIncome={(sourceId) => setEditing({ mode: 'edit', sourceId })}
+          onEditActual={(sourceId) =>
+            setEditing({ mode: 'actual', sourceId, seedFromGranted: false })
+          }
+          onDeleteIncome={(sourceId) => setPending({ target: 'source', sourceId })}
           onRenamePool={() => handleRenamePool(summary.pool.id, summary.pool.name)}
           onColorPool={() => setColoringPoolId(summary.pool.id)}
           onDeletePool={() => setPending({ target: 'pool', poolId: summary.pool.id })}
-          renderSource={(source) => renderSource(source, summary)}
+          renderSource={(source, merged) => renderSource(source, summary.pool, merged)}
+          renderNewForm={
+            editing?.mode === 'new' && editing.poolId === summary.pool.id
+              ? // A fresh draft per kind: switching kinds re-seeds it rather than carrying
+                // half a per-diem grant into a fixed one.
+                () => (
+                  <IncomeSourceForm
+                    key={`new:${editing.kind}`}
+                    campId={campId}
+                    kind={editing.kind}
+                    pool={summary.pool}
+                    source={null}
+                    blocks={[]}
+                    onSave={handleSave}
+                    onCancel={() => setEditing(null)}
+                  />
+                )
+              : undefined
+          }
         />
       ))}
-
-      {editing?.mode === 'new' && (
-        <IncomeSourceForm
-          // Switching type while the menu is open re-seeds the draft.
-          key={`new:${editing.kind}`}
-          campId={campId}
-          kind={editing.kind}
-          source={null}
-          blocks={[]}
-          pools={pools}
-          // Per-diem money always lands in the everyday pool; a fixed grant or a deposit
-          // starts its own, so it gets no pre-selection.
-          defaultPool={editing.kind === 'per_diem' ? everydayPool(pools, campId) : undefined}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
-      )}
 
       <footer className="income__totals">
         <p className="income__total-row">
@@ -275,7 +325,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
         onConfirm={handleConfirm}
         onCancel={() => setPending(null)}
       />
-    </div>
+    </Screen>
   )
 }
 
@@ -297,7 +347,10 @@ function describePending(
     if (summary === undefined) return { title: t.pools.deleteTitleFallback, lines: [] }
     return {
       title: t.pools.deleteTitle(summary.pool.name),
-      lines: [t.pools.deleteSources(summary.sources.length, euros(summary.fundedCents))],
+      lines:
+        summary.sources.length === 0
+          ? [t.pools.deleteEmpty]
+          : [t.pools.deleteSources(summary.sources.length, euros(summary.fundedCents))],
     }
   }
 
@@ -307,98 +360,132 @@ function describePending(
     return { title: t.pools.sourceDeleteTitleFallback, lines: [] }
   }
 
-  const lines = [
-    t.pools.sourceDeleteLine(euros(sourceAmountCents(source, blocks)), summary.pool.name),
-  ]
-  // The reducer drops a pool once nothing feeds it — say so before it happens. The
-  // everyday pool is the exception: it stays whether or not anything funds it.
-  if (summary.sources.length === 1 && summary.pool.role !== 'everyday') {
-    lines.push(t.pools.sourceDeleteLastLine(summary.pool.name))
+  // The pool stays behind, empty — it was created deliberately and carries the colour every
+  // receipt in it wears, so say where the money goes from rather than implying it vanishes.
+  return {
+    title: t.pools.sourceDeleteTitle(sourceLabel(source, summary.pool)),
+    lines: [t.pools.sourceDeleteLine(euros(sourceAmountCents(source, blocks)), summary.pool.name)],
   }
-  return { title: t.pools.sourceDeleteTitle(source.name), lines }
 }
 
 type PoolSectionProps = {
   summary: PoolSummary
   locked: boolean
+  /** What this pool can still take. Empty when it is full — a Kaution pool that already
+   *  has its one income — which is what hides its ＋. */
+  kinds: IncomeKind[]
+  /** True while this pool's "which kind?" menu is open. Only ever the everyday pool. */
+  picking: boolean
+  onAddIncome: () => void
+  onPickKind: (kind: IncomeKind) => void
+  onEditIncome: (sourceId: string) => void
+  onEditActual: (sourceId: string) => void
+  onDeleteIncome: (sourceId: string) => void
   onRenamePool: () => void
   onColorPool: () => void
   onDeletePool: () => void
-  /** A render prop: the parent owns `editing` and every card's props, this section owns the
-   *  pool header and layout, so it stays ignorant of drafts, blocks and saving. */
-  renderSource: (source: IncomeSource) => React.ReactNode
+  /** A render prop: the parent owns every card's props, this section owns the pool header
+   *  and layout, so it stays ignorant of drafts, blocks and saving. `merged` tells the
+   *  parent that this section's header is already naming the income. */
+  renderSource: (source: IncomeSource, merged: boolean) => React.ReactNode
+  /** Present only while a brand-new income is being added to *this* pool. */
+  renderNewForm?: () => React.ReactNode
 }
 
 function PoolSection({
   summary,
   locked,
+  kinds,
+  picking,
+  onAddIncome,
+  onPickKind,
+  onEditIncome,
+  onEditActual,
+  onDeleteIncome,
   onRenamePool,
   onColorPool,
   onDeletePool,
   renderSource,
+  renderNewForm,
 }: PoolSectionProps) {
   const t = useT()
   const format = useFormat()
-  const menuRef = useRef<HTMLDetailsElement>(null)
+  const { pool, sources } = summary
   // The everyday pool outlives every source in it, so it offers no Delete at all.
-  const deletable = summary.pool.role !== 'everyday'
+  const deletable = pool.role !== 'everyday'
+  const isDeposit = pool.role === 'deposit'
 
-  // <details> keeps its open state in the DOM, exactly like <dialog>. Closing it after
-  // an action is a one-line reach through a ref rather than a second piece of state.
-  const closeMenu = () => {
-    if (menuRef.current !== null) menuRef.current.open = false
-  }
+  // A pool holding exactly one income is one thing, not a box inside a box: the header
+  // speaks for both, so the income's Edit and Delete join the pool's own menu.
+  const merged = sources.length === 1 ? sources[0] : undefined
+
+  const menu: RowMenuItem[] = [
+    ...(merged === undefined
+      ? []
+      : [{ label: t.pools.editIncome, onSelect: () => onEditIncome(merged.id) }]),
+    ...(merged === undefined || merged.kind !== 'per_diem'
+      ? []
+      : [{ label: t.rowMenu.editActual, onSelect: () => onEditActual(merged.id) }]),
+    { label: t.pools.rename, onSelect: onRenamePool },
+    { label: t.pools.color, onSelect: onColorPool },
+    ...(merged === undefined
+      ? []
+      : [{ label: t.pools.deleteIncome, danger: true, onSelect: () => onDeleteIncome(merged.id) }]),
+    ...(deletable ? [{ label: t.pools.delete, danger: true, onSelect: onDeletePool }] : []),
+  ]
 
   return (
-    <section className="pool">
+    <section className={isDeposit ? 'pool pool--deposit' : 'pool'}>
       <header className="pool__header">
         <h3 className="pool__name">
-          <PoolTag pool={summary.pool} variant="dot" />
-          {summary.pool.name}
+          <PoolTag pool={pool} variant="dot" />
+          {pool.name}
+          {/* Money that is only passing through: it is in the camp's hands but never the
+              camp's to spend, which is worth saying on the pot itself. */}
+          {isDeposit && <span className="pool__badge">{t.pools.roles.deposit.label}</span>}
         </h3>
         <span className="pool__total">{format.euros(summary.fundedCents)}</span>
-        <details className="pool__menu" ref={menuRef}>
-          <summary className="pool__menu-button" aria-label={t.pools.actions(summary.pool.name)}>
-            ⋯
-          </summary>
-          <div className="pool__menu-items">
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => {
-                closeMenu()
-                onRenamePool()
-              }}
-            >
-              {t.pools.rename}
-            </button>
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => {
-                closeMenu()
-                onColorPool()
-              }}
-            >
-              {t.pools.color}
-            </button>
-            {deletable && (
-              <button
-                type="button"
-                disabled={locked}
-                onClick={() => {
-                  closeMenu()
-                  onDeletePool()
-                }}
-              >
-                {t.pools.delete}
-              </button>
-            )}
-          </div>
-        </details>
+        {kinds.length > 0 && (
+          <button
+            className="pool__add"
+            type="button"
+            disabled={locked}
+            aria-label={t.pools.addIncomeTo(pool.name)}
+            onClick={onAddIncome}
+          >
+            ＋
+          </button>
+        )}
+        <RowMenu label={pool.name} disabled={locked} items={menu} />
       </header>
 
-      {summary.sources.map((source) => renderSource(source))}
+      {isDeposit && sources.length > 0 && <p className="pool__note">{t.pools.depositNote}</p>}
+
+      {picking && (
+        <div className="type-menu">
+          {kinds.map((kind) => (
+            <button
+              key={kind}
+              className="type-menu__option"
+              type="button"
+              onClick={() => onPickKind(kind)}
+            >
+              <span className="type-menu__label">{t.income.kinds[kind].label}</span>
+              <span className="type-menu__hint">{t.income.kinds[kind].hint}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {sources.map((source) => renderSource(source, merged !== undefined))}
+
+      {renderNewForm?.()}
+
+      {/* A pool is created before it is funded, so an empty one is a normal state — but a
+          silent empty box would read as something failing to load. */}
+      {sources.length === 0 && renderNewForm === undefined && !picking && (
+        <p className="pool__empty">{t.pools.emptyPool}</p>
+      )}
     </section>
   )
 }

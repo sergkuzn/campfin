@@ -11,18 +11,12 @@
   width: 100%;
 }
 
-.create-camp__error {
-  margin: 0;
-  color: var(--danger);
-  font-size: 0.875rem;
-}
-
 .create-camp__input {
   flex: 1; /* take all leftover width; the button keeps its natural size */
   min-width: 0; /* without this a flex item refuses to shrink below its content */
   padding: var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background-color: var(--surface);
   color: inherit;
   font: inherit;
@@ -33,18 +27,14 @@
   outline-offset: 1px;
 }
 
-.create-camp__button {
-  padding: var(--space-3) var(--space-4);
-  border: 0;
-  border-radius: var(--radius);
-  background-color: var(--accent);
-  color: #ffffff;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.create-camp__button:disabled {
+.create-camp__input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* What is left of the camp allowance, under the field it governs. */
+.create-camp__quota {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
 }

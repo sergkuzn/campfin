@@ -1,0 +1,90 @@
+/* Bare form controls: the text input and the button, shared by every screen. Named for
+   what they are rather than for the screen they first appeared on. */
+
+/* Sized by its container, never by flex-basis: inside a column flex parent a basis
+   would set the input's HEIGHT, which is what made these boxes tower. */
+.input {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* An amount never needs the full width, and a short box says "a number goes here". */
+.input--amount {
+  max-width: 12rem;
+}
+
+/* The button primitive. The base is a bare shell — font, box and cursor only — so a
+   button cannot look like the primary action by forgetting a modifier. Appearance is
+   always one of the modifiers below. */
+.btn {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+/* The one action that submits or moves the flow forward. At most one per form. */
+.btn--primary {
+  background-color: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Secondary: outlined, never filled. A border reads correctly on both the --bg cards and
+   the --surface dialogs, which is why these carry no fill of their own — the two fills
+   they used to have were opposite answers to the same "what contrasts with my parent". */
+.btn--ghost {
+  border-color: var(--border);
+}
+
+.btn--ghost:hover {
+  border-color: var(--accent);
+}
+
+/* Destructive, outlined — a delete you can still walk away from. */
+.btn--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn--danger:hover {
+  background-color: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+/* Destructive, filled — the confirm inside a dialog, where the choice is already made. */
+.btn--danger-fill {
+  background-color: var(--danger);
+  color: var(--on-accent);
+}
+
+/* Compact: a button that sits inside a dense list row, where the standard padding would
+   set the height of the whole row. */
+.btn--sm {
+  padding: var(--space-1) var(--space-2);
+  font-size: 0.8125rem;
+}
+
+/* A call to action that owns its line: full width, and heavier so it carries the weight
+   a wide button needs to keep. */
+.btn--block {
+  width: 100%;
+  padding: var(--space-3);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

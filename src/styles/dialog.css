@@ -1,0 +1,32 @@
+/* The modal shell, shared by every native <dialog> in the app. A dialog's own stylesheet
+   is then only about what is inside it.
+
+   No width here: how wide a dialog wants to be is the one thing that really does differ
+   between a question and a colour picker, so each sets its own max-width. */
+.dialog {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--fg);
+}
+
+/* The page behind, dimmed. A literal black at 40% rather than a token: this sits over the
+   page in both themes, and a themed colour would stop dimming in the one that matches it. */
+.dialog::backdrop {
+  background-color: rgb(0 0 0 / 0.4);
+}
+
+.dialog__title {
+  margin: 0 0 var(--space-3);
+  font-size: 1rem;
+}
+
+/* The buttons, right-aligned in the reading direction so the confirming one lands under
+   the thumb rather than across the dialog from it. */
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}

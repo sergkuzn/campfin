@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './MovementsScreen.css'
 import type { UseMovements } from '../hooks/useMovements'
 import { useFormat, useT } from '../i18n'
+import type { CampWindow } from '../lib/camps'
 import { todayIso } from '../lib/dates'
 import {
   type CustodyFocus,
@@ -10,11 +11,13 @@ import {
   type SaveMovementInput,
 } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
-import { CashStrip } from './CashStrip'
 import { ConfirmDialog } from './ConfirmDialog'
 import { DepositsStrip } from './DepositsStrip'
+import { FeeStrip } from './FeeStrip'
 import { MovementForm } from './MovementForm'
 import { MovementList } from './MovementList'
+import { Screen } from './Screen'
+import { Toast } from './Toast'
 
 type Props = {
   campId: string
@@ -25,13 +28,24 @@ type Props = {
   deposits: PoolSummary[]
   /** Computed once by the parent, so the strip here and on the dashboard agree. */
   custody: CustodyReading
+  /** The camp's span, for the date picker in the form below. `null` until per-diem income
+   *  dates the camp. */
+  campWindow: CampWindow | null
   onBack: () => void
 }
 
 /** Which movement is unlocked. One at a time — the same lock model as the other screens. */
 type Editing = { mode: 'new' } | { mode: 'edit'; movementId: string }
 
-export function MovementsScreen({ campId, focus, movements, deposits, custody, onBack }: Props) {
+export function MovementsScreen({
+  campId,
+  focus,
+  movements,
+  deposits,
+  custody,
+  campWindow,
+  onBack,
+}: Props) {
   const t = useT()
   const format = useFormat()
 
@@ -43,7 +57,7 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
   const labels = t.movements[focus]
   // Nothing can be recorded here yet: the deposit kinds have no pool to point at.
   const missingDeposits = focus === 'deposits' && deposits.length === 0
-  // Only this half's rows: a screen headed "Deposits" listing volunteer cash would undo
+  // Only this half's rows: a screen headed "Deposits" listing participation fees would undo
   // the split the dashboard makes. The form below is limited to the same half.
   const rows = movementsInFocus(movements.movements, focus)
   const editingRow =
@@ -66,15 +80,11 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
   }
 
   return (
-    <div className="movements">
-      <button className="screen-back" type="button" onClick={onBack}>
-        {t.movements.back}
-      </button>
-
+    <Screen name="movements" back={{ label: t.movements.back, onClick: onBack }}>
       <header className="movements__header">
-        <h2 className="movements__title">{labels.title}</h2>
+        <h2 className="screen__title">{labels.title}</h2>
         <button
-          className="income-form__button"
+          className="btn btn--primary"
           type="button"
           disabled={locked || missingDeposits}
           onClick={() => setEditing({ mode: 'new' })}
@@ -85,21 +95,17 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
 
       {/* A write that only failed to *sync* says nothing — Instant queues it. This is for
           a write the server actually rejected. */}
-      {movements.error !== null && (
-        <p className="income__error" role="alert">
-          {movements.error}
-        </p>
-      )}
+      {movements.error !== null && <Toast key={movements.error} message={movements.error} />}
 
       {focus === 'deposits' ? (
         <DepositsStrip statuses={custody.statuses} />
       ) : (
-        <CashStrip heldCents={custody.volunteerHeldCents} count={custody.volunteerCount} />
+        <FeeStrip heldCents={custody.feeHeldCents} count={custody.feeCount} />
       )}
 
       {/* Without a deposit source there is no Kaution to hand over, so say what is missing
           rather than offering a form whose pool picker would be empty. */}
-      {missingDeposits && <p className="dashboard__slot-hint">{t.movements.deposits.noDeposits}</p>}
+      {missingDeposits && <p className="slot-card__hint">{t.movements.deposits.noDeposits}</p>}
 
       {editing?.mode === 'new' && (
         <MovementForm
@@ -107,8 +113,10 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
           focus={focus}
           movement={null}
           deposits={deposits}
+          statuses={custody.statuses}
           // Read at the edge and passed down, so nothing below here touches the clock.
           todayIso={todayIso()}
+          campWindow={campWindow}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
         />
@@ -136,7 +144,9 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
             focus={focus}
             movement={editingRow}
             deposits={deposits}
+            statuses={custody.statuses}
             todayIso={todayIso()}
+            campWindow={campWindow}
             onSave={handleSave}
             onCancel={() => setEditing(null)}
           />
@@ -166,6 +176,6 @@ export function MovementsScreen({ campId, focus, movements, deposits, custody, o
         onConfirm={handleConfirmDelete}
         onCancel={() => setPendingId(null)}
       />
-    </div>
+    </Screen>
   )
 }

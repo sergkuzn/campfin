@@ -1,0 +1,36 @@
+/* Taken out of the flow and pinned to the corner of `.app`, which is `position: relative`
+   for it. In the flow it would either push the centred title off-centre or claim a row of
+   its own above it; the corner is dead space in both themes and on every screen.
+
+   Inset by half the shell's padding rather than sitting flush at `0`: it lands in the
+   corner without touching the viewport edge, where a phone's rounded screen or a
+   swipe-back gesture would eat part of the target. */
+.theme-toggle {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Square, so the target is a thumb's width as well as its height. */
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted); /* quiet by default — it is a setting, not an action */
+  cursor: pointer;
+}
+
+/* Only on a device that actually hovers: on a phone the hover state sticks after a tap. */
+@media (hover: hover) {
+  .theme-toggle:hover {
+    color: var(--fg);
+  }
+}
+
+.theme-toggle__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}

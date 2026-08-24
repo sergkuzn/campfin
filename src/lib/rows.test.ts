@@ -169,7 +169,7 @@ describe('toMovement', () => {
   it('toMovement rejects a deposit movement with no pool', () => {
     const { poolId: _dropped, ...rest } = movementRow
     expect(toMovement(rest)).toBeNull()
-    // The same row as volunteer money is fine — that kind names no pool.
+    // The same row as a participation fee is fine — that kind names no pool.
     expect(toMovement({ ...rest, kind: 'volunteer_in' })?.kind).toBe('volunteer_in')
   })
 

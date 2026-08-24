@@ -4,7 +4,10 @@ import {
   blankBlockDraft,
   blockDraftCents,
   blockDraftPersonDays,
+  copyBlockDraft,
 } from '../lib/drafts'
+import { DateField } from './DateField'
+import { RequiredMark } from './RequiredMark'
 
 type Props = {
   blocks: BlockDraft[]
@@ -37,6 +40,12 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
   // identity — never use one for the other.
   const addRow = () => onChange([...blocks, blankBlockDraft(crypto.randomUUID())])
 
+  const copyLastRow = () => {
+    const last = blocks[blocks.length - 1]
+    if (last === undefined) return
+    onChange([...blocks, copyBlockDraft(last, crypto.randomUUID())])
+  }
+
   const removeRow = (key: string) => onChange(blocks.filter((block) => block.key !== key))
 
   return (
@@ -61,7 +70,7 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
             <label className="field">
               <span className="field__label">{t.blocks.nameLabel}</span>
               <input
-                className="income-form__input"
+                className="input"
                 value={block.label}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   patchRow(block.key, { label: event.target.value })
@@ -70,11 +79,14 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
               />
             </label>
 
-            <div className="block__row">
+            <div className="field-row">
               <label className="field">
-                <span className="field__label">{t.blocks.peopleLabel}</span>
+                <span className="field__label">
+                  {t.blocks.peopleLabel}
+                  <RequiredMark />
+                </span>
                 <input
-                  className="income-form__input"
+                  className="input"
                   type="number"
                   min="1"
                   step="1"
@@ -87,9 +99,13 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
               </label>
 
               <label className="field">
-                <span className="field__label">{t.blocks.rateLabel}</span>
+                <span className="field__label">
+                  {t.blocks.rateLabel}
+                  <RequiredMark />
+                </span>
                 <input
-                  className="income-form__input"
+                  className="input"
+                  aria-required="true"
                   // inputMode="decimal" so a phone shows a numeric keypad. The value stays
                   // a string here: cents happen in drafts.ts.
                   inputMode="decimal"
@@ -102,30 +118,26 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
               </label>
             </div>
 
-            <div className="block__row">
-              <label className="field">
-                <span className="field__label">{t.blocks.startLabel}</span>
-                <input
-                  className="income-form__input"
-                  type="date"
-                  value={block.startDate}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    patchRow(block.key, { startDate: event.target.value })
-                  }
-                />
+            <div className="field">
+              {/* The button trigger must sit outside the <label> — a label wrapping a
+                  button steals its taps — so it is tied to its text by id instead. */}
+              <label className="field__label" htmlFor={`${block.key}-dates`}>
+                {t.blocks.datesLabel}
+                <RequiredMark />
               </label>
-
-              <label className="field">
-                <span className="field__label">{t.blocks.endLabel}</span>
-                <input
-                  className="income-form__input"
-                  type="date"
-                  value={block.endDate}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    patchRow(block.key, { endDate: event.target.value })
-                  }
-                />
-              </label>
+              <DateField
+                id={`${block.key}-dates`}
+                mode="range"
+                placeholder={t.blocks.datesPlaceholder}
+                value={
+                  block.startDate !== '' && block.endDate !== ''
+                    ? { start: block.startDate, end: block.endDate }
+                    : null
+                }
+                onChange={({ start, end }) =>
+                  patchRow(block.key, { startDate: start, endDate: end })
+                }
+              />
             </div>
 
             <p className="block__summary">
@@ -140,9 +152,16 @@ export function PerDiemBlocksEditor({ blocks, onChange }: Props) {
         )
       })}
 
-      <button className="blocks__add" type="button" onClick={addRow}>
-        {t.blocks.add}
-      </button>
+      <div className="blocks__add-actions">
+        <button className="blocks__add" type="button" onClick={addRow}>
+          {t.blocks.add}
+        </button>
+        {blocks.length > 0 && (
+          <button className="blocks__add" type="button" onClick={copyLastRow}>
+            {t.blocks.copyLast}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

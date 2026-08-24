@@ -1,21 +1,8 @@
-.movements {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-}
-
 .movements__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-}
-
-.movements__title {
-  margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: -0.02em;
 }
 
 .movements__rows {
@@ -78,4 +65,21 @@
   flex: 0 0 auto;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/* The deposit direction radios, as one fieldset so they are announced as a single question
+   — "handed over, or came back" — rather than as two unrelated controls. */
+.movement-direction {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* A handover larger than the deposit its pool holds. Warning colour, not error colour: the
+   save goes through, and it balances as long as all of it comes back. */
+.field__hint--warn {
+  color: var(--warn);
 }

@@ -1,7 +1,6 @@
 /**
  * Hand a file to the browser. The DOM half of the export hatch — what goes *into* the file
- * is built by the pure `buildCampExport` / `toCsv`, so nothing about the content depends
- * on this file.
+ * is built by the pure `toCsv`, so nothing about the content depends on this file.
  */
 
 /** Saves `text` as `filename`. On a phone this lands in Downloads or the share sheet. */
@@ -14,10 +13,6 @@ function download(filename: string, text: string, mimeType: string): void {
   anchor.download = filename
   anchor.click()
   URL.revokeObjectURL(url)
-}
-
-export function downloadJson(filename: string, text: string): void {
-  download(filename, text, 'application/json')
 }
 
 /**

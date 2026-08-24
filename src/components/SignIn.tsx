@@ -70,7 +70,11 @@ export function SignIn() {
           placeholder={t.auth.emailPlaceholder}
           aria-label={t.auth.emailLabel}
         />
-        <button className="sign-in__button" type="submit" disabled={busy || email.trim() === ''}>
+        <button
+          className="btn btn--primary btn--block"
+          type="submit"
+          disabled={busy || email.trim() === ''}
+        >
           {busy ? t.auth.sending : t.auth.sendCode}
         </button>
         {error !== null && (
@@ -100,7 +104,11 @@ export function SignIn() {
         placeholder={t.auth.codePlaceholder}
         aria-label={t.auth.codeLabel}
       />
-      <button className="sign-in__button" type="submit" disabled={busy || code.trim() === ''}>
+      <button
+        className="btn btn--primary btn--block"
+        type="submit"
+        disabled={busy || code.trim() === ''}
+      >
         {t.auth.verify}
       </button>
       <button className="sign-in__link" type="button" onClick={restart}>

@@ -28,10 +28,10 @@ function renderHeadline(burn: Partial<Burn>, remainingCents: number) {
   )
 }
 
-/** The value rendered under a stat label — the two live in the same cell, so the label's
- *  parent is the row to read the figure from. */
+/** The value rendered next to a stat label — label and value are sibling grid cells, so
+ *  the value is the label's next sibling. */
 function statValue(label: string): string {
-  return plain(screen.getByText(label).parentElement?.textContent?.replace(label, '') ?? '')
+  return plain(screen.getByText(label).nextElementSibling?.textContent ?? '')
 }
 
 describe('AllowedToday', () => {

@@ -1,5 +1,7 @@
-import { useMemo } from 'react'
-import { downloadCsv, downloadJson } from '../db/download'
+import { useMemo, useState } from 'react'
+import { downloadCsv } from '../db/download'
+import { useAccount } from '../hooks/useAccount'
+import { useAdmin } from '../hooks/useAdmin'
 import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
@@ -8,19 +10,22 @@ import { useScrollToTop } from '../hooks/useScrollToTop'
 import type { Session } from '../hooks/useSession'
 import { useViewHistory } from '../hooks/useViewHistory'
 import { computeBurn, emptyBurn } from '../lib/burn'
+import { campWindow } from '../lib/camps'
 import { todayIso } from '../lib/dates'
-import { buildCampExport, exportFileName } from '../lib/exportJson'
+import { exportFileName } from '../lib/exportFile'
 import { isCampAdmin, memberCount } from '../lib/members'
 import { type CustodyFocus, custodyReading } from '../lib/movements'
 import { depositPools, everydayPool, summarisePools } from '../lib/pools'
+import { buildReport } from '../lib/report'
 import { computeSettlement } from '../lib/settlement'
+import { AdminScreen } from './AdminScreen'
 import { CampDashboard } from './CampDashboard'
 import { CampList } from './CampList'
 import { CampSettingsScreen } from './CampSettingsScreen'
+import { FinancialReport } from './FinancialReport'
 import { IncomeSetup } from './IncomeSetup'
 import { MovementsScreen } from './MovementsScreen'
 import { ReceiptsScreen } from './ReceiptsScreen'
-import { SettlementSheet } from './SettlementSheet'
 
 /**
  * Every screen, no router. `View` is a discriminated union rather than two independent
@@ -30,13 +35,14 @@ import { SettlementSheet } from './SettlementSheet'
  */
 type View =
   | { screen: 'list' }
+  | { screen: 'admin' }
   | { screen: 'dashboard'; campId: string }
   | { screen: 'income'; campId: string }
   // `poolId` is where the receipt list *opens*, not a lasting setting: the screen seeds its
   // filter from it once and owns the chips from then on.
   | { screen: 'receipts'; campId: string; poolId: string | null }
   | { screen: 'movements'; campId: string; focus: CustodyFocus }
-  | { screen: 'settlement'; campId: string }
+  | { screen: 'report'; campId: string }
   | { screen: 'settings'; campId: string }
 
 type Props = {
@@ -49,6 +55,13 @@ type Props = {
  * has to cope with "no user yet" would leak that state into every screen.
  */
 export function SignedInApp({ session }: Props) {
+  // What this account may do app-wide, as opposed to what it may do inside one camp.
+  const { access } = useAccount(session.userId)
+  // Admin only, and off by default: your own camps are the ones you came here for, so
+  // everyone else's stay behind a switch rather than burying them.
+  const [showAllCamps, setShowAllCamps] = useState(false)
+  const admin = useAdmin(access.isAdmin)
+
   const {
     camps,
     memberships,
@@ -56,11 +69,11 @@ export function SignedInApp({ session }: Props) {
     isLoading,
     error,
     createCamp,
-    importCamp,
     renameCamp,
+    setMoneyHolder,
     deleteCamp,
     clearError,
-  } = useCamps(session.userId)
+  } = useCamps(session.userId, access.isAdmin && showAllCamps)
   // Backed by session history, so the phone's own back gesture steps up a screen exactly
   // as the ← buttons do. `navigate` replaces `setView` and takes the same values; the
   // callback clears any pending error whichever way the screen was left, so a rejected
@@ -73,8 +86,9 @@ export function SignedInApp({ session }: Props) {
 
   // `find` returns `Camp | undefined`; if the open camp was just deleted — by us, or by the
   // other leader mid-sync — we fall back to the list automatically, with no effect and no
-  // stale state to clean up.
-  const openCamp = view.screen === 'list' ? undefined : camps.find((c) => c.id === view.campId)
+  // stale state to clean up. `'campId' in view` narrows the union to the screens that have
+  // one, so adding a camp-less screen never needs this line touched again.
+  const openCamp = 'campId' in view ? camps.find((c) => c.id === view.campId) : undefined
   const openCampId = openCamp?.id ?? ''
 
   // Three queries per open camp: passing '' skips them entirely while the list is showing.
@@ -98,11 +112,30 @@ export function SignedInApp({ session }: Props) {
   )
   const deposits = useMemo(() => depositPools(summaries), [summaries])
 
-  // What goes back at the end. Derived from the same summaries as the bars, so the
-  // dashboard headline and the sheet behind it can never quote different totals.
+  // The camp's span, for the receipt date field: highlights those days and asks before
+  // saving a receipt outside them.
+  const campSpan = useMemo(() => campWindow(blocks), [blocks])
+
+  // What goes back at the end, floored per pool. Derived from the same summaries as the
+  // bars, so the dashboard headline and the report behind it cannot quote different totals.
   const settlement = useMemo(
     () =>
       computeSettlement({
+        summaries,
+        blocks,
+        expenses: expenses.expenses,
+        movements: movements.movements,
+        moneyHolder: openCamp?.moneyHolder,
+      }),
+    [summaries, blocks, expenses.expenses, movements.movements, openCamp],
+  )
+
+  // The same figures read as a statement: income, expenses, and the difference between
+  // them. Separate from the settlement because the two answer different questions — this
+  // one balances to the cent, that one floors each pool before transferring anything back.
+  const report = useMemo(
+    () =>
+      buildReport({
         summaries,
         blocks,
         expenses: expenses.expenses,
@@ -153,32 +186,26 @@ export function SignedInApp({ session }: Props) {
     navigate({ screen: 'list' }, 'replace')
   }
 
-  const handleExportJson = () => {
-    if (openCamp === undefined) return
-    const exportedAt = new Date().toISOString()
-    const dump = buildCampExport(
-      openCamp,
-      { pools, sources, blocks },
-      expenses.expenses,
-      movements.movements,
-      exportedAt,
-    )
-    downloadJson(exportFileName(openCamp, exportedAt, 'json'), JSON.stringify(dump, null, 2))
-  }
-
-  // The sheet builds the CSV text, because the column labels are its business; the
+  // The report builds the CSV text, because the column labels are its business; the
   // filename and the download are the app's.
   const handleExportCsv = (text: string) => {
     if (openCamp === undefined) return
     downloadCsv(exportFileName(openCamp, new Date().toISOString(), 'csv'), text)
   }
 
-  const handleImport = (text: string): boolean => {
-    const camp = importCamp(text)
-    // Null means the file was refused; the reason is already in `error` on the list.
-    if (camp === null) return false
-    navigate({ screen: 'dashboard', campId: camp.id })
-    return true
+  if (view.screen === 'admin') {
+    return (
+      <AdminScreen
+        admin={admin}
+        onBack={goBack}
+        onOpenCamp={(campId) => {
+          // Another leader's camp is only in `camps` while the switch is on, so opening one
+          // from here turns it on: the dashboard reads the camp out of that same list.
+          setShowAllCamps(true)
+          navigate({ screen: 'dashboard', campId })
+        }}
+      />
+    )
   }
 
   if (openCamp === undefined) {
@@ -187,11 +214,14 @@ export function SignedInApp({ session }: Props) {
         camps={camps}
         blocks={campBlocks}
         userId={session.userId}
+        access={access}
+        showAllCamps={showAllCamps}
         isLoading={isLoading}
         error={error}
         onOpen={handleOpen}
         onCreate={handleCreate}
-        onImport={handleImport}
+        onToggleAllCamps={setShowAllCamps}
+        onOpenAdmin={() => navigate({ screen: 'admin' })}
       />
     )
   }
@@ -200,6 +230,8 @@ export function SignedInApp({ session }: Props) {
     return (
       <ReceiptsScreen
         campId={openCamp.id}
+        moneyHolder={openCamp.moneyHolder}
+        campWindow={campSpan}
         expenses={expenses}
         summaries={summaries}
         focusPoolId={view.poolId}
@@ -216,20 +248,21 @@ export function SignedInApp({ session }: Props) {
         movements={movements}
         deposits={deposits}
         custody={custody}
+        campWindow={campSpan}
         onBack={goBack}
       />
     )
   }
 
-  if (view.screen === 'settlement') {
+  if (view.screen === 'report') {
     return (
-      <SettlementSheet
+      <FinancialReport
         camp={openCamp}
+        report={report}
         settlement={settlement}
         expenses={expenses.expenses}
         summaries={summaries}
         onBack={goBack}
-        onExportJson={handleExportJson}
         onExportCsv={handleExportCsv}
       />
     )
@@ -241,12 +274,15 @@ export function SignedInApp({ session }: Props) {
         camp={openCamp}
         summaries={summaries}
         memberCount={memberCount(memberships, openCamp.id)}
+        campWindow={campSpan}
         isAdmin={isCampAdmin(memberships, openCamp.id, session.userId)}
         isLoading={income.isLoading}
         error={error ?? income.error}
         onBack={goBack}
         onOpenIncome={() => navigate({ screen: 'income', campId: openCamp.id })}
+        expenses={expenses.expenses}
         onRename={(name) => renameCamp(openCamp.id, name)}
+        onChangeHolder={(name: string) => setMoneyHolder(openCamp.id, name)}
         onDelete={() => handleDelete(openCamp.id)}
       />
     )
@@ -266,12 +302,12 @@ export function SignedInApp({ session }: Props) {
       error={error ?? income.error ?? expenses.error ?? movements.error}
       hasExpenses={expenses.expenses.length > 0}
       custody={custody}
-      settlement={settlement}
       onBack={goBack}
       onOpenIncome={() => navigate({ screen: 'income', campId: openCamp.id })}
+      onChangeHolder={(name: string) => setMoneyHolder(openCamp.id, name)}
       onOpenReceipts={(poolId) => navigate({ screen: 'receipts', campId: openCamp.id, poolId })}
       onOpenMovements={(focus) => navigate({ screen: 'movements', campId: openCamp.id, focus })}
-      onOpenSettlement={() => navigate({ screen: 'settlement', campId: openCamp.id })}
+      onOpenReport={() => navigate({ screen: 'report', campId: openCamp.id })}
       onOpenSettings={() => navigate({ screen: 'settings', campId: openCamp.id })}
     />
   )

@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => {
           description: isProd
             ? 'Local-first camp budget tracker.'
             : 'Dev build of campfin — writes to the dev database.',
-          theme_color: isProd ? '#0f172a' : '#78350f',
+          theme_color: isProd ? '#f5f5f5' : '#78350f', // the day theme's --bg; the running app rewrites it per theme
           background_color: '#ffffff',
           display: 'standalone',
           start_url: '/',
@@ -77,6 +77,9 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
+      // Without this, a stylesheet imported by a test is stubbed out as an empty string.
+      // The palette test reads `index.css` to check its colours, so it needs the real file.
+      css: true,
     },
   }
 })

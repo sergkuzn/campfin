@@ -10,12 +10,22 @@
  * `importJson.ts` face the same problem, so they share one definition of it.
  */
 
+import { isAccount } from './accounts'
 import { isCamp } from './camps'
 import { isExpense } from './expenses'
 import { isIncomeSource, isMovement, isPerDiemBlock, isPool } from './income'
 import { isMembership } from './members'
 import { isPoolColor } from './poolColors'
-import type { Camp, Expense, IncomeSource, Membership, Movement, PerDiemBlock, Pool } from './types'
+import type {
+  Account,
+  Camp,
+  Expense,
+  IncomeSource,
+  Membership,
+  Movement,
+  PerDiemBlock,
+  Pool,
+} from './types'
 
 /**
  * An optional attribute nobody has set can come back as `null`, while the domain types
@@ -44,8 +54,15 @@ export function mapRows<T>(
 export function toCamp(row: unknown): Camp | null {
   const value = withoutNulls(row)
   if (!isCamp(value)) return null
-  const { id, name, joinCode, createdAt } = value
-  return { id, name, joinCode, createdAt }
+  const { id, name, joinCode, moneyHolder, createdAt } = value
+  return { id, name, joinCode, moneyHolder, createdAt }
+}
+
+export function toAccount(row: unknown): Account | null {
+  const value = withoutNulls(row)
+  if (!isAccount(value)) return null
+  const { id, email, role, campQuota, grantedAt } = value
+  return { id, email, role, campQuota, grantedAt }
 }
 
 export function toMembership(row: unknown): Membership | null {
@@ -99,20 +116,29 @@ export function toMovement(row: unknown): Movement | null {
   const { id, campId, name, amountCents, date, note, createdAt } = value
   const common = { id, campId, name, amountCents, date, note, createdAt }
   // Narrowing on `kind` is what makes `poolId` visible: copying it unconditionally would
-  // give volunteer money a pool it does not have.
+  // give a participation fee a pool it does not have.
   return value.kind === 'volunteer_in'
     ? { ...common, kind: value.kind }
-    : {
-        ...common,
-        kind: value.kind,
-        poolId: value.poolId,
-        completesDeposit: value.completesDeposit,
-      }
+    : { ...common, kind: value.kind, poolId: value.poolId }
 }
 
 export function toExpense(row: unknown): Expense | null {
   const value = withoutNulls(row)
   if (!isExpense(value)) return null
-  const { id, campId, poolId, name, amountCents, date, number, note, enteredBy, createdAt } = value
-  return { id, campId, poolId, name, amountCents, date, number, note, enteredBy, createdAt }
+  const { id, campId, poolId, name, amountCents, date, number, note, createdAt } = value
+  const { paidBy, reimbursed, enteredBy } = value
+  return {
+    id,
+    campId,
+    poolId,
+    name,
+    amountCents,
+    date,
+    number,
+    note,
+    paidBy,
+    reimbursed,
+    enteredBy,
+    createdAt,
+  }
 }

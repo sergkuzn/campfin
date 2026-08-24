@@ -45,7 +45,7 @@ function useI18n(): I18n {
   return value
 }
 
-/** Every user-facing string: `const t = useT()` … `t.income.add`. */
+/** Every user-facing string: `const t = useT()` … `t.income.title`. */
 export function useT(): Dict {
   return useI18n().t
 }

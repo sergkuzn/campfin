@@ -8,15 +8,15 @@
  * merely filtered out, it is unreadable.
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import * as campsDb from '../db/campsDb'
 import { db } from '../db/instant'
 import { useT } from '../i18n'
-import { campNameExists, uniqueCampName } from '../lib/camps'
-import { parseCampExport } from '../lib/importJson'
+import { campNameExists } from '../lib/camps'
 import { generateJoinCode } from '../lib/joinCode'
 import { mapRows, toBlock, toCamp, toMembership } from '../lib/rows'
 import type { Camp, Membership, PerDiemBlock } from '../lib/types'
+import { useWriteState } from './useWriteState'
 
 export type UseCamps = {
   camps: Camp[]
@@ -30,19 +30,22 @@ export type UseCamps = {
   error: string | null
   /** Returns the created camp so the caller can navigate straight into it, or null if the name is taken. */
   createCamp: (name: string) => Camp | null
-  /** Restores an exported dump as a new camp. Null when the file was not readable — the
-   *  reason lands in `error`. */
-  importCamp: (text: string) => Camp | null
   renameCamp: (campId: string, name: string) => void
+  /** Name the leader holding the camp's cash. Only ever a hand-over: a camp past setup
+   *  always has a holder, because every debt in it is measured against one. */
+  setMoneyHolder: (campId: string, name: string) => void
   deleteCamp: (campId: string) => void
   /** Dismiss the current error — call it when navigating away from the input that raised it. */
   clearError: () => void
 }
 
-export function useCamps(userId: string): UseCamps {
+/**
+ * @param allCamps drops the membership filter, for the admin's "every camp" switch. The
+ *   server still decides: `camps.view` returns the whole table to an admin account and
+ *   only your own camps to anyone else, so this widens the request, never the answer.
+ */
+export function useCamps(userId: string, allCamps = false): UseCamps {
   const t = useT()
-  // Validation failures and rejected writes are a UI concern, not query state.
-  const [error, setError] = useState<string | null>(null)
 
   // The nested `members` and `perDiemBlocks` ride along in the same subscription, so the
   // leader count, my role and every camp's date window cost no second query. Blocks are a
@@ -52,8 +55,21 @@ export function useCamps(userId: string): UseCamps {
     error: queryError,
     data,
   } = db.useQuery({
-    camps: { $: { where: { 'members.user.id': userId } }, members: {}, perDiemBlocks: {} },
+    camps: {
+      // The switch varies the *value*, not the shape of the clause: Instant's result type
+      // is inferred from the query object, and a ternary over whole `where` objects (or an
+      // `or` of two) makes it a union it collapses to `never`. So "every camp" is spelled
+      // as "every camp with a member", which every camp this app creates has — its author's
+      // membership is written in the same transaction.
+      $: { where: { 'members.user.id': allCamps ? { $isNull: false } : userId } },
+      members: {},
+      perDiemBlocks: {},
+    },
   })
+
+  // Validation failures and rejected writes share one channel: both are a UI concern, and
+  // a failed load outranks either.
+  const { error, run, fail, clearError } = useWriteState(queryError)
 
   const camps = useMemo(() => mapRows(data?.camps, toCamp), [data])
   const memberships = useMemo(
@@ -72,10 +88,9 @@ export function useCamps(userId: string): UseCamps {
     (name: string): Camp | null => {
       const trimmed = name.trim()
       if (campNameExists(camps, trimmed)) {
-        setError(t.camps.nameTaken(trimmed))
+        fail(t.camps.nameTaken(trimmed))
         return null
       }
-      setError(null)
 
       // The write lands locally at once, so the camp can be returned and opened before the
       // server has heard of it. Only a *rejection* — a join-code collision, a permission
@@ -87,75 +102,49 @@ export function useCamps(userId: string): UseCamps {
         now: Date.now(),
         everydayPoolName: t.pools.everydayDefault,
       })
-      void done.catch(() => setError(t.sync.createFailed))
+      // A refused creation reads differently from a refused edit: it is usually the camp
+      // quota, not a lost connection.
+      clearError()
+      void done.catch(() => fail(t.sync.createFailed))
       return camp
     },
-    [camps, t, userId],
-  )
-
-  const importCamp = useCallback(
-    (text: string): Camp | null => {
-      const result = parseCampExport(text)
-      // The union means the failure branch has an `issue` and no dump, so there is no way
-      // to import a file that was never parsed.
-      if (!result.ok) {
-        setError(t.camps.importFailed[result.issue])
-        return null
-      }
-      setError(null)
-
-      // Restoring a dump next to the camp it came from is the normal case — a suffix beats
-      // refusing the file, and the name is editable afterwards anyway.
-      const name = uniqueCampName(camps, result.dump.camp.name)
-      const { camp, done } = campsDb.importCamp({
-        parsed: result.dump,
-        name,
-        // A fresh code: the old camp, if it still exists, keeps its own.
-        joinCode: generateJoinCode(name),
-        userId,
-        now: Date.now(),
-      })
-      void done.catch(() => setError(t.sync.createFailed))
-      return camp
-    },
-    [camps, t, userId],
+    [camps, clearError, fail, t, userId],
   )
 
   const renameCamp = useCallback(
     (campId: string, name: string): void => {
       const trimmed = name.trim()
       if (campNameExists(camps, trimmed, campId)) {
-        setError(t.camps.nameTaken(trimmed))
+        fail(t.camps.nameTaken(trimmed))
         return
       }
-      setError(null)
-      void campsDb.renameCamp(campId, trimmed).catch(() => setError(t.sync.writeFailed))
+      run(campsDb.renameCamp(campId, trimmed))
     },
-    [camps, t],
+    [camps, fail, run, t],
   )
 
-  const deleteCamp = useCallback(
-    (campId: string): void => {
-      void campsDb.deleteCamp(campId).catch(() => setError(t.sync.writeFailed))
+  const setMoneyHolder = useCallback(
+    (campId: string, name: string): void => {
+      // The screens already refuse an empty field; dropping a blank here as well keeps a
+      // person called "" out of the camp whatever calls this.
+      const trimmed = name.trim()
+      if (trimmed === '') return
+      run(campsDb.setMoneyHolder(campId, trimmed))
     },
-    [t],
+    [run],
   )
 
-  const clearError = useCallback((): void => {
-    setError(null)
-  }, [])
+  const deleteCamp = useCallback((campId: string): void => run(campsDb.deleteCamp(campId)), [run])
 
   return {
     camps,
     memberships,
     blocks,
     isLoading,
-    // A failed load outranks a stale validation message: if the data isn't there, nothing
-    // else on screen is trustworthy either.
-    error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
+    error,
     createCamp,
-    importCamp,
     renameCamp,
+    setMoneyHolder,
     deleteCamp,
     clearError,
   }

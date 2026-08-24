@@ -4,9 +4,11 @@ import {
   campNameExists,
   campStatus,
   campWindow,
+  hasMoneyHolder,
   isCamp,
+  isCampSetUp,
   sortCampsByRecent,
-  uniqueCampName,
+  windowLabel,
 } from './camps'
 import type { Camp, PerDiemBlock } from './types'
 
@@ -53,6 +55,24 @@ describe('isCamp', () => {
   })
 })
 
+describe('isCampSetUp', () => {
+  const held = camp({ moneyHolder: 'Anna' })
+
+  it('needs both a holder and income', () => {
+    expect(isCampSetUp(held, true)).toBe(true)
+  })
+  it('is not set up while nobody holds the money', () => {
+    expect(isCampSetUp(camp(), true)).toBe(false)
+  })
+  it('is not set up while there is no income', () => {
+    expect(isCampSetUp(held, false)).toBe(false)
+  })
+  it('treats a blank holder as no holder — a name of spaces names nobody', () => {
+    expect(isCampSetUp(camp({ moneyHolder: '   ' }), true)).toBe(false)
+    expect(hasMoneyHolder(camp({ moneyHolder: '' }))).toBe(false)
+  })
+})
+
 describe('sortCampsByRecent', () => {
   const older = camp({ id: 'OLD', createdAt: 1 })
   const newer = camp({ id: 'NEW', createdAt: 2 })
@@ -85,24 +105,6 @@ describe('campNameExists', () => {
   })
   it('still catches a collision with a different camp when renaming', () => {
     expect(campNameExists([moor, wald], 'Waldcamp', 'MOOR-1')).toBe(true)
-  })
-})
-
-describe('uniqueCampName', () => {
-  const moor = camp({ id: 'MOOR-1', name: 'Moorwerder' })
-  const moor2 = camp({ id: 'MOOR-2', name: 'Moorwerder (2)' })
-
-  it('leaves a free name alone', () => {
-    expect(uniqueCampName([moor], 'Waldcamp')).toBe('Waldcamp')
-  })
-  it('suffixes a taken name', () => {
-    expect(uniqueCampName([moor], 'Moorwerder')).toBe('Moorwerder (2)')
-  })
-  it('keeps counting past a suffix that is taken too', () => {
-    expect(uniqueCampName([moor, moor2], 'Moorwerder')).toBe('Moorwerder (3)')
-  })
-  it('has nothing to avoid in an empty list', () => {
-    expect(uniqueCampName([], 'Moorwerder')).toBe('Moorwerder')
   })
 })
 
@@ -179,5 +181,19 @@ describe('campStatus', () => {
   })
   it('is finished the day after', () => {
     expect(campStatus(dated, '2026-07-15')).toBe('finished')
+  })
+})
+
+describe('windowLabel', () => {
+  // A stand-in formatter: the real one is locale-bound and lives in the i18n layer, so the
+  // only thing to test here is that both ends go through it, in order.
+  const formatDay = (iso: string) => iso.slice(8, 10)
+
+  it('joins both ends with an en dash', () => {
+    expect(windowLabel({ startIso: '2026-07-01', endIso: '2026-07-14' }, formatDay)).toBe('01 – 14')
+  })
+
+  it('still names both ends for a one-day window', () => {
+    expect(windowLabel({ startIso: '2026-07-01', endIso: '2026-07-01' }, formatDay)).toBe('01 – 01')
   })
 })

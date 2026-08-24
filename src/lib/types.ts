@@ -7,6 +7,19 @@ export type Camp = {
    * exactly one camp.
    */
   joinCode: string
+  /**
+   * Who holds the camp's cash — the leader with the wallet. A name as typed, not an id:
+   * payers are free text on the receipt, so this is the same kind of value, compared
+   * through `payerKey` so spelling and case never split one person into two.
+   *
+   * It lives on the camp rather than as a flag per person because "exactly one holder" is
+   * an invariant, and a boolean per person cannot express it: two phones offline, each
+   * promoting someone different, would merge into two holders with no rule to settle it.
+   * One field merges to one winner.
+   *
+   * Absent until someone is named, and then no receipt owes anybody anything.
+   */
+  moneyHolder?: string
   createdAt: number
   // No dates of its own: the camp's window is the span of its per-diem blocks, which is
   // the only place camp days are ever entered. One source, so the two cannot disagree.
@@ -17,6 +30,34 @@ export type Camp = {
  * today is that deleting the whole camp is offered to them; finer roles are deferred.
  */
 export type MemberRole = 'admin' | 'editor'
+
+/**
+ * What an account may do *across the app*, as opposed to `MemberRole`, which only ever
+ * describes one camp. `leader` starts camps of their own up to a quota; `admin` runs the
+ * instance — sees every camp and hands out the grants.
+ */
+export type AccountRole = 'admin' | 'leader'
+
+/**
+ * Permission to start camps at all: the row that turns a signed-in stranger into a leader.
+ *
+ * Signing up cannot be closed — an invited co-leader has to be able to create an account
+ * before anyone knows who they are — so the gate sits here instead. No account row means
+ * the app is inert: you may still join a camp whose code you were given, which keeps
+ * inviting a co-leader a matter between the two leaders and nobody else.
+ *
+ * The email is the one address this app stores itself. It has to be: a grant can be
+ * written before that person has ever signed in, so there is no user row to read it from
+ * yet, and the admin screen has nothing else to name a person by.
+ */
+export type Account = {
+  id: string
+  email: string
+  role: AccountRole
+  /** How many camps this person may create. Ignored for `admin`, who is never metered. */
+  campQuota: number
+  grantedAt: number
+}
 
 /**
  * Who may see and edit a camp. No name, no email — a user id and a role, which is all the
@@ -43,6 +84,13 @@ export type Membership = {
 export type PoolRole = 'everyday' | 'earmarked' | 'deposit'
 
 /**
+ * The roles "＋ Add pool" offers. `Exclude` subtracts a member from a union, so the
+ * everyday pool — born with the camp and never created by hand — cannot leak into the
+ * form by accident, and adding a fourth role adds it here for free.
+ */
+export type CreatablePoolRole = Exclude<PoolRole, 'everyday'>
+
+/**
  * How a pool is told apart at a glance. A *token*, not a hex string: the token says which
  * pool this is, and the stylesheet decides what it looks like — so every hue gets a
  * readable value in light and in dark mode, which a colour typed on one phone could not
@@ -66,19 +114,13 @@ export type Pool = {
   createdAt: number
 }
 
-/**
- * Which pool an income kind is allowed to feed. Derived from the kind, never stored:
- * `everyday` = no choice, it joins the daily pot · `choose` = pick a pool or make one ·
- * `own` = always a fresh pool of its own.
- */
-export type PoolPolicy = 'everyday' | 'choose' | 'own'
-
 export type PerDiemSource = {
   id: string
   campId: string
   poolId: string
   kind: 'per_diem'
-  name: string
+  /** Optional — see AmountSource.name. */
+  name?: string
   createdAt: number
   // amount is COMPUTED from its blocks, never stored
 }
@@ -94,14 +136,22 @@ export type AmountSource = {
   campId: string
   poolId: string
   kind: 'fixed' | 'deposit'
-  name: string
+  /**
+   * Absent when the pool's name already says it: a pool holding one income needs one
+   * name, not two. `sourceLabel` falls back to the pool, so renaming the pool renames
+   * the income with it — there is no second copy to keep in step.
+   */
+  name?: string
   amountCents: number // note the Cents suffix — make the unit unmissable
   createdAt: number
 }
 
 export type IncomeSource = PerDiemSource | AmountSource
 
-/** The three entries in the "＋ Add income" menu. */
+/**
+ * What an income *is*. Never chosen from a menu of three any more: the pool decides it,
+ * and `addableKinds` is where that decision lives.
+ */
 export type IncomeKind = IncomeSource['kind']
 
 /**
@@ -137,30 +187,31 @@ type MovementBase = {
 }
 
 /**
- * Cash changing hands *without* consuming budget — a Kaution left at a shop, or a
- * volunteer's cash you are passing on to the org. It changes what is in your pocket and
+ * Cash changing hands *without* consuming budget — a Kaution left at a shop, or the
+ * participation fees you are passing on to the org. It changes what is in your pocket and
  * what you owe, never what you may spend, which is what keeps the burn curve honest.
  *
  * Written as a union rather than one type with `poolId?`, so "a deposit movement names
  * its pool" is checked by the compiler instead of by a comment: narrowing on `kind`
- * gives you `poolId` for the deposit kinds and hides it for volunteer money.
+ * gives you `poolId` for the deposit kinds and hides it for a fee.
  */
 export type DepositMovement = MovementBase & {
   kind: 'deposit_out' | 'deposit_in'
   poolId: string // → a Pool with role 'deposit'
-  /**
-   * Set on a handover the leader declares final: the counterparty asked for less than the
-   * organisation granted, so nothing more is owed even though the amount is short of the
-   * deposit. Without it a €150 Kaution out of a €200 grant would look forever half-paid.
-   */
-  completesDeposit?: boolean
 }
 
-export type VolunteerMovement = MovementBase & {
-  kind: 'volunteer_in' // no `volunteer_out`: handing it to the org isn't recorded
+/**
+ * A participation fee collected from a participant and held for the organisation.
+ *
+ * The stored `kind` still reads `volunteer_in`: it is the value written to InstantDB and
+ * to every JSON export, so renaming it would mean migrating live rows and old dumps for
+ * nothing. The name of the concept lives in the type and the dictionary instead.
+ */
+export type FeeMovement = MovementBase & {
+  kind: 'volunteer_in' // no outgoing kind: handing it to the org isn't recorded
 }
 
-export type Movement = DepositMovement | VolunteerMovement
+export type Movement = DepositMovement | FeeMovement
 
 export type MovementKind = Movement['kind']
 
@@ -179,6 +230,22 @@ export type Expense = {
    */
   number?: number
   note?: string
+  /**
+   * Whose wallet the money came out of, as typed. Absent means "not tracked" — which is
+   * every receipt written before this field existed, and the reason nothing had to be
+   * backfilled: an untracked receipt owes nobody.
+   *
+   * Not to be confused with `enteredBy`, which is about who typed the row into the app.
+   */
+  paidBy?: string
+  /**
+   * Whether the money holder has paid this back. Absent/false = still owed.
+   *
+   * Deliberately *not* a `Movement`: the budget was consumed when the receipt was paid,
+   * whoever's wallet it came from. Booking the payback as a second row would spend the
+   * pool twice and bend the burn curve.
+   */
+  reimbursed?: boolean
   enteredBy?: string
   createdAt: number
 }

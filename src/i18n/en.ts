@@ -26,12 +26,31 @@ export const en = {
     cancel: 'Cancel',
   },
 
+  /** The popover month-grid behind every date field. */
+  calendar: {
+    prevMonth: 'Previous month',
+    nextMonth: 'Next month',
+    /** Shown while `DateField` waits for the user to confirm a day outside the camp's
+     *  known span — picking one is allowed, just double-checked. */
+    outsideRangeTitle: 'Outside the camp dates',
+    outsideRangeLine: 'This date falls outside the camp — use it anyway?',
+    outsideRangeConfirm: 'Use this date',
+  },
+
   /** The ⋮ menu carrying a list row's actions. Shared by the receipt and custody rows —
    *  the words are the same on both, so they are written once. */
   rowMenu: {
     open: (name: string) => `Actions for ${name}`,
     edit: 'Edit',
+    editActual: 'Edit actual',
     delete: 'Delete',
+  },
+
+  /** The day/night switch in the shell's corner. Each label names where a tap goes,
+   *  which is what the icon shows — not the theme currently in force. */
+  theme: {
+    switchToDark: 'Switch to night mode',
+    switchToLight: 'Switch to day mode',
   },
 
   app: {
@@ -63,7 +82,7 @@ export const en = {
 
   join: {
     title: 'Join a camp',
-    hint: 'Got a join code from the other leader? Type it here.',
+    hint: 'Got a join code? Type it here.',
     label: 'Join code',
     placeholder: 'MOOR-7F3K',
     searching: 'Looking…',
@@ -75,10 +94,10 @@ export const en = {
   },
 
   share: {
-    hint: 'The other leader types this code into their phone.',
-    members: (count: number) => `${count} ${count === 1 ? 'leader' : 'leaders'} share this camp.`,
+    members: (count: number) =>
+      `${count} ${count === 1 ? 'person shares' : 'people share'} this camp.`,
     /** On the join-code button itself, under the code — it has to say what the tap does. */
-    copy: '⧉ Tap to copy join code',
+    copy: '⧉ Copy join code',
     copied: '✓ Copied',
     /** The clipboard API is missing outside a secure context; reading the code aloud
      *  still works, so say that rather than showing a dead end. */
@@ -98,14 +117,6 @@ export const en = {
     create: 'Create',
     empty: 'No camps yet. Create one above.',
     nameTaken: (name: string) => `A camp named "${name}" already exists.`,
-    /** Restoring an exported dump. It always lands as a *new* camp, never a merge. */
-    import: '⤒ Restore from a file',
-    importHint: 'Reads a JSON file exported from campfin and adds it as a new camp.',
-    importFailed: {
-      json: 'That file is not readable — pick the .json file campfin exported.',
-      format: 'That file is not a campfin export.',
-      version: 'That file was written by a newer version of campfin. Update this app first.',
-    },
     /** Only the dated statuses: an undated camp shows no pill at all. */
     status: {
       upcoming: 'Upcoming',
@@ -114,16 +125,58 @@ export const en = {
     },
   },
 
+  /** What a signed-in account may do app-wide: start camps, and how many more. Joining a
+   *  camp by code needs none of this, so nothing here ever blocks an invited co-leader. */
+  access: {
+    lockedTitle: 'Your account is not activated yet',
+    lockedBody:
+      'You can join any camp whose code you have been given. Starting a camp of your own needs to be switched on for you.',
+    left: (n: number) => `${n} more ${n === 1 ? 'camp' : 'camps'} you can start.`,
+    usedUp: 'You have started as many camps as your account allows. Ask for a higher limit.',
+  },
+
+  admin: {
+    open: 'Admin',
+    title: 'Admin',
+    back: '← All camps',
+    /** On the camp list, not in here: it changes what that list shows. */
+    showAllCamps: 'Show every camp',
+    peopleTitle: 'People',
+    peopleEmpty: 'Nobody has signed in yet.',
+    grantLabel: 'Email to activate',
+    grantPlaceholder: 'them@example.com',
+    grant: 'Activate',
+    badEmail: 'That does not look like an email address.',
+    alreadyGranted: (email: string) => `${email} is already activated.`,
+    /** Someone with a grant written to their address who has never signed in. */
+    pending: 'Invited — not signed in yet',
+    notActivated: 'Not activated',
+    adminBadge: 'Admin — no limit',
+    /** A line under the address, not a control: the two ways to change it live in the row's
+     *  ⋮ menu, so this has to say what the number means on its own. */
+    quotaLabel: (n: number) => `${n} ${n === 1 ? 'camp' : 'camps'} allowed`,
+    quotaUp: 'Allow one more camp',
+    quotaDown: 'Allow one camp fewer',
+    revoke: 'Revoke',
+    revokeTitle: 'Revoke access',
+    revokeConfirm: (email: string) =>
+      `Revoke ${email}? They keep every camp they are already in — this only stops them starting new ones.`,
+    campsTitle: (n: number) => `All camps (${n})`,
+    campsEmpty: 'No camps in the database.',
+    /** Under a person's address, when they are in no camp at all. The camps they are in
+     *  are listed by name, one per line, and need no wording of their own. */
+    inNoCamps: 'In no camps',
+    /** Who can open this camp. */
+    campMembersEmpty: 'Nobody has joined yet',
+    /** Members whose account no longer exists — named by nothing but their membership. */
+    unknownMembers: (n: number) => `${n} unknown ${n === 1 ? 'member' : 'members'}`,
+  },
+
   dashboard: {
     back: '← All camps',
     receivedTotal: 'Received total',
     noIncome: 'No income sources yet.',
     setUpIncome: 'Set up income →',
-    /** The whole dashboard while the camp has no money in it yet: one thing to do, said
-     *  large, instead of five empty blocks. */
-    firstStepTitle: 'Start here',
-    firstStep: 'Set up income',
-    firstStepHint: 'Enter the money your camp was granted. Everything else follows from it.',
     spending: 'Spending',
     noReceipts: 'No receipts yet.',
     /** Not drawn: the block's title row is the button, and this is what names its
@@ -131,8 +184,22 @@ export const en = {
     openReceipts: 'Open receipts',
     /** Shown until the camp has its daily grant — nothing per-day can be computed
      *  without it, so the chart and "allowed today" stay hidden. */
-    setupCallout: 'Add the daily grant to start tracking.',
+    setupCallout: 'Add the daily group allowance income to start tracking.',
     openSettings: 'Camp settings',
+  },
+
+  /** The whole dashboard until the camp can track anything: the two compulsory answers,
+   *  in the order they matter, each ticked as it lands. */
+  setup: {
+    title: 'Set up this camp',
+    hint: 'Two answers before the money can be tracked.',
+    holderStep: 'Money holder',
+    /** Read out after a step's title in place of the tick, which says nothing aloud. */
+    done: 'done',
+    incomeStep: 'Income',
+    incomeTodo: 'Enter the money your camp was granted. Everything else follows from it.',
+    incomeGo: 'Set up income',
+    incomeEdit: 'Edit income →',
   },
 
   /** The camp's own screen: what it is called, who can reach it, and how to be rid of it —
@@ -140,16 +207,54 @@ export const en = {
   campSettings: {
     title: 'Camp settings',
     back: '← Back to camp',
-    nameSection: 'Name',
+    nameSection: 'Camp name',
     nameLabel: 'Camp name',
     save: 'Save',
     shareSection: 'Join code',
+    /** The camp's own dates. Read-only: they are the span of the per-person-per-day
+     *  income's days, so the note says where they come from and where to change them. */
+    datesSection: 'Camp dates',
+    datesFrom: 'Taken from the dates on the per-person-per-day income.',
+    datesDays: (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`,
+    /** No per-diem income yet, so nothing dates the camp — the chart and the date pickers
+     *  have no span to draw either. */
+    datesNone: 'No dates yet — add a per-person-per-day income to date the camp.',
     incomeSection: 'Income',
+    /** Who carries the cash. Camp-wide, and the thing every "owed" marker is measured
+     *  against — so it lives with the camp's other once-per-camp settings. */
+    holderSection: 'Money holder',
+    holderHint: 'The leader carrying the camp cash.',
+    /** Who has the wallet, stated rather than picked from a list: it changes once a camp
+     *  at most, so the screen offers only the two things you would ever do to it. The name
+     *  is drawn separately, so this is only what follows it. */
+    holderHolds: 'holds the money.',
+    /** Only reachable from the gear on the setup screen — every camp past setup has one. */
+    holderNone: 'Nobody holds the money yet.',
+    holderSet: 'Set money holder',
+    holderChange: 'Change holder',
+    holderCancel: 'Cancel',
+    holderNewNameLabel: 'Name',
+    holderNewNamePlaceholder: 'e.g. Anna',
+    holderSave: 'Save holder',
+    /** Handing the wallet over rewrites no receipt, but it does flip who owes whom — so
+     *  the question says how many rows change, in both directions. The wallet can only
+     *  change hands, never be put down: every "owed" marker is measured against it. */
+    holderChangeTitle: (name: string) => `Make ${name} the money holder?`,
+    holderReplaces: (current: string) => `${current} holds it now.`,
+    holderStopOwing: (n: number) =>
+      `${n} ${n === 1 ? 'receipt stops' : 'receipts stop'} showing as owed.`,
+    holderStartOwing: (n: number) =>
+      `${n} ${n === 1 ? 'receipt starts' : 'receipts start'} showing as owed.`,
+    holderNoChange: 'No receipt changes.',
+    /** Distinct from the button that opens the name field, so the dialog's own action is
+     *  never the same words as the control behind it. */
+    holderConfirm: 'Confirm change',
     dangerSection: 'Danger zone',
     delete: 'Delete camp',
     deleteTitle: 'Delete camp',
     deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
     deleteLine: 'Its income, receipts and movements go with it.',
+    deleteTypeLabel: (name: string) => `Type "${name}" to confirm`,
     deleteConfirmLabel: 'Delete',
   },
 
@@ -158,19 +263,20 @@ export const en = {
     // was — so the label cannot name a destination the way the other screens' do.
     back: '← Back',
     title: 'Set up income',
-    add: '＋ Add income',
-    empty: 'No income yet — tap ＋ Add income.',
+    /** Only ever seen if a camp somehow has no pools at all — every camp is born with one. */
+    empty: 'No pools yet — tap ＋ Add pool.',
     receivedTotal: 'Received total',
     nameLabel: 'Income name',
-    namePlaceholder: 'Name, e.g. Group money',
-    amountLabel: 'Amount',
-    amountPlaceholder: '€ e.g. 300,00',
+    nameHintLabel: 'What if I leave the name blank?',
+    nameHint: "Leave blank and it goes by the pool's name.",
+    /** The subtitle of an income shown under a heading that does not name it. */
+    kindWithName: (name: string, kind: string) => `${name} · ${kind}`,
+    amountLabel: 'Amount (€)',
+    amountPlaceholder: 'e.g. 300,00',
     personDaysTotal: 'Total person-days',
     sourceTotal: 'Source total',
     save: 'Save',
     cancel: 'Cancel',
-    edit: 'Edit',
-    delete: 'Delete',
     kinds: {
       per_diem: {
         label: 'Per person, per day',
@@ -186,8 +292,7 @@ export const en = {
       },
     },
     issues: {
-      name: 'Give this income a name.',
-      poolName: 'Name the new pool.',
+      poolName: 'Give the pool a name.',
       noBlocks: 'Add at least one block of people and days.',
       invalidBlock: 'Every block needs people, dates (start before end) and a rate.',
       amount: 'Enter an amount in euros, e.g. 120,00.',
@@ -199,7 +304,32 @@ export const en = {
      *  switching language later must never rename their pools. Deliberately the same
      *  wording as the per-person-per-day income that feeds it: one name, one pot. */
     everydayDefault: 'Group money',
-    actions: (name: string) => `Actions for ${name}`,
+    add: '＋ Add pool',
+    addTitle: 'New pool',
+    addSave: 'Create pool',
+    nameLabel: 'Pool name',
+    namePlaceholder: 'e.g. Bike hire',
+    roleLabel: 'What is this pot for?',
+    roles: {
+      earmarked: {
+        label: 'Normal',
+        hint: 'Money the camp spends.',
+      },
+      deposit: {
+        label: 'Deposit',
+        hint: 'A Deposit - you hand over and get back.',
+      },
+    },
+    aboutLabel: 'What is a pool?',
+    about:
+      'A pool is a pot of money tracked on its own. "Group money" is the daily pot every ' +
+      'camp has; add another pool for a different purpose, or for a deposit you hand over ' +
+      'and get back. Every receipt belongs to one pool.',
+    addIncomeTo: (name: string) => `Add income to ${name}`,
+    editIncome: 'Edit income',
+    deleteIncome: 'Delete income',
+    emptyPool: 'No income yet — tap ＋ to say what came in.',
+    depositNote: 'Handed back at the end of camp.',
     rename: 'Rename pool',
     renamePrompt: 'Rename pool',
     /** Colours are how a pool is recognised in a list of receipts, so every pool gets one
@@ -223,12 +353,11 @@ export const en = {
     deleteTitleFallback: 'Delete pool?',
     deleteSources: (count: number, amount: string) =>
       `Its ${count} income ${count === 1 ? 'source' : 'sources'} worth ${amount} will be deleted too.`,
+    deleteEmpty: 'Nothing funds it, so no income goes with it.',
     sourceDeleteTitle: (name: string) => `Delete "${name}"?`,
     sourceDeleteTitleFallback: 'Delete this income?',
     sourceDeleteLine: (amount: string, pool: string) =>
-      `This removes ${amount} from the ${pool} pool.`,
-    sourceDeleteLastLine: (pool: string) =>
-      `The ${pool} pool goes with it — it has no other income.`,
+      `This removes ${amount} from the ${pool} pool. The pool itself stays.`,
   },
 
   blocks: {
@@ -240,11 +369,12 @@ export const en = {
     namePlaceholder: 'e.g. Participants',
     peopleLabel: 'Number of people',
     peoplePlaceholder: 'e.g. 12',
-    rateLabel: 'Rate per person / day',
-    ratePlaceholder: '€ e.g. 8,00',
-    startLabel: 'Start date',
-    endLabel: 'End date',
-    add: '＋ Add block',
+    rateLabel: 'Rate per person / day (€)',
+    ratePlaceholder: 'e.g. 8,00',
+    datesLabel: 'Dates',
+    datesPlaceholder: 'Pick a start and end date',
+    add: '＋ Add empty block',
+    copyLast: '＋ Copy previous block',
     personDays: (n: number) => `${n} person-day${n === 1 ? '' : 's'}`,
     personDaysUnknown: '— person-days',
     days: (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`,
@@ -254,15 +384,16 @@ export const en = {
   /** Granted vs actual attendance, inside the per-person-per-day card. */
   attendance: {
     granted: 'Granted',
-    actual: 'Who came',
+    actual: 'Actual',
+    /** The disclosure over the block breakdown, collapsed by default — the comparison line
+     *  below it already says what changed, so the blocks themselves are opt-in detail. */
+    toggleBlocks: (open: boolean) => (open ? '▾ Granted / actual' : '▸ Granted / actual'),
     /** Shown on the actual tab while no actual block exists — actual *is* granted then. */
-    sameAsGranted: 'Nobody dropped out yet, so this matches what was granted.',
+    sameAsGranted: 'Matches what was granted.',
     copyFromGranted: '⧉ Copy from granted',
-    edit: 'Edit who came',
     reset: '↺ Everybody came',
     save: 'Save',
     cancel: 'Cancel',
-    hint: 'Drop the people who never came, or shorten a stay. What is left is what you may spend.',
     comparison: (granted: string, actual: string) => `Granted ${granted} · Actual ${actual}`,
     goesBack: (amount: string) => `${amount} goes back`,
     overAttended: (amount: string) =>
@@ -277,13 +408,12 @@ export const en = {
     unfunded: 'Nothing granted to this pool yet.',
     /** Not drawn: the whole bar is the button into that pool's receipts, and this is the
      *  hidden word that says so — the figures on the row are read out first. */
-    openPool: 'Open its receipts',
   },
 
   /** The day-by-day allowance: the headline number and the chart under it. */
   burn: {
     title: 'Daily burn',
-    allowedToday: 'Allowed today',
+    allowedToday: 'Left today',
     /** The headline goes red rather than negative-with-a-minus: "you are €40 over" is
      *  what a leader needs to read, not "−40 allowed". */
     overspentBy: (amount: string) => `${amount} over`,
@@ -308,24 +438,62 @@ export const en = {
     add: '＋ Add receipt',
     empty: 'No receipts yet — tap ＋ Add receipt.',
     dateLabel: 'Date',
-    nameLabel: 'What was it?',
+    nameLabel: 'Item',
     namePlaceholder: 'e.g. Bakery',
-    amountLabel: 'Amount',
-    amountPlaceholder: '€ e.g. 8,00',
+    amountLabel: 'Amount (€)',
+    amountPlaceholder: 'e.g. 8,00',
     poolLabel: 'Paid from',
     /** The number written on the paper slip, so the folder and the app can be matched
      *  row by row. Optional — a receipt is worth entering before it is filed. */
-    numberLabel: 'Receipt no. (optional)',
+    numberLabel: 'Receipt no.',
     numberPlaceholder: 'e.g. 12',
-    /** Fills the field with the next free number, which is the whole point of the button:
-     *  nobody should have to remember where the folder got to. */
-    numberSuggest: (n: number) => `Next: #${n}`,
-    numberTag: (n: number) => `#${n}`,
-    noteLabel: 'Note (optional)',
+    numberTag: (n: number) => `${n}.`,
+    noteLabel: 'Note',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
     cancel: 'Cancel',
     spentTotal: 'Spent total',
+    /** Whose wallet the money came out of, and what the holder still owes them. */
+    payer: {
+      label: 'Paid by',
+      /** The two answers. Nothing is picked to begin with — a receipt has to say whose
+       *  money it was, so the choice is made rather than defaulted into. The emoji stands
+       *  in for "holds the camp money" so the option reads as one short line instead of two
+       *  words of explanation after every name. */
+      holderOption: (name: string) => `👑 ${name}`,
+      /** Not shown as text — the second radio sits directly beside the name field, so the
+       *  field itself says what picking it means. Kept as the radio's accessible name. */
+      otherOption: 'Someone else',
+      /** Not shown — the input's placeholder already says "name", so a label above it would
+       *  repeat itself. Kept as the accessible name for a screen reader. */
+      newNameLabel: 'Their name',
+      newNamePlaceholder: 'e.g. Ben',
+      /** Shown instead of the first option when no holder has been named yet. */
+      noHolder: 'No money holder yet — name one in camp settings, then this becomes a choice.',
+      /** In the editor, for a receipt somebody else paid: it may already have been settled
+       *  before it was ever typed in. */
+      returnedLabel: 'Paid back',
+      /** Behind the ⓘ button beside the checkbox, shown only on request rather than always,
+       *  since most taps of the checkbox need no explanation at all. */
+      returnedHint: 'Tick if the money holder has already returned this money.',
+      returnedInfoLabel: 'What does “Paid back” mean?',
+      /** On the row itself. Only ever shown when someone other than the holder paid, so
+       *  the common case costs no words at all. */
+      paidByRow: (name: string) => `Paid by ${name}`,
+      returnButton: 'Return',
+      returnedButton: 'Returned',
+      /** Both directions ask first: the button sits in a list you scroll past. */
+      confirmReturnTitle: (name: string) => `Return the money to ${name}?`,
+      confirmReturnLine: (amount: string) => `${amount} will be returned.`,
+      confirmReturnLabel: 'Yes, returned',
+      confirmUndoTitle: (name: string) => `Undo the return to ${name}?`,
+      confirmUndoLine: (amount: string) => `${amount} goes back to being owed.`,
+      confirmUndoLabel: 'Undo',
+      /** Under the list, beside the spent total. */
+      owedTotal: 'Owed to others',
+      filterUnpaid: 'Not repaid',
+      emptyUnpaid: 'Nothing is waiting to be paid back.',
+    },
     dayTotal: (amount: string) => `${amount} that day`,
     count: (n: number) => `${n} ${n === 1 ? 'receipt' : 'receipts'}`,
     unknownPool: 'Unknown pool',
@@ -338,12 +506,11 @@ export const en = {
       number_asc: 'Number — 1 upwards',
       number_desc: 'Number — highest first',
     },
+    /** Tapping every chip on is the same as tapping every chip off, so the chips settle on
+     *  "none lit" for both — there is no all-lit state to explain, and no All chip. */
     filterLabel: 'Show pools',
-    /** Tapping every chip off is the same as tapping every chip on: both mean "no filter",
-     *  which is what makes the chips safe to switch off one at a time. */
-    filterAll: 'All',
     filterCount: (shown: number, total: number) => `${shown} of ${total} receipts shown`,
-    emptyFiltered: 'No receipts in the pools you picked.',
+    emptyFiltered: 'No receipts match the filters you picked.',
     deleteTitle: (name: string) => `Delete "${name}"?`,
     deleteLine: (amount: string, pool: string) => `${amount} goes back into ${pool}.`,
     confirmDelete: 'Delete',
@@ -354,11 +521,12 @@ export const en = {
       pool: 'Choose which pool paid for it.',
       number: 'A receipt number is a whole number: 1, 2, 3 — or leave it empty.',
       numberTaken: 'Another receipt already has that number.',
+      paidBy: 'Say whose money paid for this — the money holder, or somebody else by name.',
     },
   },
 
   /**
-   * Cash that changes hands without being spent: a Kaution and volunteers' money. The
+   * Cash that changes hands without being spent: a Kaution and the participation fees. The
    * wording deliberately avoids "spent" and "budget" — this money is held, not consumed.
    */
   movements: {
@@ -370,27 +538,33 @@ export const en = {
       empty: 'No deposit handed over or returned yet.',
       /** Shown instead of the form: without a deposit source there is no Kaution to move. */
       noDeposits: 'Add a deposit under income first — then you can hand it over here.',
+      nameLabel: 'Counterparty',
+      namePlaceholder: 'e.g. Bike shop',
     },
-    cash: {
-      title: 'Volunteer cash',
-      add: '＋ Record cash collected',
-      empty: 'No volunteer money collected yet.',
+    fee: {
+      title: 'Participation fee',
+      add: '＋ Record a fee collected',
+      empty: 'No participation fee collected yet.',
+      nameLabel: 'Paid by',
+      namePlaceholder: 'e.g. Alex',
     },
     kindLabel: 'What happened?',
+    /** The two radios on the deposits form: which way this money went. */
+    directionLabel: 'Direction',
     kinds: {
       deposit_out: 'Deposit handed over',
       deposit_in: 'Deposit came back',
-      volunteer_in: 'Volunteer money collected',
+      volunteer_in: 'Participation fee collected',
     },
     dateLabel: 'Date',
-    nameLabel: 'Who?',
-    namePlaceholder: 'e.g. Bike shop',
-    amountLabel: 'Amount',
-    amountPlaceholder: '€ e.g. 200,00',
+    amountLabel: 'Amount (€)',
+    amountPlaceholder: 'e.g. 200,00',
     poolLabel: 'Which deposit',
-    completesLabel: 'This is the full deposit',
-    completesHint: 'Tick when the counterparty asked for less than the deposit you were given.',
-    noteLabel: 'Note (optional)',
+    /** A soft warning, not a blocked save: topping a Kaution up out of camp cash is fine
+     *  as long as all of it comes back. */
+    overDeposit: (amount: string) =>
+      `${amount} more than this deposit holds. Fine if all of it comes back — check the amount.`,
+    noteLabel: 'Note',
     notePlaceholder: 'e.g. paid in cash',
     save: 'Save',
     cancel: 'Cancel',
@@ -409,8 +583,8 @@ export const en = {
 
   /**
    * The two custody blocks: money passing through your hands, split by where it goes next.
-   * A deposit travels to a counterparty and comes back; volunteers' cash only goes onward
-   * to the organisation.
+   * A deposit travels to a counterparty and comes back; the participation fees only go
+   * onward to the organisation.
    */
   custody: {
     deposits: {
@@ -428,76 +602,102 @@ export const en = {
       stepOverBack: (amount: string) => `${amount} more came back than went out`,
       forfeited: (amount: string) => `${amount} kept for damage`,
     },
-    cash: {
-      title: 'Volunteer cash',
-      empty: 'No volunteer money collected.',
-      open: 'Open volunteer cash',
+    fee: {
+      title: 'Participation fee',
+      empty: 'No participation fee collected yet.',
+      open: 'Open the participation fee',
       held: 'To hand over to the organisation',
-      count: (n: number) => `${n} ${n === 1 ? 'handover' : 'handovers'}`,
+      count: (n: number) => `${n} ${n === 1 ? 'payment' : 'payments'}`,
     },
   },
 
   /**
-   * The end-of-camp sheet. Every row says *why* an amount is on it — the sheet is read once,
-   * by someone who has to justify the transfer back to the organisation.
+   * The end-of-camp report: income, expenses, and the difference between them. Read once,
+   * by someone who has to justify the transfer back to the organisation — so every
+   * difference line says *why* it is on the report.
+   */
+  report: {
+    title: 'Financial report',
+    back: '← Back to camp',
+    open: 'Open the financial report',
+    /** On the dashboard card, in place of a figure: the report is three tables, and no one
+     *  of them is the headline. */
+    hint: 'Income, expenses and what is left over.',
+    /** Column headings, shared by all three tables. */
+    columnItem: 'Item',
+    columnAmount: 'Amount',
+    income: {
+      title: 'Income',
+      /** Everything the organisation sent: the daily grant, the fixed grants, the deposits. */
+      advance: 'Cash advance',
+      advanceTotal: 'Cash advance total',
+      fee: 'Participation fee',
+      feeTotal: 'Participation fee total',
+      total: 'Total income',
+      empty: 'No income recorded yet.',
+    },
+    expenses: {
+      title: 'Expenses',
+      /** A receipt whose pool was deleted: still money out, so still on the report. */
+      unknownPool: 'Deleted pool',
+      total: 'Total expenses',
+      empty: 'No receipts yet.',
+    },
+    difference: {
+      title: 'Cash rest',
+      total: 'Total cash rest',
+      empty: 'Nothing left over — every pot is spent to the cent.',
+      rows: {
+        poolUnspent: (pool: string) => `${pool} — unspent`,
+        poolUnusable: (pool: string) => `${pool} — not eligible for spending`,
+        depositReturn: (pool: string) => `Deposit ${pool} — to be refunded`,
+        fee: 'Participation fee to hand over',
+        orphanSpent: 'Spent from a deleted pool',
+      },
+    },
+    /** The report is arithmetic over what was typed in, which is not the same as what
+     *  happened — so it says so, on screen and in print. */
+    disclaimer:
+      'These figures are only as good as what was entered in the app, and not every accounting case is covered yet — check the report against your receipts and bank statements before filling the forms.',
+    exportCsv: '⤓ Export CSV',
+    print: '⎙ Print',
+    /** Headings inside the CSV file, for whoever opens it in a spreadsheet. */
+    csv: {
+      item: 'Item',
+      amount: 'Amount (EUR)',
+      receiptsTitle: 'Receipts',
+      /** First column, so a printed report can be read against the numbered paper folder. */
+      number: 'No.',
+      date: 'Date',
+      pool: 'Pool',
+      name: 'What',
+      note: 'Note',
+      paidBy: 'Paid by',
+      /** One column, three answers: "yes", "no" while it is owed, empty when nobody
+       *  fronted the money. */
+      repaid: 'Repaid',
+      repaidYes: 'yes',
+      repaidNo: 'no',
+    },
+  },
+
+  /**
+   * What actually goes back to the organisation: each pool floored on its own, so an
+   * overspend in one pot cannot eat another's leftover. The dashboard headline and the
+   * checks under the report's difference table.
    */
   settlement: {
-    title: 'Settle up',
-    back: '← Back to camp',
-    open: 'Open the settlement sheet',
-    /** The dashboard block's title, above the figure the sheet explains. */
-    toReturn: 'To return',
-    intro: 'What goes back, and where each amount comes from.',
-    columnCategory: 'Category',
-    columnAmount: 'Amount',
-    columnWhy: 'Why',
-    received: 'Received',
-    spent: 'Spent',
-    total: 'Total to return',
-    empty: 'Nothing goes back — every pot is spent to the cent.',
-    rows: {
-      poolUnspent: (pool: string) => `${pool} — unspent`,
-      poolUnusable: (pool: string) => `${pool} — not ours to spend`,
-      depositReturn: (pool: string) => `Deposit ${pool} — coming back`,
-      volunteer: 'Volunteer money to hand over',
-    },
-    why: {
-      poolUnspent: 'What arrived, minus what was spent from it',
-      poolUnusable: 'Granted for people who never came',
-      depositReturn: 'The deposit, minus what was kept for damage',
-      volunteer: 'Collected from volunteers, passed on to the organisation',
-    },
-    warningsTitle: 'Check these before you transfer',
+    warningsTitle: 'Check these',
     warnings: {
       depositAtVendor: (pool: string, amount: string) =>
         `${amount} of ${pool} is still with the counterparty — get it back first.`,
       poolOverspent: (pool: string, amount: string) => `${pool} is ${amount} over budget.`,
       overAttended: (pool: string, amount: string) =>
         `${pool}: ${amount} more was used than granted — more people came than were funded.`,
+      /** Not money for the organisation — an IOU between the leaders. It still belongs on
+       *  the report: until it is settled, the cash box holds somebody else's money. */
+      owedToPayer: (name: string, amount: string) =>
+        `${name} is still owed ${amount} for receipts they paid themselves.`,
     },
-    exportJson: '⤓ Export JSON',
-    exportCsv: '⤓ Export CSV',
-    print: '⎙ Print',
-    /** Column headings inside the CSV file, for whoever opens it in a spreadsheet. */
-    csv: {
-      category: 'Category',
-      amount: 'Amount (EUR)',
-      why: 'Why',
-      receiptsTitle: 'Receipts',
-      /** First column, so a printed sheet can be read against the numbered paper folder. */
-      number: 'No.',
-      date: 'Date',
-      pool: 'Pool',
-      name: 'What',
-      note: 'Note',
-    },
-  },
-
-  poolSelect: {
-    label: 'Pool',
-    newOption: '＋ New pool…',
-    newNameLabel: 'New pool name',
-    newNamePlaceholder: 'e.g. Bike deposit',
-    copyName: '⧉ Same as income name',
   },
 }

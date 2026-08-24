@@ -31,12 +31,25 @@ export function saveExpense(input: SaveExpenseInput): Promise<unknown> {
         // away, otherwise the old one survives the save.
         number: input.number ?? null,
         note: input.note ?? null,
+        paidBy: input.paidBy ?? null,
+        reimbursed: input.reimbursed ?? null,
         createdAt,
       })
       // Permission rules can only traverse links, so the camp link is what makes this row
       // readable by the camp's members at all.
       .link({ camp: input.campId }),
   )
+}
+
+/**
+ * Tick a receipt off as paid back, or un-tick it. One attribute, written straight from the
+ * list — the whole point is that settling up costs a tap, not a trip through the editor.
+ *
+ * Nothing else is touched: the receipt already spent the pool's money when it was paid, so
+ * repaying the person who fronted it must not move a single cent of budget.
+ */
+export function setExpenseReimbursed(expenseId: string, reimbursed: boolean): Promise<unknown> {
+  return db.transact(chunk(db.tx.expenses[expenseId]).update({ reimbursed: reimbursed || null }))
 }
 
 export function deleteExpense(expenseId: string): Promise<unknown> {

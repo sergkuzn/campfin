@@ -51,7 +51,6 @@ export function JoinCodeCard({ joinCode, memberCount }: Props) {
           {state === 'copied' ? t.share.copied : t.share.copy}
         </span>
       </button>
-      <p className="join-code__hint">{t.share.hint}</p>
       <p className="join-code__members">{t.share.members(memberCount)}</p>
       {state === 'failed' && (
         <p className="join-code__error" role="alert">

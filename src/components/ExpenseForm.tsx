@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useT } from '../i18n'
+import type { CampWindow } from '../lib/camps'
 import {
   blankExpenseDraft,
   draftFromExpense,
@@ -8,9 +9,16 @@ import {
   expenseIssues,
   type SaveExpenseInput,
 } from '../lib/expenses'
+import { poolColorOf } from '../lib/poolColors'
 import type { PoolSummary } from '../lib/pools'
 import type { Expense } from '../lib/types'
+import { FormIssues } from './FormIssues'
+import './PoolTag.css'
+import './ReceiptFilters.css'
+import { DateField } from './DateField'
+import { PayerSelect } from './PayerSelect'
 import { ReceiptNumberField } from './ReceiptNumberField'
+import { RequiredMark } from './RequiredMark'
 
 type Props = {
   campId: string
@@ -23,8 +31,15 @@ type Props = {
   todayIso: string
   /** Receipt numbers other rows already carry — a duplicate blocks the save. */
   takenNumbers: ReadonlySet<number>
-  /** What the "next number" button fills in: one past the highest in the camp. */
+  /** The number a new receipt starts on: one past the highest in the camp. */
   suggestedNumber: number
+  /** Who holds the camp cash, so "paid out of the camp cash" can name them. Set in camp
+   *  settings — this form only reads it. */
+  moneyHolder: string | undefined
+  /** The camp's known span, derived from its per-diem blocks. Highlights those days on the
+   *  date picker and asks for confirmation before saving a date outside them. `null` when
+   *  the camp has no per-diem income yet, so nothing dates it. */
+  campWindow: CampWindow | null
   onSave: (input: SaveExpenseInput) => void
   onCancel: () => void
 }
@@ -37,6 +52,8 @@ export function ExpenseForm({
   todayIso,
   takenNumbers,
   suggestedNumber,
+  moneyHolder,
+  campWindow,
   onSave,
   onCancel,
 }: Props) {
@@ -46,7 +63,7 @@ export function ExpenseForm({
   // on every keystroke and throw away what was typed.
   const [draft, setDraft] = useState<ExpenseDraft>(() =>
     expense === null
-      ? blankExpenseDraft(todayIso, pools[0]?.pool.id ?? '')
+      ? blankExpenseDraft(todayIso, pools[0]?.pool.id ?? '', suggestedNumber)
       : draftFromExpense(expense),
   )
 
@@ -67,22 +84,55 @@ export function ExpenseForm({
 
   return (
     <form className="card card--editing" onSubmit={handleSubmit}>
-      <label className="field">
-        <span className="field__label">{t.receipts.dateLabel}</span>
-        <input
-          className="income-form__input"
-          type="date"
-          value={draft.date}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-            patch({ date: event.target.value })
-          }
-        />
-      </label>
+      <div className="field">
+        <span className="field__label">
+          {t.receipts.poolLabel}
+          <RequiredMark />
+        </span>
+        <div className="filters__chips">
+          {pools.map((summary) => (
+            <button
+              key={summary.pool.id}
+              type="button"
+              className={`filters__chip pool-tag--${poolColorOf(summary.pool)}`}
+              // A single choice rather than a multi-select filter, so picking one pool
+              // switches to it instead of toggling it on top of whatever was already lit.
+              aria-pressed={draft.poolId === summary.pool.id}
+              onClick={() => patch({ poolId: summary.pool.id })}
+            >
+              <span className="pool-tag__dot" aria-hidden="true" />
+              {summary.pool.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="field-row">
+        <div className="field">
+          <label className="field__label" htmlFor="expense-date">
+            {t.receipts.dateLabel}
+            <RequiredMark />
+          </label>
+          <DateField
+            id="expense-date"
+            mode="single"
+            value={draft.date}
+            campWindow={campWindow ?? undefined}
+            onChange={(date) => patch({ date })}
+          />
+        </div>
+
+        <ReceiptNumberField value={draft.number} onChange={(number) => patch({ number })} />
+      </div>
 
       <label className="field">
-        <span className="field__label">{t.receipts.nameLabel}</span>
+        <span className="field__label">
+          {t.receipts.nameLabel}
+          <RequiredMark />
+        </span>
         <input
-          className="income-form__input"
+          className="input"
+          aria-required="true"
           value={draft.name}
           placeholder={t.receipts.namePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -92,9 +142,13 @@ export function ExpenseForm({
       </label>
 
       <label className="field">
-        <span className="field__label">{t.receipts.amountLabel}</span>
+        <span className="field__label">
+          {t.receipts.amountLabel}
+          <RequiredMark />
+        </span>
         <input
-          className="income-form__input income-form__input--amount"
+          className="input input--amount"
+          aria-required="true"
           // inputMode="decimal" so a phone shows a numeric keypad. The value stays a
           // string here; cents happen in `lib/expenses.ts`.
           inputMode="decimal"
@@ -106,33 +160,18 @@ export function ExpenseForm({
         />
       </label>
 
-      <label className="field">
-        <span className="field__label">{t.receipts.poolLabel}</span>
-        <select
-          className="income-form__input"
-          value={draft.poolId}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-            patch({ poolId: event.target.value })
-          }
-        >
-          {pools.map((summary) => (
-            <option key={summary.pool.id} value={summary.pool.id}>
-              {summary.pool.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <ReceiptNumberField
-        value={draft.number}
-        suggestion={suggestedNumber}
-        onChange={(number) => patch({ number })}
+      <PayerSelect
+        value={draft.paidBy}
+        moneyHolder={moneyHolder}
+        reimbursed={draft.reimbursed}
+        onChange={(paidBy) => patch({ paidBy })}
+        onReimbursedChange={(reimbursed) => patch({ reimbursed })}
       />
 
       <label className="field">
         <span className="field__label">{t.receipts.noteLabel}</span>
         <input
-          className="income-form__input"
+          className="input"
           value={draft.note}
           placeholder={t.receipts.notePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -141,19 +180,13 @@ export function ExpenseForm({
         />
       </label>
 
-      {issues.length > 0 && (
-        <ul className="card__issues">
-          {issues.map((issue) => (
-            <li key={issue}>{t.receipts.issues[issue]}</li>
-          ))}
-        </ul>
-      )}
+      <FormIssues issues={issues} labels={t.receipts.issues} />
 
       <div className="card__actions">
-        <button className="card__button" type="button" onClick={onCancel}>
+        <button className="btn btn--ghost" type="button" onClick={onCancel}>
           {t.receipts.cancel}
         </button>
-        <button className="income-form__button" type="submit" disabled={issues.length > 0}>
+        <button className="btn btn--primary" type="submit" disabled={issues.length > 0}>
           {t.receipts.save}
         </button>
       </div>

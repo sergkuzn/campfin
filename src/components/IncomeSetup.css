@@ -1,21 +1,14 @@
-.income {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  width: 100%;
-}
-
+/* On top of the global `.screen__title`: this header wraps, so the title takes the
+   leftover width and pushes the ⓘ toggle to the end of the row. */
 .income__title {
-  margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: -0.02em;
+  flex: 1;
 }
 
 .income__header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .income__empty {
@@ -24,87 +17,15 @@
   font-size: 0.875rem;
 }
 
-.income__error {
+/* The ⓘ paragraph under the header, shown only while it is asked for. */
+.income__hint {
   margin: 0;
-  color: var(--danger);
-  font-size: 0.875rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
 }
 
 /* Shared form shell: the fields wrap on a phone and sit in a row on wider screens. */
-.income-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-/* Sized by its container, never by flex-basis: inside a column flex parent a basis
-   would set the input's HEIGHT, which is what made these boxes tower. */
-.income-form__input {
-  width: 100%;
-  min-width: 0;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--space-2);
-  background-color: var(--bg);
-  color: var(--fg);
-  font: inherit;
-  font-size: 0.875rem;
-  line-height: 1.6;
-}
-
-.income-form__input--amount {
-  max-width: 12rem;
-}
-
-/* Label above its control. Height stays content-sized: a flex-basis here would be
-   read as a height by the column-flex forms and blow the field up. Side-by-side
-   sizing is the row container's job (see .block__row / .pool-select below). */
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
-.field__label {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-
-/* A checkbox reads left-to-right, not label-above-input like the rest of the fields. */
-.field--check {
-  flex-direction: row;
-  align-items: flex-start;
-  gap: var(--space-2);
-}
-
-.field__check-label {
-  display: block;
-  font-size: 0.875rem;
-}
-
-.field__hint {
-  display: block;
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-
-.income-form__button {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid transparent;
-  border-radius: var(--space-2);
-  background-color: var(--accent);
-  color: var(--surface);
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.income-form__button:disabled {
-  background-color: var(--border);
-  color: var(--muted);
-  cursor: not-allowed;
-}
 
 .type-menu {
   display: flex;
@@ -149,15 +70,23 @@
   background-color: var(--surface);
 }
 
+/* Money that is only passing through the camp's hands. Dashed rather than a different
+   colour, so the pot's own hue keeps saying which pot it is — the border says how the
+   money behaves, the dot says which pool it belongs to. */
+.pool--deposit {
+  border-style: dashed;
+}
+
 .pool__header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
 }
 
 .pool__name {
   /* Flex so the pool's colour dot sits on the name's line rather than above it. */
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   flex: 1;
@@ -165,146 +94,52 @@
   font-size: 1rem;
 }
 
+.pool__badge {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .pool__total {
   font-variant-numeric: tabular-nums;
   font-size: 0.9375rem;
 }
 
-/* The disclosure triangle is the browser's; we want a bare ⋯ button. */
-.pool__menu {
-  position: relative;
-}
-
-.pool__menu-button {
-  list-style: none;
-  padding: 0 var(--space-2);
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.pool__menu-button::-webkit-details-marker {
-  display: none;
-}
-
-.pool__menu-items {
-  position: absolute;
-  right: 0;
-  z-index: 1;
+/* The same 2.25rem thumb target as the ⋮ beside it, so the two read as one pair of
+   controls rather than a big button next to a small one. */
+.pool__add {
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
-  min-width: 9rem;
-  padding: var(--space-1);
-  border: 1px solid var(--border);
-  border-radius: var(--space-2);
-  background-color: var(--surface);
-}
-
-.pool__menu-items button {
-  padding: var(--space-2);
-  border: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
   background: none;
-  color: inherit;
+  color: var(--accent);
   font: inherit;
-  font-size: 0.875rem;
-  text-align: left;
+  font-size: 1.125rem;
+  line-height: 1;
   cursor: pointer;
 }
 
-.pool__menu-items button:disabled {
-  color: var(--muted);
-  cursor: not-allowed;
+.pool__add:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background-color: var(--bg);
-}
-
-.card--editing {
-  border-color: var(--accent);
-}
-
-.card__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-2);
-}
-
-.card__name {
-  flex: 1;
-  font-size: 0.9375rem;
-}
-
-.card__amount {
-  font-variant-numeric: tabular-nums;
-  font-size: 0.9375rem;
-}
-
-.card__kind {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-/* A saved per-diem block: heading + two detail rows, each label left, figure right. */
-.card__block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2);
-  border-radius: var(--space-2);
-  background-color: var(--surface);
-}
-
-.card__block-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: var(--space-2);
+.pool__note,
+.pool__empty {
   margin: 0;
   color: var(--muted);
   font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.card__block-row--head {
-  color: var(--fg);
-  font-size: 0.875rem;
-}
-
-.card__issues {
-  margin: 0;
-  padding-left: var(--space-4);
-  color: var(--danger);
-  font-size: 0.75rem;
-}
-
-.card__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
-
-.card__button {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--space-2);
-  background-color: var(--surface);
-  color: inherit;
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.card__button:disabled {
-  color: var(--muted);
-  cursor: not-allowed;
 }
 
 .blocks {
@@ -325,7 +160,7 @@
   margin: 0;
   padding: var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--space-2);
+  border-radius: var(--radius-sm);
 }
 
 .block__legend {
@@ -336,15 +171,6 @@
 
 /* Two fields side by side, stacking on a narrow phone. The basis lives here, on the
    row axis, where it means width. */
-.block__row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.block__row > .field {
-  flex: 1 1 8rem;
-}
 
 .block__remove {
   position: absolute;
@@ -382,8 +208,16 @@
   font-size: 0.875rem;
 }
 
+/* Right-justified so both links sit under the thumb on a phone held one-handed, rather
+   than at the far side of the block list. */
+.blocks__add-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
 .blocks__add {
-  align-self: flex-start;
   border: 0;
   background: none;
   color: var(--muted);
@@ -392,34 +226,30 @@
   cursor: pointer;
 }
 
-.pool-select {
+/* min-inline-size overrides the fieldset's built-in min-content width, which would
+   otherwise stop the hints wrapping on a narrow phone. */
+.pool-roles {
+  min-inline-size: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.pool-select__field {
-  display: flex;
-  flex: 1 1 10rem;
   flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
-.pool-select__copy {
-  align-self: flex-start;
+  gap: var(--space-2);
+  margin: 0;
   padding: 0;
   border: 0;
-  background: none;
-  color: var(--accent);
-  font: inherit;
-  font-size: 0.75rem;
+}
+
+/* The radio on its own line-height, the label and its hint stacked beside it. */
+.pool-roles__option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
   cursor: pointer;
 }
 
-.pool-select__copy:disabled {
-  color: var(--muted);
-  cursor: not-allowed;
+.pool-roles__option > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .income__totals {
@@ -442,12 +272,24 @@
   gap: var(--space-2);
 }
 
+/* The disclosure over the block breakdown: a plain left-aligned line of text, like
+   .blocks__add, so it reads as "there is more here" rather than as a form control. */
+.attendance__toggle {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
 /* Two equal halves so the strip is thumb-sized on a phone whatever the labels say. */
 .attendance__tabs {
   display: flex;
   gap: var(--space-1);
   padding: 2px;
-  border-radius: var(--space-2);
+  border-radius: var(--radius-sm);
   background-color: var(--surface);
 }
 
@@ -477,17 +319,20 @@
   color: var(--muted);
 }
 
-.attendance__actions,
-.attendance__form-actions {
+/* The border marks this off as a distinct group of shortcuts, sitting above the blocks
+   they act on rather than blending into the editor or the Save/Cancel row below it. */
+.attendance__quick-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
 }
 
 .attendance__button {
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--space-2);
+  border-radius: var(--radius-sm);
   background-color: var(--surface);
   color: inherit;
   font: inherit;

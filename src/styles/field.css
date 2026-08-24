@@ -1,0 +1,59 @@
+/* A labelled form control. Every form in the app builds its rows out of these, so the
+   label size, the required star and the hint below all live here rather than in whichever
+   screen stylesheet happened to be imported. */
+
+/* Label above its control. Height stays content-sized: a flex-basis here would be
+   read as a height by the column-flex forms and blow the field up. Side-by-side
+   sizing is the row container's job (see .field-row below). */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* Marks a field whose value blocks Save. Red because it is the same "you must deal with
+   this" colour as the issues under the form. */
+.field__required {
+  margin-left: 0.15rem;
+  color: var(--danger);
+}
+
+/* A checkbox reads left-to-right, not label-above-input like the rest of the fields. */
+.field--check {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.field__check-label {
+  display: block;
+  font-size: 0.875rem;
+}
+
+.field__hint {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* Fields side by side. Each one takes an equal share down to 8rem, below which it wraps
+   to its own line rather than squeezing — the sizing a .field deliberately does not do
+   for itself. */
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.field-row > .field {
+  flex: 1 1 8rem;
+}

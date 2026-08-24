@@ -1,23 +1,46 @@
-/* Headline and figures sit side by side, filling the space the big number leaves free, so
-   the burn card costs two lines less height. The gaps are small on purpose: the pair only
-   fits beside each other on a phone if neither block is padded generously. */
+/* Headline and figures sit side by side. The table isn't pinned to either edge — it's
+   centered in the space between the headline and the chart's plot edge below, using two
+   invisible flex items (`::before`/`::after`, reordered by `order` to sit around the
+   table) that grow equally and split whatever room is left. `padding-right` shrinks that
+   room to stop at the chart's plot edge (8px in from the card, matching the chart's own
+   `margin.right`) rather than the card's true edge. The left spacer has a floor
+   (`min-width`) so the table never crowds the headline on a narrow phone; the right one
+   has none, since it only needs to yield the 8px gap already reserved by the padding. */
 .allowed {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: var(--space-2);
+  gap: var(--space-1) 0;
   margin-top: var(--space-2);
+  padding-right: 8px;
 }
 
 /* Never shrinks below its content: the headline is the one figure that must stay legible,
    so a long amount pushes the figures onto their own line instead of squeezing itself. */
 .allowed__headline {
+  order: 1;
   flex: 0 0 auto;
 }
 
+.allowed::before {
+  content: "";
+  order: 2;
+  flex: 1 1 auto;
+  min-width: var(--space-2);
+}
+
+.allowed::after {
+  content: "";
+  order: 4;
+  flex: 1 1 auto;
+}
+
+/* `min-content` breaks the label after its first word, so the headline reads on two lines
+   without a hard-coded newline in the string — a translation of any length still wraps at
+   its own word boundaries. The extra height is what the stats table stretches against. */
 .allowed__label {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -27,7 +50,7 @@
    jitter as digits change, and green until it isn't. */
 .allowed__amount {
   margin: 0;
-  font-size: 1.625rem;
+  font-size: 1.375rem;
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
@@ -38,33 +61,72 @@
   color: var(--danger);
 }
 
-/* A 2×2 table filled top-to-bottom then left-to-right, which is what pairs "spent today"
-   with "median day" in one column and the two remainders in the other. `auto` columns
-   never shrink below their text, so on a screen too narrow for both blocks the whole table
-   wraps under the headline rather than overlapping it. */
+/* A 2×2 table as four grid columns — label, value, label, value — filled row by row, which
+   is what pairs "spent today" with "days left" on one row and the two remainders on the
+   next. Each label/value pair gets its own two columns sized to its own content, so the
+   value lines up flush against its label's column instead of chasing a shared right edge
+   across the whole table; `auto` columns never shrink below their text, so on a screen too
+   narrow for both pairs the whole table wraps under the headline rather than overlapping
+   it. Its horizontal position comes from the flex spacers in `.allowed`, not from anything
+   here. */
 .allowed__stats {
+  order: 3;
   display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(2, auto);
-  gap: var(--space-1) var(--space-2);
-}
-
-/* Label left, value right: the grid stretches each cell to its column's width, so the
-   values in a column line up under each other without a fixed width anywhere. */
-.allowed__stat {
-  display: flex;
+  grid-template-columns: repeat(2, auto auto);
+  column-gap: var(--space-1);
+  row-gap: var(--space-1);
+  justify-content: start;
   align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
+  /* Stretch to the headline's full height so the table's vertical range runs from the top
+     of the label to the bottom of the amount, then centre the two rows inside it: the pair
+     stays tight (`row-gap`) and sits in the middle of that range rather than being pulled
+     apart to its edges. `.allowed`'s `align-items: flex-end` still governs the wrapped
+     layout, where the table sits on its own line under the headline. */
+  align-self: stretch;
+  align-content: center;
   white-space: nowrap;
   font-size: 0.6875rem;
 }
 
 .allowed__stat-label {
   color: var(--muted);
+  padding-right: var(--space-2);
 }
 
 .allowed__stat-value {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  justify-self: end;
+}
+
+/* The middle of a row separates two unrelated pairs, so it needs more air than the gap
+   inside a pair. The grid children are flat spans, four to a row, so every 4th starting at
+   the 2nd is the left pair's value — the one that sits against the right pair's label. */
+.allowed__stats > :nth-child(4n + 2) {
+  padding-right: var(--space-3);
+}
+
+/* Narrow phones don't have room for the full-size headline beside the 2×2 table, so the
+   table wraps underneath it (see .allowed's comment). Shrinking the headline here buys back
+   just enough width to keep both on one row instead. */
+@media (max-width: 400px) {
+  .allowed__amount {
+    font-size: 1.15rem;
+  }
+
+  .allowed__label {
+    font-size: 0.625rem;
+  }
+
+  .allowed__stats {
+    column-gap: var(--space-1);
+    row-gap: 0;
+    font-size: 0.625rem;
+  }
+
+  /* Width is the scarce thing here, so the pair separator gives back what it can while
+     staying wider than the gap inside a pair. */
+  .allowed__stats > :nth-child(4n + 2) {
+    padding-right: var(--space-2);
+  }
 }

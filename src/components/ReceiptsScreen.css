@@ -1,21 +1,8 @@
-.receipts {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-}
-
 .receipts__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-}
-
-.receipts__title {
-  margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: -0.02em;
 }
 
 .receipts__days {
@@ -31,10 +18,11 @@
 }
 
 /* Sticky day heading: scrolling a long list keeps the day you are looking at named.
-   Parks below the back bar rather than at the very top, which is already taken. */
+   Pins to the very top — the way back is plain text now and scrolls away with the rest
+   of the page, so nothing else is parked there. */
 .day__header {
   position: sticky;
-  top: var(--screen-back-height);
+  top: 0;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -75,6 +63,10 @@
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
+  /* The pool, as a stripe down the card's edge. It costs no line of its own, so the run of
+     rows from the everyday pot reads as one quiet colour and a receipt from another pool
+     breaks it. Falls back to the plain border when the row's pool is gone. */
+  border-left: 3px solid var(--pool-ink, var(--border));
   border-radius: var(--radius);
   background-color: var(--surface);
 }
@@ -108,12 +100,6 @@
   overflow-wrap: anywhere;
 }
 
-/* A pool tag is an inline pill, so the row that holds it needs a start alignment —
-   otherwise it stretches to the column's full width. */
-.receipt__main > .pool-tag {
-  align-self: flex-start;
-}
-
 .receipt__pool,
 .receipt__note {
   font-size: 0.75rem;
@@ -124,4 +110,96 @@
   flex: 0 0 auto;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/* Who fronted the money, and the button that settles it. The name is plain muted text —
+   a row you only want to read should not look like a row that wants tapping — and only the
+   button carries any weight. Drawn only when somebody other than the money holder paid, so
+   the ordinary receipt still costs no extra line. */
+.receipt__payer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: 2px;
+}
+
+.receipt__payer-name {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* An outline, not a fill: at one of these per row a solid amber or green block turned the
+   list into a traffic light. The tap target stays thumb-sized either way. */
+.receipt__return {
+  flex: 0 0 auto;
+  min-height: 1.75rem;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+/* Still owed: the only tint on the row, and a quiet one — enough to find while scanning,
+   not enough to shout. */
+.receipt__return--owed {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+  color: color-mix(in srgb, var(--warn) 80%, var(--fg));
+}
+
+/* Settled. Reads as done rather than as a control, but stays a button so a mis-tap can be
+   undone. */
+.receipt__return--done {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent);
+}
+
+.receipt__return:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* What is spent and what is still owed to a co-leader are different kinds of number, so
+   the owed line is tinted — gently, matching the button above it. */
+.receipts__owed {
+  color: color-mix(in srgb, var(--warn) 80%, var(--fg));
+}
+
+/* The two radios and their name field. A fieldset so the pair is announced as one question
+   — "Paid by: the holder, or someone else" — rather than as two unrelated controls. */
+.payer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* The "someone else" radio, its name field, and the "paid back" checkbox share one row —
+   wrapping on a narrow phone rather than scrolling, since a receipt form is read top to
+   bottom, not sideways. */
+.payer__other {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Takes whatever width the row's other controls do not need. */
+.payer__other-name {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.payer__returned {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.875rem;
+  white-space: nowrap;
 }

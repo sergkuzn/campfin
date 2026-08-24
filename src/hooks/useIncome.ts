@@ -7,18 +7,20 @@
  * one. Without it a pool could quietly jump above another between two renders.
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import * as incomeDb from '../db/incomeDb'
 import { db } from '../db/instant'
-import { useT } from '../i18n'
-import type { SaveBlocksInput, SaveSourceInput } from '../lib/drafts'
+import type { SaveBlocksInput, SavePoolInput, SaveSourceInput } from '../lib/drafts'
 import type { IncomeState } from '../lib/income'
 import { mapRows, toBlock, toPool, toSource } from '../lib/rows'
 import type { IncomeSource, PerDiemBlock, Pool, PoolColor } from '../lib/types'
+import { useWriteState } from './useWriteState'
 
 export type UseIncome = IncomeState & {
   isLoading: boolean
   error: string | null
+  /** Returns the new pool's id, so the caller can open its income form at once. */
+  createPool: (input: SavePoolInput) => string
   saveSource: (input: SaveSourceInput) => void
   /** Replace one variant's block rows — the actual-attendance editor. */
   saveBlocks: (input: SaveBlocksInput) => void
@@ -43,9 +45,6 @@ function byStartDate(blocks: PerDiemBlock[]): PerDiemBlock[] {
 
 /** Pass `''` while no camp is open: the query is skipped rather than run for nothing. */
 export function useIncome(campId: string): UseIncome {
-  const t = useT()
-  const [error, setError] = useState<string | null>(null)
-
   const {
     isLoading,
     error: queryError,
@@ -60,6 +59,8 @@ export function useIncome(campId: string): UseIncome {
         },
   )
 
+  const { error, run } = useWriteState(queryError)
+
   // One memo for all three arrays: they change together, and every consumer wants the
   // whole slice. `state` is also exactly what the write helpers need to plan a cascade.
   const state = useMemo<IncomeState>(
@@ -71,60 +72,54 @@ export function useIncome(campId: string): UseIncome {
     [data],
   )
 
-  // Each mutator passes the current rows along, because what a write must *also* delete is
-  // computed from them. That is why `state` is in every dependency list here.
-  const saveSource = useCallback(
-    (input: SaveSourceInput): void => {
-      setError(null)
-      void incomeDb.saveSource(input, state).catch(() => setError(t.sync.writeFailed))
+  // Each mutator passes the current rows along, because what a write must *also* write or
+  // delete is computed from them. That is why `state` is in every dependency list here.
+  const createPool = useCallback(
+    (input: SavePoolInput): string => {
+      // The only mutator that hands something back: the id is known before the write
+      // settles, so the caller can open the new pool's income form at once.
+      const { poolId, done } = incomeDb.createPool(input, state)
+      run(done)
+      return poolId
     },
-    [state, t],
+    [run, state],
+  )
+
+  const saveSource = useCallback(
+    (input: SaveSourceInput): void => run(incomeDb.saveSource(input, state)),
+    [run, state],
   )
 
   const saveBlocks = useCallback(
-    (input: SaveBlocksInput): void => {
-      setError(null)
-      void incomeDb.saveBlocks(input, state).catch(() => setError(t.sync.writeFailed))
-    },
-    [state, t],
+    (input: SaveBlocksInput): void => run(incomeDb.saveBlocks(input, state)),
+    [run, state],
   )
 
   const deleteSource = useCallback(
-    (sourceId: string): void => {
-      setError(null)
-      void incomeDb.deleteSource(sourceId, state).catch(() => setError(t.sync.writeFailed))
-    },
-    [state, t],
+    (sourceId: string): void => run(incomeDb.deleteSource(sourceId, state)),
+    [run, state],
   )
 
   const renamePool = useCallback(
-    (poolId: string, name: string): void => {
-      setError(null)
-      void incomeDb.renamePool(poolId, name).catch(() => setError(t.sync.writeFailed))
-    },
-    [t],
+    (poolId: string, name: string): void => run(incomeDb.renamePool(poolId, name)),
+    [run],
   )
 
   const setPoolColor = useCallback(
-    (poolId: string, color: PoolColor): void => {
-      setError(null)
-      void incomeDb.setPoolColor(poolId, color).catch(() => setError(t.sync.writeFailed))
-    },
-    [t],
+    (poolId: string, color: PoolColor): void => run(incomeDb.setPoolColor(poolId, color)),
+    [run],
   )
 
   const deletePool = useCallback(
-    (poolId: string): void => {
-      setError(null)
-      void incomeDb.deletePool(poolId, state).catch(() => setError(t.sync.writeFailed))
-    },
-    [state, t],
+    (poolId: string): void => run(incomeDb.deletePool(poolId, state)),
+    [run, state],
   )
 
   return {
     ...state,
     isLoading,
-    error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
+    error,
+    createPool,
     saveSource,
     saveBlocks,
     deleteSource,

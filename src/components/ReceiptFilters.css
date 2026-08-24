@@ -9,8 +9,20 @@
   background-color: var(--surface);
 }
 
+/* Sort picker and the repayment toggle share one line rather than a line each. */
+.filters__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Takes every pixel the chip beside it does not need. `min-width: 0` overrides the flex
+   default of not shrinking below the content, so on a narrow phone the select gets
+   smaller instead of pushing the chip off the card. */
 .filters__sort {
   display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
   align-items: center;
   gap: var(--space-2);
 }
@@ -53,6 +65,11 @@
   cursor: pointer;
 }
 
+/* On the sort row the chip keeps its natural width — it is the fixed half of that line. */
+.filters__row .filters__chip {
+  flex: 0 0 auto;
+}
+
 /* A pressed chip fills with its pool's tint and outlines in its ink, so "this filter is
    on" is carried by shape as well as by colour. */
 .filters__chip[aria-pressed="true"] {
@@ -60,4 +77,12 @@
   background-color: color-mix(in srgb, var(--pool-tint, var(--accent)) 60%, transparent);
   color: var(--pool-ink, var(--accent));
   font-weight: 600;
+}
+
+/* The one chip that is not a pool: it filters by whether the money has been paid back, so
+   it borrows the same restrained amber as the row buttons rather than a pool's hue. */
+.filters__chip--owed[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--warn) 55%, var(--border));
+  background-color: color-mix(in srgb, var(--warn) 8%, transparent);
+  color: color-mix(in srgb, var(--warn) 80%, var(--fg));
 }

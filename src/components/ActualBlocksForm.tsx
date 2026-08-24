@@ -10,6 +10,7 @@ import {
   type SaveBlocksInput,
 } from '../lib/drafts'
 import type { PerDiemBlock } from '../lib/types'
+import { FormIssues } from './FormIssues'
 import { PerDiemBlocksEditor } from './PerDiemBlocksEditor'
 
 type Props = {
@@ -63,11 +64,7 @@ export function ActualBlocksForm({
 
   return (
     <form className="attendance__form" onSubmit={handleSubmit}>
-      <p className="attendance__hint">{t.attendance.hint}</p>
-
-      <PerDiemBlocksEditor blocks={blocks} onChange={setBlocks} />
-
-      <div className="attendance__form-actions">
+      <div className="attendance__quick-actions">
         <button
           className="attendance__button"
           type="button"
@@ -82,24 +79,20 @@ export function ActualBlocksForm({
         </button>
       </div>
 
+      <PerDiemBlocksEditor blocks={blocks} onChange={setBlocks} />
+
       <p className="income__total-row">
         <span>{t.attendance.actual}</span>
         <strong>{format.euros(totalCents)}</strong>
       </p>
 
-      {issues.length > 0 && (
-        <ul className="card__issues">
-          {issues.map((issue) => (
-            <li key={issue}>{t.income.issues[issue]}</li>
-          ))}
-        </ul>
-      )}
+      <FormIssues issues={issues} labels={t.income.issues} />
 
       <div className="card__actions">
-        <button className="card__button" type="button" onClick={onCancel}>
+        <button className="btn btn--ghost" type="button" onClick={onCancel}>
           {t.attendance.cancel}
         </button>
-        <button className="income-form__button" type="submit" disabled={issues.length > 0}>
+        <button className="btn btn--primary" type="submit" disabled={issues.length > 0}>
           {t.attendance.save}
         </button>
       </div>

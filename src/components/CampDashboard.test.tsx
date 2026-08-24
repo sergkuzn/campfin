@@ -1,11 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/en'
 import { I18nProvider } from '../i18n/I18nProvider'
 import { emptyBurn } from '../lib/burn'
 import type { PoolSummary } from '../lib/pools'
-import type { Settlement } from '../lib/settlement'
 import type { Camp } from '../lib/types'
 import { CampDashboard } from './CampDashboard'
 
@@ -16,8 +15,12 @@ const camp: Camp = {
   createdAt: 1_700_000_000_000,
 }
 
+/** A camp past the first of the two setup steps. The default for every test that is not
+ *  about the checklist, since the hub only appears once somebody holds the money. */
+const heldCamp: Camp = { ...camp, moneyHolder: 'Anna' }
+
 /** The everyday pool a camp is born with: it exists from the first second and holds
- *  nothing, which is exactly the state the first-step screen is for. */
+ *  nothing, which is exactly the state the setup checklist is for. */
 const emptyPool: PoolSummary = {
   pool: { id: 'pool-e', campId: 'c1', name: 'Group money', role: 'everyday', createdAt: 1 },
   sources: [],
@@ -56,39 +59,31 @@ const depositPool: PoolSummary = {
   remainingCents: 20_000,
 }
 
-const settlement: Settlement = {
-  receivedTotalCents: 0,
-  spentTotalCents: 0,
-  toReturnCents: 0,
-  rows: [],
-  warnings: [],
-  pools: [],
-}
-
 function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboard>> = {}) {
   const onOpenIncome = vi.fn()
   const onOpenSettings = vi.fn()
   const onOpenReceipts = vi.fn()
   const onOpenMovements = vi.fn()
-  const onOpenSettlement = vi.fn()
+  const onOpenReport = vi.fn()
+  const onChangeHolder = vi.fn()
   const user = userEvent.setup()
   render(
     <I18nProvider>
       <CampDashboard
-        camp={camp}
+        camp={heldCamp}
         summaries={[emptyPool]}
         burn={emptyBurn}
         todayIso="2026-07-05"
         isLoading={false}
         error={null}
         hasExpenses={false}
-        custody={{ statuses: [], volunteerHeldCents: 0, volunteerCount: 0 }}
-        settlement={settlement}
+        custody={{ statuses: [], feeHeldCents: 0, feeCount: 0 }}
         onBack={vi.fn()}
         onOpenIncome={onOpenIncome}
+        onChangeHolder={onChangeHolder}
         onOpenReceipts={onOpenReceipts}
         onOpenMovements={onOpenMovements}
-        onOpenSettlement={onOpenSettlement}
+        onOpenReport={onOpenReport}
         onOpenSettings={onOpenSettings}
         {...props}
       />
@@ -99,7 +94,8 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
     onOpenSettings,
     onOpenReceipts,
     onOpenMovements,
-    onOpenSettlement,
+    onOpenReport,
+    onChangeHolder,
     user,
   }
 }
@@ -111,14 +107,23 @@ function slotHeader(action: string) {
 }
 
 describe('CampDashboard', () => {
-  it('shows nothing but the first step while the camp has no money in it', () => {
+  it('shows nothing but the setup checklist while the camp has no money in it', () => {
     renderDashboard()
 
-    expect(screen.getByRole('button', { name: en.dashboard.firstStep })).toBeInTheDocument()
+    expect(screen.getByText(en.setup.title)).toBeInTheDocument()
     // The blocks that would all be empty stay away until there is something in them.
     expect(screen.queryByText(en.dashboard.spending)).not.toBeInTheDocument()
     expect(screen.queryByText(en.burn.title)).not.toBeInTheDocument()
-    expect(screen.queryByText(en.settlement.toReturn)).not.toBeInTheDocument()
+    expect(screen.queryByText(en.report.title)).not.toBeInTheDocument()
+  })
+
+  it('keeps a funded camp on the checklist while nobody holds the money', () => {
+    // Both answers are compulsory: income alone is not enough, because every "owed"
+    // marker on the hub is measured against the holder.
+    renderDashboard({ camp, summaries: [fundedPool] })
+
+    expect(screen.getByText(en.setup.title)).toBeInTheDocument()
+    expect(screen.queryByText(en.dashboard.spending)).not.toBeInTheDocument()
   })
 
   it('waits for the query before claiming the camp is empty', () => {
@@ -127,22 +132,39 @@ describe('CampDashboard', () => {
     renderDashboard({ isLoading: true })
 
     expect(screen.getByText(en.app.loading)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: en.dashboard.firstStep })).not.toBeInTheDocument()
+    expect(screen.queryByText(en.setup.title)).not.toBeInTheDocument()
   })
 
-  it('opens the income screen from the first step', async () => {
+  it('opens the income screen from the checklist', async () => {
     const { user, onOpenIncome } = renderDashboard()
-    await user.click(screen.getByRole('button', { name: en.dashboard.firstStep }))
+    await user.click(screen.getByRole('button', { name: en.setup.incomeGo }))
 
     expect(onOpenIncome).toHaveBeenCalledOnce()
   })
 
-  it('shows the money blocks once income has been set up', () => {
+  it('names the money holder from the checklist, trimmed', async () => {
+    const { user, onChangeHolder } = renderDashboard({ camp })
+    await user.type(screen.getByLabelText(en.campSettings.holderNewNameLabel), '  Anna  ')
+    await user.click(screen.getByRole('button', { name: en.campSettings.holderSave }))
+
+    expect(onChangeHolder).toHaveBeenCalledExactlyOnceWith('Anna')
+  })
+
+  it('ticks the finished step and keeps it on the list', () => {
+    // The holder is already named here, so its step shows the name rather than the field.
+    renderDashboard()
+
+    expect(screen.getByText('Anna')).toBeInTheDocument()
+    expect(screen.queryByLabelText(en.campSettings.holderNewNameLabel)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: en.campSettings.holderChange })).toBeInTheDocument()
+  })
+
+  it('shows the money blocks once both setup steps are answered', () => {
     renderDashboard({ summaries: [fundedPool] })
 
     expect(screen.getByText(en.dashboard.spending)).toBeInTheDocument()
-    expect(screen.getByText(en.settlement.toReturn)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: en.dashboard.firstStep })).not.toBeInTheDocument()
+    expect(screen.getByText(en.report.title)).toBeInTheDocument()
+    expect(screen.queryByText(en.setup.title)).not.toBeInTheDocument()
   })
 
   it('keeps the received total off the main screen — it lives in settings now', () => {
@@ -154,13 +176,13 @@ describe('CampDashboard', () => {
     expect(screen.queryByText('MOOR-7F3K')).not.toBeInTheDocument()
   })
 
-  it('shows the money blocks for a camp with receipts but no income yet', () => {
-    // Unusual, but real: a receipt entered before the grant was recorded must not be
-    // hidden behind the first-step screen.
+  it('keeps a camp with receipts but no income on the checklist', () => {
+    // A receipt entered before the grant does not complete the setup: its pool bar and
+    // its "owed" marker have nothing to be measured against yet.
     renderDashboard({ hasExpenses: true })
 
-    expect(screen.getByText(en.dashboard.spending)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: en.dashboard.firstStep })).not.toBeInTheDocument()
+    expect(screen.getByText(en.setup.title)).toBeInTheDocument()
+    expect(screen.queryByText(en.dashboard.spending)).not.toBeInTheDocument()
   })
 
   it('opens the settings screen from the gear', async () => {
@@ -178,12 +200,25 @@ describe('CampDashboard', () => {
     expect(screen.queryByText(en.camps.status.finished)).not.toBeInTheDocument()
   })
 
-  it('opens the receipts of the pool whose bar was tapped', async () => {
+  it('opens the whole receipt list from anywhere on the spending card', async () => {
     const { user, onOpenReceipts } = renderDashboard({ summaries: [fundedPool, depositPool] })
 
-    // The bar is named by what it says, not by a label: the figures are the row's content.
+    // The card is one button; a pool's own figures are part of its accessible name, so
+    // pressing on a bar is pressing the card.
     await user.click(screen.getByRole('button', { name: new RegExp(fundedPool.pool.name) }))
-    expect(onOpenReceipts).toHaveBeenCalledWith('pool-e')
+    expect(onOpenReceipts).toHaveBeenCalledWith(null)
+  })
+
+  it('leaves the pool bars as a readout rather than controls of their own', async () => {
+    const { user, onOpenReceipts } = renderDashboard({ summaries: [fundedPool] })
+
+    // One button for the card, not one per pool: a nested control would be both invalid
+    // inside a <button> and a second target on a row that is only there to be read.
+    const spending = screen.getByRole('button', { name: new RegExp(en.dashboard.spending) })
+    expect(within(spending).queryAllByRole('button')).toHaveLength(0)
+
+    await user.click(screen.getByText(fundedPool.pool.name))
+    expect(onOpenReceipts).toHaveBeenCalledWith(null)
   })
 
   it('keeps deposits out of the spending block — they have a block of their own', () => {
@@ -200,7 +235,7 @@ describe('CampDashboard', () => {
   })
 
   it('opens each block’s screen from its title row', async () => {
-    const { user, onOpenReceipts, onOpenMovements, onOpenSettlement } = renderDashboard({
+    const { user, onOpenReceipts, onOpenMovements, onOpenReport } = renderDashboard({
       summaries: [fundedPool],
     })
 
@@ -212,11 +247,11 @@ describe('CampDashboard', () => {
     await user.click(slotHeader(en.custody.deposits.open))
     expect(onOpenMovements).toHaveBeenCalledWith('deposits')
 
-    await user.click(slotHeader(en.custody.cash.open))
-    expect(onOpenMovements).toHaveBeenLastCalledWith('cash')
+    await user.click(slotHeader(en.custody.fee.open))
+    expect(onOpenMovements).toHaveBeenLastCalledWith('fee')
 
-    await user.click(slotHeader(en.settlement.open))
-    expect(onOpenSettlement).toHaveBeenCalledOnce()
+    await user.click(slotHeader(en.report.open))
+    expect(onOpenReport).toHaveBeenCalledOnce()
   })
 
   it('leaves the chart block with no way in — it has no screen of its own', () => {

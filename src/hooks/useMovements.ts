@@ -4,13 +4,13 @@
  * custody money never consumes budget.
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { db } from '../db/instant'
 import * as movementsDb from '../db/movementsDb'
-import { useT } from '../i18n'
 import type { SaveMovementInput } from '../lib/movements'
 import { mapRows, toMovement } from '../lib/rows'
 import type { Movement } from '../lib/types'
+import { useWriteState } from './useWriteState'
 
 export type UseMovements = {
   /** Newest first. */
@@ -23,9 +23,6 @@ export type UseMovements = {
 
 /** Pass `''` while no camp is open: the query is skipped rather than run for nothing. */
 export function useMovements(campId: string): UseMovements {
-  const t = useT()
-  const [error, setError] = useState<string | null>(null)
-
   const {
     isLoading,
     error: queryError,
@@ -40,30 +37,26 @@ export function useMovements(campId: string): UseMovements {
         },
   )
 
+  const { error, run } = useWriteState(queryError)
+
   // Memoised on the query result: the deposit statuses take this array as a dependency, so
   // a fresh array every render would recompute every custody figure.
   const movements = useMemo(() => mapRows<Movement>(data?.movements, toMovement), [data])
 
   const saveMovement = useCallback(
-    (input: SaveMovementInput): void => {
-      setError(null)
-      void movementsDb.saveMovement(input).catch(() => setError(t.sync.writeFailed))
-    },
-    [t],
+    (input: SaveMovementInput): void => run(movementsDb.saveMovement(input)),
+    [run],
   )
 
   const deleteMovement = useCallback(
-    (movementId: string): void => {
-      setError(null)
-      void movementsDb.deleteMovement(movementId).catch(() => setError(t.sync.writeFailed))
-    },
-    [t],
+    (movementId: string): void => run(movementsDb.deleteMovement(movementId)),
+    [run],
   )
 
   return {
     movements,
     isLoading,
-    error: queryError === undefined ? error : t.sync.loadFailed(queryError.message),
+    error,
     saveMovement,
     deleteMovement,
   }

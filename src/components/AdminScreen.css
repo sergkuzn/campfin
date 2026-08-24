@@ -1,0 +1,132 @@
+/* The address field and its button, side by side until the width runs out. */
+.admin__grant {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.admin__input {
+  flex: 1;
+  min-width: 0; /* without this a flex item refuses to shrink below its content */
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  color: inherit;
+  font: inherit;
+}
+
+.admin__empty {
+  margin: 0;
+  padding: var(--space-4);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.admin__people,
+.admin__camps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One person per row: address and their camps stacked on the left, the ⋮ that acts on them
+   in the corner. `nowrap` keeps the trigger out of the address column, which shrinks and
+   ellipses instead of pushing anything onto a second line. */
+.admin__person {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.admin__person:last-child {
+  border-bottom: 0;
+}
+
+.admin__person-main {
+  display: flex;
+  flex-direction: column;
+  /* No gap: the stacked lines are one block of text, and line-height already spaces them. */
+  min-width: 0;
+}
+
+.admin__email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9375rem;
+}
+
+/* A state, or one camp name, on its own line under the address. */
+.admin__state {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* The whole row is the button, as on the camp list. */
+.admin__camp {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin__camp:hover {
+  background-color: var(--bg);
+}
+
+.admin__camps li:last-child .admin__camp {
+  border-bottom: 0;
+}
+
+/* Name over members, so a long list of addresses cannot push the join code off the row. */
+.admin__camp-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin__camp-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* One address per line, each clipped rather than wrapped: a full address rarely fits a
+   phone's width, and a wrapped one reads as two people. */
+.admin__members {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.admin__camp-code {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}

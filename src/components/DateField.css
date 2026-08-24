@@ -1,0 +1,33 @@
+.date-field {
+  position: relative;
+  min-width: 0;
+}
+
+/* Matches .input so a date field sits flush beside the other inputs on the
+   same form row. */
+.date-field__trigger {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-align: start;
+  cursor: pointer;
+}
+
+.date-field__panel {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  inset-inline-start: 0;
+  z-index: 5;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-popover);
+}

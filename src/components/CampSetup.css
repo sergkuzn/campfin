@@ -1,0 +1,113 @@
+/* The whole screen a camp shows until it is set up: a numbered list of what is missing,
+   in the app's card clothes so it reads as part of the camp rather than an interruption. */
+.camp-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+
+.camp-setup__title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.camp-setup__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.camp-setup__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none; /* the markers are drawn below, so the numbers are ours to style */
+}
+
+.camp-setup__step {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+/* The number, and the tick that replaces it. Outlined while the step is open, filled
+   green once it is answered — the state is visible before any word is read. */
+.camp-setup__marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.camp-setup__step--done .camp-setup__marker {
+  border-color: transparent;
+  background-color: var(--ok);
+  color: var(--on-accent);
+}
+
+.camp-setup__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0; /* without this a flex item refuses to shrink below its content */
+}
+
+.camp-setup__step-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* A done step recedes: its title stays, its detail is a quiet line rather than a prompt. */
+.camp-setup__readout {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.camp-setup__holder-name {
+  color: var(--fg);
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.camp-setup__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.camp-setup__input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  color: inherit;
+  font: inherit;
+}
+
+/* The holder step's "Change" button stands alone on its own line (the readout paragraph
+   above it takes the line before) — push it right so it lands under the thumb on a phone
+   held one-handed. */
+.camp-setup__ghost--end {
+  align-self: flex-end;
+}

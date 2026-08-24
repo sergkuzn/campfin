@@ -14,10 +14,10 @@ them in step. No personal data is stored — only counts, days, amounts and cate
   people who never turned up is never treated as spendable.
 - **Daily burn** — how much may be spent today, and a day-by-day chart of the allowance
   against real spending.
-- **Deposits & cash** — a deposit handed over and returned, and volunteers' money held for
+- **Deposits & fees** — a deposit handed over and returned, and participation fees held for
   the organisation. Neither consumes budget.
-- **Settle up** — a breakdown table that explains what goes back, exportable as JSON (a
-  full backup, restorable) or CSV, and printable for accounting.
+- **Financial report** — income, expenses and the cash rest, each as its own table, with the
+  receipts itemised. Exportable as CSV and printable for accounting.
 
 Every amount is stored as **integer cents**; euros exist only at the display edge.
 
@@ -123,6 +123,14 @@ needed.
    `dist`.
 3. Set `VITE_INSTANT_APP_ID` and `VITE_APP_ENV` in the host's environment variables — the
    build reads them (see **Environments** above for the per-environment split).
+4. Sign in once, then insert your own admin grant by hand, once per app: in the InstantDB
+   dashboard's Explorer, add a row to `accounts` with your `email`, `role` set to `admin`,
+   any `campQuota`, a `grantedAt` timestamp, and link `user` to your `$users` row. Nothing
+   else can create it — `accounts.create` is admin-only, which is what stops an account
+   from granting itself. Everyone else is then activated from the app's **Admin** screen.
+
+Without step 4 nobody, including you, can create a camp: `camps.create` requires a grant.
+Joining an existing camp by its code keeps working regardless.
 
 Serve over HTTPS: the service worker (and therefore offline use) will not install
 otherwise. After the first visit the app runs offline; writes queue and sync when the phone
@@ -131,9 +139,9 @@ is back online.
 ## Data safety
 
 Everything lives in InstantDB's cloud copy plus each phone's IndexedDB cache. iOS evicts
-IndexedDB for apps it considers unused, so the habit that matters is **Export JSON from the
-settlement sheet** at the end of camp. That file restores as a complete camp through
-_Restore from a file_ on the camp list.
+IndexedDB for apps it considers unused, but the cloud copy survives that — a re-installed
+app signs in and pulls the camp back. The report's **Export CSV** is a record for
+accounting, not a restorable backup: it holds the numbers, not the camp.
 
 ## Licence
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './ConfirmDialog.css'
 import { useBackDismiss } from '../hooks/useBackDismiss'
 import { useT } from '../i18n'
@@ -10,6 +10,14 @@ type Props = {
    *  always says what the button will actually cost. */
   lines: string[]
   confirmLabel: string
+  /** When set, the confirm button stays disabled until the typed text matches `value`
+   *  exactly (case-sensitive) — a GitHub-style guard against a reflexive tap on a
+   *  destructive action too costly to undo. */
+  requireText?: {
+    value: string
+    label: string
+    placeholder: string
+  }
   onConfirm: () => void
   onCancel: () => void
 }
@@ -19,11 +27,20 @@ type Props = {
  * Esc-to-close and a backdrop for free. `window.confirm` would block the main thread
  * and is suppressed outright in some installed-PWA contexts.
  */
-export function ConfirmDialog({ open, title, lines, confirmLabel, onConfirm, onCancel }: Props) {
+export function ConfirmDialog({
+  open,
+  title,
+  lines,
+  confirmLabel,
+  requireText,
+  onConfirm,
+  onCancel,
+}: Props) {
   const t = useT()
   // useRef holds a mutable box that survives re-renders without causing one. Passing it
   // as ref={} makes React put the real DOM node in .current after mount.
   const ref = useRef<HTMLDialogElement>(null)
+  const [typed, setTyped] = useState('')
 
   // The phone's back gesture answers the question the same way Esc does — by declining it.
   // Android has no Esc key, so without this the only ways out are the backdrop and Cancel.
@@ -37,25 +54,41 @@ export function ConfirmDialog({ open, title, lines, confirmLabel, onConfirm, onC
     // Guarded both ways: showModal() on an already-open dialog throws.
     if (open && !dialog.open) dialog.showModal()
     if (!open && dialog.open) dialog.close()
+    // Each opening starts from a blank field, so a stale match from a previous dialog
+    // can't leave the confirm button already enabled.
+    if (open) setTyped('')
   }, [open])
+
+  const confirmDisabled = requireText !== undefined && typed !== requireText.value
 
   return (
     // onCancel is React's handler for the dialog's native `cancel` event (Esc). Without
     // it the DOM would close the dialog behind React's back and `open` would go stale.
-    <dialog className="confirm" ref={ref} onCancel={onCancel}>
-      <h3 className="confirm__title">{title}</h3>
+    <dialog className="dialog confirm" ref={ref} onCancel={onCancel}>
+      <h3 className="dialog__title">{title}</h3>
       {lines.map((line) => (
         <p key={line} className="confirm__line">
           {line}
         </p>
       ))}
-      <div className="confirm__actions">
-        <button className="confirm__button" type="button" onClick={onCancel}>
+      {requireText !== undefined && (
+        <input
+          className="confirm__input"
+          aria-label={requireText.label}
+          type="text"
+          value={typed}
+          placeholder={requireText.placeholder}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setTyped(event.target.value)}
+        />
+      )}
+      <div className="dialog__actions">
+        <button className="btn btn--ghost" type="button" onClick={onCancel}>
           {t.confirm.cancel}
         </button>
         <button
-          className="confirm__button confirm__button--danger"
+          className="btn btn--danger-fill"
           type="button"
+          disabled={confirmDisabled}
           onClick={onConfirm}
         >
           {confirmLabel}

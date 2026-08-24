@@ -1,40 +1,7 @@
-.camp-settings {
+/* A field with its buttons beside it. Wraps, because the holder row carries two. */
+.camp-settings__row {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-}
-
-.camp-settings__title {
-  margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: -0.02em;
-}
-
-.camp-settings__section {
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background-color: var(--surface);
-}
-
-.camp-settings__heading {
-  margin: 0 0 var(--space-2);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-}
-
-/* Red border, not a red button in a plain box: the frame is what makes it read as a
-   place you have arrived at rather than a control you might brush past. */
-.camp-settings__section--danger {
-  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
-}
-
-.camp-settings__rename {
-  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
@@ -43,50 +10,65 @@
   min-width: 0; /* without this a flex item refuses to shrink below its content */
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--space-2);
+  border-radius: var(--radius-sm);
   background-color: var(--bg);
   color: inherit;
   font: inherit;
 }
 
-.camp-settings__save {
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid transparent;
-  border-radius: var(--space-2);
-  background-color: var(--accent);
-  color: var(--surface);
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.camp-settings__save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
+/* Spans the card it ends: the only action in the danger zone, so nothing sits beside it. */
 .camp-settings__delete {
   width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--danger);
-  border-radius: var(--space-2);
-  background: none;
-  color: var(--danger);
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
 }
 
-.camp-settings__delete:hover {
-  background-color: color-mix(in srgb, var(--danger) 10%, transparent);
+/* Red border, not a red button in a plain box: the frame is what makes it read as a
+   place you have arrived at rather than a control you might brush past. */
+.camp-settings__danger {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
 }
 
-/* The copy button is `--surface` by default, which is also this section's background —
+/* The copy button is `--surface` by default, which is also the card's background —
    inside here it needs the page colour to stay visibly a button. */
-.camp-settings__section .join-code__button {
+.camp-settings .join-code__button {
   background-color: var(--bg);
 }
 
-.camp-settings__section .received {
-  margin-top: var(--space-2);
+/* The camp's span, stated as a fact. The dates carry the weight; the day count trails
+   them, muted, because it is the same information counted differently. */
+.camp-settings__dates {
+  margin: 0 0 var(--space-1);
+  font-size: 0.9375rem;
+}
+
+.camp-settings__dates-days {
+  color: var(--muted);
+}
+
+.camp-settings__hint {
+  margin: 0 0 var(--space-2);
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+/* Who has the wallet, as a sentence rather than a form field — muted, so the name inside
+   it carries the line. */
+.camp-settings__holder {
+  margin: 0 0 var(--space-3);
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.camp-settings__holder-name {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+/* Right-justified: the single action for this card, kept under the thumb on a phone
+   held one-handed rather than pinned to the card's far side. */
+.camp-settings__holder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }

@@ -1,8 +1,15 @@
 /* Styles for App.tsx. Co-locating a component's CSS next to it (imported at the
    top of the .tsx) keeps related things together — Vite bundles it automatically.
-   Class names use a light BEM-ish convention: block, block__element, block--modifier. */
+   Class names use a light BEM-ish convention: block, block__element, block--modifier.
+
+   The recurring shapes are global instead: src/styles/ owns .card, .field, .input, .btn
+   and .dialog, imported once in main.tsx, and index.css owns the shell — .screen,
+   .screen__title, .screen-back, rendered by the <Screen> component. Build a screen, a card,
+   a form row, a button or a dialog out of those and keep the component stylesheet for what
+   is genuinely local to the screen. */
 
 .app {
+  position: relative; /* the anchor `ThemeToggle` pins its corner to */
   min-height: 100dvh; /* dvh = dynamic viewport height, correct on mobile with browser chrome */
   max-width: 28rem;
   margin-inline: auto; /* logical shorthand for margin-left + margin-right: centers it */
@@ -14,6 +21,18 @@
 
 .app__header {
   text-align: center;
+}
+
+.app__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.app__logo {
+  width: 2rem;
+  height: 2rem;
 }
 
 .app__title {

@@ -13,14 +13,8 @@
  */
 
 import { id } from '@instantdb/react'
-import type { BlockInput, SaveBlocksInput, SaveSourceInput } from '../lib/drafts'
-import {
-  blockIdsToDelete,
-  type IncomeState,
-  orphanPoolIds,
-  poolCascade,
-  sourceBlockIds,
-} from '../lib/income'
+import type { BlockInput, SaveBlocksInput, SavePoolInput, SaveSourceInput } from '../lib/drafts'
+import { blockIdsToDelete, type IncomeState, poolCascade, sourceBlockIds } from '../lib/income'
 import { nextPoolColor } from '../lib/poolColors'
 import type { IncomeSource, PoolColor } from '../lib/types'
 import { chunk, db } from './instant'
@@ -44,66 +38,68 @@ function blockChunk(campId: string, sourceId: string, block: BlockInput) {
 }
 
 /**
- * Create-or-update one income source with its blocks, and its pool if it's new. One
- * transaction, so a half-saved card cannot exist — not on this phone and not on the other.
+ * A new pool, empty. Pools are created deliberately from "＋ Add pool" rather than as a
+ * side effect of saving the first income into them, so an empty pool is a normal state and
+ * nothing sweeps it away.
+ */
+export function createPool(
+  input: SavePoolInput,
+  current: IncomeState,
+): { poolId: string; done: Promise<unknown> } {
+  // The id is minted here and returned, not awaited: the write is local-first, so the
+  // caller can open the new pool's income form on the very next line.
+  const poolId = id()
+  const done = db.transact(
+    chunk(db.tx.pools[poolId])
+      .update({
+        campId: input.campId,
+        name: input.name,
+        role: input.role,
+        // The first hue none of the camp's pools is wearing, so a new pool is
+        // distinguishable from its neighbours without anyone choosing.
+        color: nextPoolColor(current.pools),
+        createdAt: Date.now(),
+      })
+      .link({ camp: input.campId }),
+  )
+  return { poolId, done }
+}
+
+/**
+ * Create-or-update one income source with its blocks, in the pool the form was opened
+ * inside. One transaction, so a half-saved card cannot exist — not on this phone and not
+ * on the other.
  *
  * `current` is the camp's rows as the caller sees them right now; it is what makes the
- * removals computable. Ids and timestamps are minted here so `src/lib/` stays pure.
+ * block removals computable. Ids and timestamps are minted here so `src/lib/` stays pure.
  */
 export function saveSource(input: SaveSourceInput, current: IncomeState): Promise<unknown> {
   const now = Date.now()
   const campId = input.campId
+  const poolId = input.poolId
   const sourceId = input.existing?.id ?? id()
   const createdAt = input.existing?.createdAt ?? now
 
-  // A pool created by saving a source is never the everyday one — that pool is born with
-  // the camp. A deposit gets its own; anything else is earmarked.
-  const poolId = input.pool.mode === 'new' ? id() : input.pool.poolId
-  const newPool =
-    input.pool.mode === 'new'
-      ? [
-          chunk(db.tx.pools[poolId])
-            .update({
-              campId,
-              name: input.pool.name,
-              role: input.kind === 'deposit' ? 'deposit' : 'earmarked',
-              // The first hue none of the camp's pools is wearing, so a new pool is
-              // distinguishable from its neighbours without anyone choosing.
-              color: nextPoolColor(current.pools),
-              createdAt: now,
-            })
-            .link({ camp: campId }),
-        ]
-      : []
-
   // Building the domain row first, then deriving the write from it, keeps one definition of
   // "a per-diem source has no stored amount" instead of two that can drift.
-  const base = { id: sourceId, campId, poolId, name: input.name, createdAt }
+  const base = { id: sourceId, campId, poolId, name: input.name ?? undefined, createdAt }
   const source: IncomeSource =
     input.kind === 'per_diem'
       ? { ...base, kind: 'per_diem' }
       : { ...base, kind: input.kind, amountCents: input.amountCents ?? 0 }
 
+  // null rather than undefined: a name the user cleared has to be *removed* from the row,
+  // and an omitted field would leave the old one in place.
+  const name = input.name
   const sourceChunk = chunk(db.tx.incomeSources[sourceId])
     .update(
       source.kind === 'per_diem'
-        ? { campId, poolId, kind: source.kind, name: source.name, createdAt }
-        : {
-            campId,
-            poolId,
-            kind: source.kind,
-            name: source.name,
-            createdAt,
-            amountCents: source.amountCents,
-          },
+        ? { campId, poolId, kind: source.kind, name, createdAt }
+        : { campId, poolId, kind: source.kind, name, createdAt, amountCents: source.amountCents },
     )
     .link({ camp: campId })
 
-  // Moving a source to another pool can leave its old pool with nothing in it.
-  const sourcesAfter = [...current.sources.filter((s) => s.id !== sourceId), source]
-
   return db.transact([
-    ...newPool,
     sourceChunk,
     ...input.blocks.map((block) => blockChunk(campId, sourceId, block)),
     // Rows the user deleted in the form simply aren't in `input.blocks`. This form only ever
@@ -114,9 +110,6 @@ export function saveSource(input: SaveSourceInput, current: IncomeState): Promis
       input.kind === 'per_diem' ? ['granted'] : [],
       input.blocks,
     ).map((blockId) => chunk(db.tx.perDiemBlocks[blockId]).delete()),
-    ...orphanPoolIds(current.pools, sourcesAfter).map((orphanId) =>
-      chunk(db.tx.pools[orphanId]).delete(),
-    ),
   ])
 }
 
@@ -139,17 +132,16 @@ export function saveBlocks(input: SaveBlocksInput, current: IncomeState): Promis
   ])
 }
 
-/** A source, its blocks, and the pool it leaves empty behind it. */
+/**
+ * A source and its blocks. The pool stays: it was created deliberately, it carries the
+ * colour every receipt in it is tagged with, and emptying it is not the same as wanting
+ * it gone. Deleting the pool is its own action.
+ */
 export function deleteSource(sourceId: string, current: IncomeState): Promise<unknown> {
-  const sourcesAfter = current.sources.filter((s) => s.id !== sourceId)
-
   return db.transact([
     chunk(db.tx.incomeSources[sourceId]).delete(),
     ...sourceBlockIds(current.blocks, sourceId).map((blockId) =>
       chunk(db.tx.perDiemBlocks[blockId]).delete(),
-    ),
-    ...orphanPoolIds(current.pools, sourcesAfter).map((orphanId) =>
-      chunk(db.tx.pools[orphanId]).delete(),
     ),
   ])
 }

@@ -4,7 +4,7 @@
  *
  * Two kinds of line come out of here. **Rows** are money leaving your hands: a pool's
  * leftover, per-diem money for people who never came, a Kaution coming back, the
- * volunteers' cash. **Warnings** are the opposite — situations where a number on the sheet
+ * participation fees. **Warnings** are the opposite — situations where a number on the sheet
  * is not yet the final word (a deposit still at a shop, an overspent pool, more people than
  * were funded). They are rows in the table, not footnotes, because a leader reading the
  * sheet at the end of camp reads it once.
@@ -14,6 +14,7 @@
 
 import { perDiemTotals, spentTotalCents } from './budget'
 import { custodyReading } from './movements'
+import { payerDebts } from './payers'
 import { type PoolSummary, receivedTotalCents, spendablePools } from './pools'
 import type { Expense, Movement, PerDiemBlock, Pool } from './types'
 
@@ -21,30 +22,48 @@ import type { Expense, Movement, PerDiemBlock, Pool } from './types'
  * What one row of the breakdown is about. A *code*, not a sentence: `src/lib/` never
  * decides how the UI reads, so the dictionary turns each of these into a label.
  */
-export type SettlementRowKind = 'pool_unspent' | 'pool_unusable' | 'deposit_return' | 'volunteer'
+export type SettlementRowKind = 'pool_unspent' | 'pool_unusable' | 'deposit_return' | 'fee'
 
 /** Something that is not wrong yet, but is not settled either. Also codes. */
-export type SettlementWarningKind = 'deposit_at_vendor' | 'pool_overspent' | 'over_attended'
+export type SettlementWarningKind =
+  | 'deposit_at_vendor'
+  | 'pool_overspent'
+  | 'over_attended'
+  | 'owed_to_payer'
 
 export type SettlementRow = {
   kind: SettlementRowKind
-  /** The pool this money sits in; null only for volunteer cash, which belongs to none. */
+  /** The pool this money sits in; null only for the fee, which belongs to none. */
   pool: Pool | null
   /** Always positive — a row that would be zero or negative is not emitted at all. */
   amountCents: number
 }
 
-export type SettlementWarning = {
-  kind: SettlementWarningKind
-  pool: Pool | null
-  /** The size of the problem: still out, overspent by, over-attended by. */
-  amountCents: number
-}
+/**
+ * A *discriminated union* rather than one shape with a nullable field for each kind: three
+ * of these warnings are about a pool and the fourth is about a person, and a `pool: null`
+ * plus a `payerName?: string` would let the compiler wave through a pool warning with a
+ * name on it. Narrowing on `kind` hands each branch exactly the fields it has.
+ */
+export type SettlementWarning =
+  | {
+      kind: 'deposit_at_vendor' | 'pool_overspent' | 'over_attended'
+      pool: Pool | null
+      /** The size of the problem: still out, overspent by, over-attended by. */
+      amountCents: number
+    }
+  | {
+      /** The money holder has not paid somebody back yet. */
+      kind: 'owed_to_payer'
+      /** Who is owed, as the newest receipt spells it. */
+      payerName: string
+      amountCents: number
+    }
 
 export type Settlement = {
   receivedTotalCents: number
   spentTotalCents: number
-  /** Σ `rows`. Deposits and volunteer money included — everything that leaves your hands. */
+  /** Σ `rows`. Deposits and the fee included — everything that leaves your hands. */
   toReturnCents: number
   rows: SettlementRow[]
   warnings: SettlementWarning[]
@@ -59,10 +78,13 @@ export type SettlementInput = {
   blocks: PerDiemBlock[]
   expenses: Expense[]
   movements: Movement[]
+  /** The leader holding the cash, so what they still owe co-leaders can be flagged.
+   *  Absent means nobody holds it, and then no receipt owes anybody anything. */
+  moneyHolder?: string
 }
 
 export function computeSettlement(input: SettlementInput): Settlement {
-  const { summaries, blocks, expenses, movements } = input
+  const { summaries, blocks, expenses, movements, moneyHolder } = input
   const custody = custodyReading(summaries, movements)
 
   const rows: SettlementRow[] = []
@@ -85,7 +107,7 @@ export function computeSettlement(input: SettlementInput): Settlement {
     addRow('deposit_return', status.pool, status.toReturnCents)
   }
 
-  addRow('volunteer', null, custody.volunteerHeldCents)
+  addRow('fee', null, custody.feeHeldCents)
 
   return {
     receivedTotalCents: receivedTotalCents(summaries),
@@ -102,13 +124,25 @@ export function computeSettlement(input: SettlementInput): Settlement {
         .filter((summary) => summary.remainingCents < 0)
         .map((summary) => warning('pool_overspent', summary.pool, -summary.remainingCents)),
       ...overAttendedWarnings(summaries, blocks),
+      // Not money going back to the organisation — an IOU between the leaders. It belongs
+      // on the sheet all the same: until it is settled, the cash box holds money that is
+      // somebody else's, and the sheet is read once, at the end.
+      ...payerDebts(expenses, moneyHolder).map(
+        (debt): SettlementWarning => ({
+          kind: 'owed_to_payer',
+          payerName: debt.name,
+          amountCents: debt.owedCents,
+        }),
+      ),
     ],
     pools: summaries,
   }
 }
 
+/** The pool-shaped warnings. The payer one is built inline, since it carries a name
+ *  instead of a pool. */
 function warning(
-  kind: SettlementWarningKind,
+  kind: 'deposit_at_vendor' | 'pool_overspent' | 'over_attended',
   pool: Pool | null,
   amountCents: number,
 ): SettlementWarning {

@@ -5,10 +5,13 @@
 
 import { blockCents, blockPersonDays } from './budget'
 import { parseEurosToCents } from './money'
-import type { IncomeKind, IncomeSource, PerDiemBlock, PerDiemVariant, Pool } from './types'
-
-/** Sentinel for the pool `<select>`'s "＋ New pool…" option. */
-export const NEW_POOL = '__new__'
+import type {
+  CreatablePoolRole,
+  IncomeKind,
+  IncomeSource,
+  PerDiemBlock,
+  PerDiemVariant,
+} from './types'
 
 export type BlockDraft = {
   /** The persisted block's id, or null for a row the user just added. */
@@ -25,11 +28,25 @@ export type BlockDraft = {
 
 export type SourceDraft = {
   kind: IncomeKind
+  /** Blank means "named by its pool" — only asked for at all when `kindNeedsName`. */
   name: string
   amount: string // euros as typed; unused when kind is 'per_diem'
-  poolChoice: string // an existing pool id, or NEW_POOL
-  newPoolName: string
   blocks: BlockDraft[] // per-diem only
+}
+
+/** The "＋ Add pool" form. Colour is not here: a new pool is given the first free hue. */
+export type PoolDraft = {
+  name: string
+  role: CreatablePoolRole
+}
+
+/**
+ * Which incomes are worth naming separately. A per-diem grant is the camp's spine and a
+ * deposit is its pool's whole reason to exist, so both borrow the pool's name; only a
+ * fixed grant can end up beside a sibling it has to be told apart from.
+ */
+export function kindNeedsName(kind: IncomeKind): boolean {
+  return kind === 'fixed'
 }
 
 /** What the hook needs to save a card. Ids and timestamps are minted there, not here. */
@@ -59,16 +76,33 @@ export type SaveSourceInput = {
   /** The row being edited, or null when creating. Carries id + createdAt forward. */
   existing: IncomeSource | null
   campId: string
+  /** The pool the form was opened inside. Income is always added to a pool that exists. */
+  poolId: string
   kind: IncomeKind
-  name: string
+  /** null clears the stored name, which makes the income fall back to its pool's. */
+  name: string | null
   amountCents: number | null // null for per-diem, whose amount is computed
-  pool: { mode: 'existing'; poolId: string } | { mode: 'new'; name: string }
   blocks: BlockInput[]
+}
+
+/** What the hook needs to create a pool. Pools are made deliberately now, not as a
+ *  side effect of saving the first income into them. */
+export type SavePoolInput = {
+  campId: string
+  name: string
+  role: CreatablePoolRole
 }
 
 /** An empty block row. `key` comes from the caller — lib stays free of crypto/Date. */
 export function blankBlockDraft(key: string): BlockDraft {
   return { id: null, key, label: '', persons: '', startDate: '', endDate: '', rate: '' }
+}
+
+/** A new row seeded from `source`'s fields — same name, people, rate and dates, so a
+ *  follow-up block that only changes one thing (a headcount drop, a later start) begins
+ *  from something real instead of blank. `id: null` makes it a row of its own to save. */
+export function copyBlockDraft(source: BlockDraft, key: string): BlockDraft {
+  return { ...source, id: null, key }
 }
 
 /** 1250 → "8,00" — the inverse of parseEurosToCents, for pre-filling an input. */
@@ -105,26 +139,14 @@ export function draftFromSource(
   kind: IncomeKind,
   source: IncomeSource | null,
   blocks: PerDiemBlock[],
-  defaultPool: Pool | undefined,
 ): SourceDraft {
-  if (source === null) {
-    return {
-      kind,
-      name: '',
-      amount: '',
-      poolChoice: defaultPool?.id ?? NEW_POOL,
-      newPoolName: '',
-      blocks: [],
-    }
-  }
+  if (source === null) return { kind, name: '', amount: '', blocks: [] }
 
   return {
     kind: source.kind,
-    name: source.name,
+    name: source.name ?? '',
     // A per-diem source has no stored amount at all — it is computed from its blocks.
     amount: source.kind === 'per_diem' ? '' : centsToEuroInput(source.amountCents),
-    poolChoice: source.poolId,
-    newPoolName: '',
     blocks: draftsFromBlocks(blocks),
   }
 }
@@ -189,16 +211,16 @@ export function blockDraftCents(draft: BlockDraft): number | null {
  * which language the UI speaks, so the dictionary turns each code into text. A typo in a
  * code is a compile error, which a free-text string could never be.
  */
-export type DraftIssue = 'name' | 'poolName' | 'noBlocks' | 'invalidBlock' | 'amount'
+export type DraftIssue = 'poolName' | 'noBlocks' | 'invalidBlock' | 'amount'
 
-/** Problems with the draft. Empty array = Save is allowed. */
+/**
+ * Problems with the draft. Empty array = Save is allowed.
+ *
+ * A blank name is deliberately not a problem: an unnamed income inherits its pool's name,
+ * which is the whole point of not asking for one twice.
+ */
 export function draftIssues(draft: SourceDraft): DraftIssue[] {
   const issues: DraftIssue[] = []
-
-  if (draft.name.trim() === '') issues.push('name')
-  if (draft.poolChoice === NEW_POOL && draft.newPoolName.trim() === '') {
-    issues.push('poolName')
-  }
 
   if (draft.kind === 'per_diem') {
     if (draft.blocks.length === 0) {
@@ -212,6 +234,17 @@ export function draftIssues(draft: SourceDraft): DraftIssue[] {
   }
 
   return issues
+}
+
+/** A pool needs a name — it is the one name the pool and its only income share. */
+export function poolDraftIssues(draft: PoolDraft): DraftIssue[] {
+  return draft.name.trim() === '' ? ['poolName'] : []
+}
+
+/** The pool form as a save payload, or null while it isn't valid. */
+export function poolDraftToInput(draft: PoolDraft, campId: string): SavePoolInput | null {
+  if (poolDraftIssues(draft).length > 0) return null
+  return { campId, name: draft.name.trim(), role: draft.role }
 }
 
 /**
@@ -244,6 +277,7 @@ export function blockDraftsToInput(
 export function draftToInput(
   draft: SourceDraft,
   campId: string,
+  poolId: string,
   existing: IncomeSource | null,
   variant: PerDiemVariant = 'granted',
 ): SaveSourceInput | null {
@@ -262,16 +296,17 @@ export function draftToInput(
     }
   }
 
+  // A name is only kept for the kinds that are asked for one, and only when it is not
+  // blank: a kind that borrows its pool's name must never carry a stale copy of its own.
+  const name = draft.name.trim()
+
   return {
     existing,
     campId,
+    poolId,
     kind: draft.kind,
-    name: draft.name.trim(),
+    name: kindNeedsName(draft.kind) && name !== '' ? name : null,
     amountCents: isPerDiem ? null : parseEurosToCents(draft.amount),
-    pool:
-      draft.poolChoice === NEW_POOL
-        ? { mode: 'new', name: draft.newPoolName.trim() }
-        : { mode: 'existing', poolId: draft.poolChoice },
     blocks,
   }
 }

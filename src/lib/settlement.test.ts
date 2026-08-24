@@ -5,11 +5,11 @@ import type {
   AmountSource,
   DepositMovement,
   Expense,
+  FeeMovement,
   Movement,
   PerDiemBlock,
   PerDiemSource,
   Pool,
-  VolunteerMovement,
 } from './types'
 
 const everyday: Pool = {
@@ -80,7 +80,7 @@ const exp = (over: Partial<Expense>): Expense => ({
 })
 
 // Two builders, not one with an optional pool: a deposit movement always names its pool
-// and volunteer money never does, which is exactly what the union in `types.ts` says.
+// and a participation fee never does, which is exactly what the union in `types.ts` says.
 const deposit = (over: Partial<DepositMovement> = {}): Movement => ({
   id: 'm',
   campId: 'c',
@@ -93,7 +93,7 @@ const deposit = (over: Partial<DepositMovement> = {}): Movement => ({
   ...over,
 })
 
-const volunteer = (over: Partial<VolunteerMovement> = {}): Movement => ({
+const fee = (over: Partial<FeeMovement> = {}): Movement => ({
   id: 'v',
   campId: 'c',
   kind: 'volunteer_in',
@@ -114,6 +114,7 @@ const settle = (over: Partial<SettlementInput> & { pools?: Pool[] } = {}) => {
     blocks,
     expenses,
     movements: over.movements ?? [],
+    moneyHolder: over.moneyHolder,
   })
 }
 
@@ -177,22 +178,19 @@ describe('computeSettlement', () => {
     expect(s.warnings).toEqual([])
   })
 
-  it('volunteer money is a row of its own and lands in the total', () => {
+  it('the participation fee is a row of its own and lands in the total', () => {
     const s = settle({
-      movements: [
-        volunteer({ id: 'v1', amountCents: 3000 }),
-        volunteer({ id: 'v2', amountCents: 2000 }),
-      ],
+      movements: [fee({ id: 'v1', amountCents: 3000 }), fee({ id: 'v2', amountCents: 2000 })],
     })
 
-    expect(s.rows).toContainEqual({ kind: 'volunteer', pool: null, amountCents: 5000 })
+    expect(s.rows).toContainEqual({ kind: 'fee', pool: null, amountCents: 5000 })
     expect(s.toReturnCents).toBe(62_000 + 20_000 + 5000)
   })
 
   it('the rows add up to the total', () => {
     const s = settle({
       expenses: [exp({ amountCents: 1234 })],
-      movements: [volunteer({ amountCents: 777 })],
+      movements: [fee({ amountCents: 777 })],
     })
 
     expect(s.rows.reduce((sum, row) => sum + row.amountCents, 0)).toBe(s.toReturnCents)
@@ -218,6 +216,42 @@ describe('computeSettlement', () => {
 
     expect(s.warnings).toContainEqual({ kind: 'over_attended', pool: everyday, amountCents: 6000 })
     expect(s.rows).toContainEqual({ kind: 'pool_unspent', pool: everyday, amountCents: 62_000 })
+  })
+
+  it('warns about money the holder still owes a co-leader, one line per person', () => {
+    const s = settle({
+      expenses: [
+        exp({ id: 'e1', amountCents: 800, paidBy: 'Ben' }),
+        exp({ id: 'e2', amountCents: 1200, paidBy: 'ben' }), // same person, other spelling
+        exp({ id: 'e3', amountCents: 500, paidBy: 'Anna' }), // the holder's own money
+        exp({ id: 'e4', amountCents: 900, paidBy: 'Chris', reimbursed: true }), // settled
+      ],
+      moneyHolder: 'Anna',
+    })
+
+    expect(s.warnings).toContainEqual({
+      kind: 'owed_to_payer',
+      payerName: 'Ben',
+      amountCents: 2000,
+    })
+    expect(s.warnings.filter((w) => w.kind === 'owed_to_payer')).toHaveLength(1)
+  })
+
+  it("does not touch the money that goes back — an IOU between leaders is not the org's", () => {
+    const withDebt = settle({
+      expenses: [exp({ amountCents: 30_000, paidBy: 'Ben' })],
+      moneyHolder: 'Anna',
+    })
+    const withoutDebt = settle({ expenses: [exp({ amountCents: 30_000 })] })
+
+    expect(withDebt.toReturnCents).toBe(withoutDebt.toReturnCents)
+    expect(withDebt.spentTotalCents).toBe(withoutDebt.spentTotalCents)
+  })
+
+  it('names no debt while the camp has no money holder', () => {
+    const s = settle({ expenses: [exp({ amountCents: 800, paidBy: 'Ben' })] })
+
+    expect(s.warnings.some((w) => w.kind === 'owed_to_payer')).toBe(false)
   })
 
   it('an empty camp settles to zeros with no rows', () => {

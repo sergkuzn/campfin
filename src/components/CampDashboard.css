@@ -1,20 +1,7 @@
-.dashboard {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-}
-
 .dashboard__header {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-}
-
-.dashboard__name {
-  margin: 0;
-  font-size: 1.5rem;
-  letter-spacing: -0.02em;
 }
 
 /* The name and its status pill stay together on the left; settings is pushed to the far
@@ -41,126 +28,6 @@
   color: var(--fg);
 }
 
-/* A camp with no money in it yet: one thing to do, said at a size you cannot miss. */
-.dashboard__first-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-6) var(--space-4);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  text-align: center;
-}
-
-.dashboard__first-step-button {
-  width: 100%;
-  padding: var(--space-4);
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background-color: var(--accent);
-  color: var(--surface);
-  font: inherit;
-  font-size: 1.125rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.dashboard__first-step-hint {
-  margin: 0;
-  max-width: 24rem;
-  font-size: 0.875rem;
-  color: var(--muted);
-}
-
-.dashboard__error {
-  margin: 0;
-  color: var(--danger);
-  font-size: 0.875rem;
-}
-
-.dashboard__slot {
-  padding: var(--space-4);
-  border: 1px dashed var(--border); /* dashed = deliberately empty, not broken */
-  border-radius: var(--radius);
-}
-
-/* Solid border once the slot holds real content rather than a placeholder. */
-.dashboard__slot--filled {
-  border-style: solid;
-  background-color: var(--surface);
-}
-
-.dashboard__slot-title {
-  margin: 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-}
-
-/* The block's title row doubles as the door to its screen. Pulled out to the card's own
-   edges by negative margins so the tap target spans the full width and reaches the top
-   corner — a thumb aiming anywhere along the title hits it, which a 14px line of text at
-   the bottom of the card never allowed.
-
-   It is also drawn as a tinted band with its own bottom edge: a full-width control with no
-   background is invisible as a control, and nothing else on the dashboard is banded, so the
-   shading alone marks the row as the thing to press. */
-.dashboard__slot-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  /* A <button> shrink-wraps its content even as a flex container — `width: auto` on a form
-     control is fit-content, not fill-available — so the full width has to be stated: the
-     card's content width plus the two paddings the negative margins cancel out. */
-  width: calc(100% + var(--space-4) * 2);
-  margin: calc(var(--space-4) * -1) 0 var(--space-3) calc(var(--space-4) * -1);
-  padding: var(--space-3) var(--space-4);
-  /* 2.75rem ≈ 44px, the smallest comfortable touch target; the title alone is half that. */
-  min-height: 2.75rem;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  /* One pixel inside the card's own radius, so the band's curve sits on the card's border
-     instead of cutting across it. */
-  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
-  background-color: color-mix(in srgb, var(--accent) 7%, transparent);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-/* Full-strength text in the band: muted grey reads as a caption, and this row is a button. */
-.dashboard__slot-head .dashboard__slot-title {
-  color: var(--fg);
-}
-
-.dashboard__slot-head:hover {
-  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
-}
-
-/* A phone has no hover, so the press itself is the only chance to show the row reacted. */
-.dashboard__slot-head:active {
-  background-color: color-mix(in srgb, var(--accent) 22%, transparent);
-}
-
-/* Accent-coloured and larger than the title: at 0.75rem the glyph reads as punctuation. */
-.dashboard__slot-chevron {
-  flex-shrink: 0;
-  color: var(--accent);
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.dashboard__slot-hint {
-  margin: var(--space-2) 0 0;
-  font-size: 0.875rem;
-  color: var(--muted);
-}
-
 /* A required-setup state, not an error: amber says "something is missing" without the
    alarm of red. */
 .dashboard__callout {
@@ -174,10 +41,3 @@
 
 /* The number the whole camp ends on. Big, because it is the one figure that gets typed
    into a transfer form. */
-.dashboard__to-return {
-  margin: var(--space-2) 0 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}

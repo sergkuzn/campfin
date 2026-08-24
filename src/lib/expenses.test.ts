@@ -1,17 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
-  arrangeExpenses,
   blankExpenseDraft,
   draftFromExpense,
   type ExpenseDraft,
   expenseDraftToInput,
   expenseIssues,
-  filterExpensesByPools,
-  groupExpensesByDay,
   isExpense,
-  nextReceiptNumber,
-  readReceiptNumber,
-  takenReceiptNumbers,
 } from './expenses'
 import type { Expense } from './types'
 
@@ -27,6 +21,8 @@ function draft(fields: Partial<ExpenseDraft> = {}): ExpenseDraft {
     poolId: 'pool-1',
     number: '',
     note: '',
+    paidBy: 'Anna',
+    reimbursed: false,
     ...fields,
   }
 }
@@ -39,6 +35,7 @@ function expense(fields: Partial<Expense> = {}): Expense {
     name: 'Bread',
     amountCents: 1250,
     date: '2026-07-14',
+    paidBy: 'Anna',
     createdAt: 1000,
     ...fields,
   }
@@ -116,64 +113,74 @@ describe('expenseDraftToInput', () => {
       date: row.date,
       number: 7,
       note: 'market',
+      paidBy: 'Anna',
+      reimbursed: undefined,
     })
   })
 })
 
 describe('blankExpenseDraft', () => {
-  it('defaults the date to today and pre-selects the pool', () => {
-    expect(blankExpenseDraft('2026-07-30', 'pool-2')).toEqual({
+  it('defaults the date to today, pre-selects the pool and fills in the next number', () => {
+    expect(blankExpenseDraft('2026-07-30', 'pool-2', 25)).toEqual({
+      paidBy: '',
+      reimbursed: false,
       date: '2026-07-30',
       name: '',
       amount: '',
       poolId: 'pool-2',
-      number: '',
+      number: '25',
       note: '',
     })
   })
+
+  it('fills in 1 in a camp whose receipts are unnumbered', () => {
+    expect(blankExpenseDraft('2026-07-30', 'pool-2', 1).number).toBe('1')
+  })
 })
 
-describe('readReceiptNumber', () => {
-  it('reads a plain counting number', () => {
-    expect(readReceiptNumber('12')).toEqual({ kind: 'value', value: 12 })
-    expect(readReceiptNumber(' 3 ')).toEqual({ kind: 'value', value: 3 })
+describe('the payer on a draft', () => {
+  it('a new receipt picks nobody — whose money it was is a choice, not a default', () => {
+    expect(blankExpenseDraft('2026-07-30', 'pool-2', 1).paidBy).toBe('')
+    expect(blankExpenseDraft('2026-07-30', 'pool-2', 1).reimbursed).toBe(false)
   })
 
-  it('treats an empty field as no number at all', () => {
-    expect(readReceiptNumber('')).toEqual({ kind: 'empty' })
-    expect(readReceiptNumber('   ')).toEqual({ kind: 'empty' })
+  it('stores the name trimmed, and an empty field as no payer at all', () => {
+    expect(expenseDraftToInput(draft({ paidBy: '  Ben ' }), 'c1', null, NONE)?.paidBy).toBe('Ben')
+    // A blank name is not "no payer" any more — it is an unanswered question, so there is
+    // no payload at all.
+    expect(expenseDraftToInput(draft({ paidBy: '   ' }), 'c1', null, NONE)).toBeNull()
   })
 
-  it('refuses anything that is not a positive whole number', () => {
-    // "12a" must not be filed as 12: the number's job is to match a paper slip exactly.
-    for (const text of ['12a', '1,5', '1.5', '-3', '0', '1e3', '٣']) {
-      expect(readReceiptNumber(text).kind).toBe('invalid')
+  it('a brand-new receipt is not repaid', () => {
+    const input = expenseDraftToInput(draft({ paidBy: 'Ben' }), 'c1', null, NONE)
+    expect(input?.reimbursed).toBeUndefined()
+  })
+
+  it('ticking "already paid back" marks the receipt repaid', () => {
+    const input = expenseDraftToInput(draft({ paidBy: 'Ben', reimbursed: true }), 'c1', null, NONE)
+    expect(input?.reimbursed).toBe(true)
+  })
+
+  it('un-ticking it on a settled receipt puts the money back to owed', () => {
+    const repaid: Expense = {
+      id: 'e1',
+      campId: 'c1',
+      poolId: 'pool-1',
+      name: 'Bread',
+      amountCents: 1250,
+      date: '2026-07-14',
+      paidBy: 'Ben',
+      reimbursed: true,
+      createdAt: 1,
     }
-  })
-})
-
-describe('takenReceiptNumbers', () => {
-  it('collects the numbers in use', () => {
-    const rows = [expense({ id: 'a', number: 1 }), expense({ id: 'b', number: 4 }), expense()]
-    expect([...takenReceiptNumbers(rows, null)].toSorted()).toEqual([1, 4])
+    const input = expenseDraftToInput(draft({ paidBy: 'Ben' }), 'c1', repaid, NONE)
+    expect(input?.reimbursed).toBeUndefined()
   })
 
-  it('leaves out the row being edited, so re-saving it is not a collision', () => {
-    const rows = [expense({ id: 'a', number: 1 }), expense({ id: 'b', number: 4 })]
-    expect([...takenReceiptNumbers(rows, 'a')]).toEqual([4])
-  })
-})
-
-describe('nextReceiptNumber', () => {
-  it('starts at 1 in a camp with no numbered receipts', () => {
-    expect(nextReceiptNumber([])).toBe(1)
-    expect(nextReceiptNumber([expense()])).toBe(1)
-  })
-
-  it('is one past the highest in use, even with gaps', () => {
-    expect(
-      nextReceiptNumber([expense({ id: 'a', number: 1 }), expense({ id: 'b', number: 9 })]),
-    ).toBe(10)
+  it('blocks the save until somebody is named — the field is compulsory', () => {
+    expect(expenseIssues(draft({ paidBy: '' }), NONE)).toContain('paidBy')
+    expect(expenseIssues(draft({ paidBy: '   ' }), NONE)).toContain('paidBy')
+    expect(expenseIssues(draft({ paidBy: 'Ben' }), NONE)).not.toContain('paidBy')
   })
 })
 
@@ -192,130 +199,6 @@ describe('expenseIssues — receipt numbers', () => {
 
   it('allows a number nobody else has', () => {
     expect(expenseIssues(draft({ number: '8' }), new Set([7]))).toEqual([])
-  })
-})
-
-describe('filterExpensesByPools', () => {
-  const rows = [
-    expense({ id: 'a', poolId: 'pool-1' }),
-    expense({ id: 'b', poolId: 'pool-2' }),
-    expense({ id: 'c', poolId: 'pool-3' }),
-  ]
-
-  it('shows everything when nothing is selected', () => {
-    expect(filterExpensesByPools(rows, new Set())).toEqual(rows)
-  })
-
-  it('keeps only the selected pools', () => {
-    const kept = filterExpensesByPools(rows, new Set(['pool-1', 'pool-3']))
-    expect(kept.map((e) => e.id)).toEqual(['a', 'c'])
-  })
-
-  it('is empty when the selected pool has no receipts', () => {
-    expect(filterExpensesByPools(rows, new Set(['pool-9']))).toEqual([])
-  })
-})
-
-describe('arrangeExpenses', () => {
-  const rows = [
-    expense({ id: 'a', date: '2026-07-12', number: 2 }),
-    expense({ id: 'b', date: '2026-07-15', number: 1 }),
-    expense({ id: 'c', date: '2026-07-13' }),
-  ]
-
-  it('groups by day, newest first, for date_desc', () => {
-    const view = arrangeExpenses(rows, 'date_desc')
-    expect(view.mode).toBe('days')
-    if (view.mode !== 'days') return
-    expect(view.days.map((d) => d.date)).toEqual(['2026-07-15', '2026-07-13', '2026-07-12'])
-  })
-
-  it('groups by day, oldest first, for date_asc', () => {
-    const view = arrangeExpenses(rows, 'date_asc')
-    if (view.mode !== 'days') throw new Error('expected day groups')
-    expect(view.days.map((d) => d.date)).toEqual(['2026-07-12', '2026-07-13', '2026-07-15'])
-  })
-
-  it('turns the oldest-first rows inside a day round too', () => {
-    const sameDay = [
-      expense({ id: 'a', createdAt: 100 }),
-      expense({ id: 'b', createdAt: 300 }),
-      expense({ id: 'c', createdAt: 200 }),
-    ]
-    const view = arrangeExpenses(sameDay, 'date_asc')
-    if (view.mode !== 'days') throw new Error('expected day groups')
-    expect(view.days[0]?.expenses.map((e) => e.id)).toEqual(['a', 'c', 'b'])
-  })
-
-  it('sorts by number ascending, unnumbered last', () => {
-    const view = arrangeExpenses(rows, 'number_asc')
-    if (view.mode !== 'flat') throw new Error('expected a flat list')
-    expect(view.expenses.map((e) => e.id)).toEqual(['b', 'a', 'c'])
-  })
-
-  it('keeps the unnumbered rows last when the numbers run the other way', () => {
-    const view = arrangeExpenses(rows, 'number_desc')
-    if (view.mode !== 'flat') throw new Error('expected a flat list')
-    expect(view.expenses.map((e) => e.id)).toEqual(['a', 'b', 'c'])
-  })
-
-  it('orders the unnumbered tail newest first', () => {
-    const unnumbered = [
-      expense({ id: 'a', date: '2026-07-12' }),
-      expense({ id: 'b', date: '2026-07-15' }),
-    ]
-    const view = arrangeExpenses(unnumbered, 'number_asc')
-    if (view.mode !== 'flat') throw new Error('expected a flat list')
-    expect(view.expenses.map((e) => e.id)).toEqual(['b', 'a'])
-  })
-
-  it('is empty for no receipts, in every mode', () => {
-    for (const sort of ['date_desc', 'date_asc', 'number_asc', 'number_desc'] as const) {
-      const view = arrangeExpenses([], sort)
-      expect(view.mode === 'days' ? view.days : view.expenses).toEqual([])
-    }
-  })
-})
-
-describe('groupExpensesByDay', () => {
-  it('is an empty list for no expenses', () => {
-    expect(groupExpensesByDay([])).toEqual([])
-  })
-
-  it('groups a day’s rows and totals them in cents', () => {
-    const days = groupExpensesByDay([
-      expense({ id: 'a', amountCents: 1250 }),
-      expense({ id: 'b', amountCents: 1099 }),
-    ])
-    expect(days).toHaveLength(1)
-    expect(days[0]?.date).toBe('2026-07-14')
-    expect(days[0]?.totalCents).toBe(2349)
-  })
-
-  it('puts the newest day first', () => {
-    const days = groupExpensesByDay([
-      expense({ id: 'a', date: '2026-07-12' }),
-      expense({ id: 'b', date: '2026-07-15' }),
-      expense({ id: 'c', date: '2026-07-13' }),
-    ])
-    expect(days.map((d) => d.date)).toEqual(['2026-07-15', '2026-07-13', '2026-07-12'])
-  })
-
-  it('puts the newest row first inside a day', () => {
-    const days = groupExpensesByDay([
-      expense({ id: 'a', createdAt: 100 }),
-      expense({ id: 'b', createdAt: 300 }),
-      expense({ id: 'c', createdAt: 200 }),
-    ])
-    expect(days[0]?.expenses.map((e) => e.id)).toEqual(['b', 'c', 'a'])
-  })
-
-  it('orders two rows written in the same millisecond identically on both phones', () => {
-    const days = groupExpensesByDay([
-      expense({ id: 'b', createdAt: 100 }),
-      expense({ id: 'a', createdAt: 100 }),
-    ])
-    expect(days[0]?.expenses.map((e) => e.id)).toEqual(['a', 'b'])
   })
 })
 
