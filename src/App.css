@@ -25,14 +25,27 @@
 
 .app__brand {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+}
+
+/* Shrink-to-fit inside the flex row, so its own width is the widest of the two lines and
+   it lands dead centre of the screen. The logo then hangs off its left edge out of flow,
+   which keeps the text centred instead of pushing it right. */
+.app__brand-text {
+  position: relative;
 }
 
 .app__logo {
-  width: 2rem;
-  height: 2rem;
+  position: absolute;
+  top: 50%;
+  right: 100%; /* the text block's left edge */
+  /* Centring on the box puts the logo a few pixels high: the title's line box carries more
+     leading above its caps than the subtitle does below its baseline. The nudge lines the
+     logo up with the ink rather than the box. */
+  transform: translateY(calc(-50% + 0.28rem));
+  margin-right: var(--space-3);
+  width: 2.75rem;
+  height: 2.75rem;
 }
 
 .app__title {

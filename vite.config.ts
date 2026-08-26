@@ -65,7 +65,14 @@ export default defineConfig(({ mode }) => {
           icons: [
             { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
             { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-            { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+            // A maskable icon is cropped to whatever shape the launcher uses, so it needs
+            // its own file with the mark pulled into the inner safe zone.
+            {
+              src: 'pwa-maskable-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
           ],
         },
         // Keep the service worker out of `vite dev` so HMR stays simple; flip it to try offline.

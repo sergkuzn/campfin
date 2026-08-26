@@ -1,22 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="campfin">
-  <!-- A tent with a euro coin in front of it: camp + money, the two halves of the app.
-       Every shape is a path — no <text> — so the euro sign renders identically on both
-       phones instead of depending on whatever font the OS hands the SVG.
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="campfin">
+  <!-- A sheet of accounts on a solid blue tile. The tile is what gives the mark contrast,
+       so one file serves both themes.
+       The sheet's top-right corner is folded back rather than squared off: a plain rounded
+       rectangle with stripes inside reads as a battery cell at icon size, and the fold is
+       what breaks that silhouette.
+       Two entry rows sit above a thin rule, and the bottom line is the total - an amount
+       bar closed by a euro sign on the right, the way a printed total reads. -->
+  <rect width="512" height="512" rx="114" fill="#1c5fb5"/>
 
-       No background tile: the shapes sit straight on whatever page is behind them. An
-       <img> cannot read the page's custom properties, so it cannot follow the day/night
-       toggle — the hexes below are therefore literal, chosen once rather than per theme,
-       and picked so the tent and the plank (the only two shapes that touch the page
-       directly, rather than sitting inside the coin) hold contrast against both a
-       near-white day background and a near-black night one. -->
-  <path d="M25 10 L45 44 H5 Z" fill="#18a53b"/>
-  <path d="M25 21 L34 44 H16 Z" fill="#171717"/>
-  <rect x="3" y="41.5" width="42" height="6" rx="3" fill="#78716c"/>
-  <circle cx="45" cy="44" r="14" fill="#b45309"/>
-  <circle cx="45" cy="43.4" r="13.1" fill="#fbbf24"/>
-  <g fill="none" stroke="#171717" stroke-width="2.95" stroke-linecap="round">
-    <path d="M50.7,36.4 A8.2,8.2 0 1 0 50.7,49.6"/>
-    <path d="M36.0,41.0 H47.5"/>
-    <path d="M36.0,45.0 H45.8"/>
+  <!-- sheet, with the corner cut away and the fold drawn back over it -->
+  <path d="M148,96 H320 L394,170 V386 a30,30 0 0 1 -30,30 H148 a30,30 0 0 1 -30,-30 V126 a30,30 0 0 1 30,-30 Z" fill="#f5f6f7"/>
+  <path d="M320,96 L394,170 H344 a24,24 0 0 1 -24,-24 Z" fill="#4a90e8" opacity=".35"/>
+
+  <!-- entry rows -->
+  <rect x="152" y="190" width="168" height="26" rx="13" fill="#4a90e8"/>
+  <rect x="152" y="242" width="104" height="26" rx="13" fill="#4a90e8" opacity="0.65"/>
+
+  <!-- rule, then the total line -->
+  <path d="M152,302 H360" stroke="#4a90e8" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+  <rect x="152" y="335" width="120" height="26" rx="13" fill="#4a90e8"/>
+  <g transform="translate(330,348) scale(1.05) translate(-207,-306)" fill="none" stroke="#4a90e8" stroke-width="6.19" stroke-linecap="round">
+    <path d="M234.3,290.5 A25.3,25.3 0 1 0 234.3,321.5"/>
+    <path d="M181.5,299.5 H230.0"/>
+    <path d="M181.5,311.7 H225.0"/>
   </g>
 </svg>
