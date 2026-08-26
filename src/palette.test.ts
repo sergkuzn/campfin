@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import POOL_CSS from './components/PoolTag.css?raw'
 import INDEX_CSS from './index.css?raw'
 import { contrastRatio, MIN_TEXT_CONTRAST } from './lib/contrast'
+import { themeColor } from './lib/theme'
 
 /**
  * The design tokens are readable by measurement, not by opinion. The day palette went pale
@@ -70,6 +71,73 @@ describe.each(Object.entries(THEMES))('the %s palette', (_theme, tokens) => {
     // A hairline is not text, so it is not held to 4.5 — but it has to read as a line,
     // which the day theme's old near-white border, at 1.2:1, did not.
     expect(contrastRatio(token(tokens, 'border'), token(tokens, 'bg'))).toBeGreaterThan(1.6)
+  })
+})
+
+/**
+ * The `-fill` tokens paint a shape rather than draw type — a pool bar, the stripe down a
+ * movement row, a chart line — so they answer to the 3:1 a graphic needs, not 4.5:1. That
+ * lower bar is the whole point of their existing: it buys a brighter, more saturated colour
+ * than the label token beside them can afford.
+ *
+ * Day only: the night theme aliases each fill to its ink token (`var(--ok)`), which the
+ * text tests above already cover.
+ */
+describe('the day fills', () => {
+  const MIN_GRAPHIC_CONTRAST = 3
+
+  it.each([
+    'ok-fill',
+    'warn-fill',
+    'danger-fill',
+  ])('paints --%s visibly on the card it sits on', (name) => {
+    expect(
+      contrastRatio(token(THEMES.day, name), token(THEMES.day, 'surface')),
+    ).toBeGreaterThanOrEqual(MIN_GRAPHIC_CONTRAST)
+  })
+
+  it.each([
+    ['ok-fill', 'ok'],
+    ['warn-fill', 'warn'],
+    ['danger-fill', 'danger'],
+  ])('keeps --%s brighter than the --%s label it accompanies', (fill, ink) => {
+    // Against white, a lower ratio means a lighter colour. The fill being the lighter of
+    // the pair is what makes the bar read as colour and the label read as text.
+    expect(contrastRatio(token(THEMES.day, fill), '#ffffff')).toBeLessThan(
+      contrastRatio(token(THEMES.day, ink), '#ffffff'),
+    )
+  })
+})
+
+/**
+ * Severity has to read as severity. The day theme draws dark ink on a light card, so on a
+ * card more contrast is more weight — and an amber heavier than the red beside it inverts
+ * what the two colours mean. That is precisely what --warn at amber-800 did: 7.1:1 against
+ * --danger's 6.5:1, a caution drawn sterner than an error.
+ *
+ * Day only: night paints light ink on a near-black card, where the relation between
+ * contrast and visual weight runs the other way and each 400 sits where its hue allows.
+ */
+describe('the day accents', () => {
+  it('draws --warn no heavier than the --danger it is milder than', () => {
+    const weight = (name: string) =>
+      contrastRatio(token(THEMES.day, name), token(THEMES.day, 'surface'))
+    expect(weight('warn')).toBeLessThanOrEqual(weight('danger'))
+  })
+})
+
+/**
+ * The phone paints its status and address bars from `<meta name="theme-color">`, which
+ * cannot hold a `var()` — so `theme.ts` keeps a hand-copied hex per theme. A copy nobody
+ * checks goes stale, and this one had: the day value stayed at the flat near-white the
+ * page used before it gained its slate cast, leaving a visible seam above the app.
+ */
+describe('the browser chrome', () => {
+  it.each([
+    ['light', THEMES.day],
+    ['dark', THEMES.night],
+  ])("paints the %s chrome in that theme's own --bg", (theme, tokens) => {
+    expect(themeColor(theme as 'light' | 'dark')).toBe(token(tokens, 'bg'))
   })
 })
 

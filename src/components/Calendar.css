@@ -76,7 +76,7 @@
 /* Highlights the camp's span on every camp-scoped calendar — a plain tint, not a border, so it
    reads as "these days belong together" rather than competing with the today outline. */
 .calendar__day[data-in-camp="true"] {
-  background-color: color-mix(in srgb, var(--ok) 16%, transparent);
+  background-color: color-mix(in srgb, var(--ok-fill) 18%, transparent);
 }
 
 .calendar__day[data-selected="true"] {

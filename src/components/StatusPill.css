@@ -16,7 +16,7 @@
 /* color-mix() lets one token drive both the text and a faint tinted background. */
 .pill--running {
   color: var(--ok);
-  background-color: color-mix(in srgb, var(--ok) 14%, transparent);
+  background-color: color-mix(in srgb, var(--ok-fill) 16%, transparent);
 }
 
 .pill--upcoming {

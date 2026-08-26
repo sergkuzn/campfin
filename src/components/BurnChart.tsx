@@ -39,7 +39,7 @@ export function BurnChart({ burn, todayIso }: Props) {
 
   // Colour the spending line by the situation: over the allowance is the one state worth
   // spotting from across a room.
-  const actualColor = burn.allowedTodayCents < 0 ? 'var(--danger)' : 'var(--ok)'
+  const actualColor = burn.allowedTodayCents < 0 ? 'var(--danger)' : 'var(--ok-fill)'
   const todayLabel = burn.points.find((p) => p.date === todayIso)?.dayLabel
 
   // Recharts' own "auto" domain rounds the *step* up first and lets the top follow it, so

@@ -74,7 +74,7 @@
 }
 
 .bars__fill {
-  background-color: var(--ok);
+  background-color: var(--ok-fill);
   transition: width 150ms ease-out;
 }
 
@@ -83,7 +83,7 @@
 }
 
 .bars__track--over .bars__fill {
-  background-color: var(--danger);
+  background-color: var(--danger-fill);
 }
 
 /* The funded boundary: where the budget ended and the overspend began. */
@@ -98,8 +98,8 @@
 .bars__over {
   background: repeating-linear-gradient(
     45deg,
-    var(--danger) 0 3px,
-    color-mix(in srgb, var(--danger) 45%, transparent) 3px 6px
+    var(--danger-fill) 0 3px,
+    color-mix(in srgb, var(--danger-fill) 45%, transparent) 3px 6px
   );
 }
 

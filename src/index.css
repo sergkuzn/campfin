@@ -55,8 +55,16 @@
 
   /* Semantic accents — named for meaning, not hue, so a re-theme is one edit. */
   --accent: #1d4ed8; /* blue-700  — interactive / upcoming */
-  --ok: #166534; /* green-800 — running, under budget */
-  --warn: #92400e; /* amber-800 — most of a pool is gone, but nothing is wrong yet */
+  /* A true green, not the near-black green-800 that used to sit here: at 12–14px next to
+     slate-900 body text a very dark green reads as more black text rather than as "good".
+     5.4:1 on a card, 4.6:1 on the page — still past the text bar, but with enough chroma
+     left to be recognisably green at a glance. */
+  --ok: #0f7b34; /* green-700 — running, under budget */
+  /* Amber-800 sat here, and at 7:1 on a card it was the heaviest ink in this palette —
+     drawn sterner than --danger, which inverts what a caution and an error mean. A 12px
+     label in it read as brown text rather than as a warning. This is the lightest orange
+     that still clears the text bar on the page as well as on a card (5.4:1 / 4.6:1). */
+  --warn: #a85208; /* between amber-700 and -800 — most of a pool is gone, nothing wrong yet */
   --danger: #b91c1c; /* red-700   — destructive, over budget */
 
   /* The bar fills in the spending card, and anything else that paints an area rather than
@@ -64,6 +72,16 @@
      3:1 a graphic needs instead of 4.5:1 — which lets it stay the bright orange the eye
      reads as "watch this" while --warn itself stays dark enough to be a label. */
   --warn-fill: #d97706; /* amber-600 */
+
+  /* The same split for green: the pool bar's fill, the deposit-returned stripe down a
+     movement row and the chart's actual-spend line are shapes, not type, so they take the
+     3:1 a graphic needs and get to be a brighter green than the label token can afford. */
+  --ok-fill: #16a34a; /* green-600 */
+
+  /* And for red: the overspent segment of a pool bar and its hatching. Not the token a
+     solid destructive button uses — that one carries --on-accent text, which is held to
+     4.5:1 against --danger and would not survive the fill being lightened. */
+  --danger-fill: #dc2626; /* red-600 */
 
   /* The tinted strip a card wears across its top, and what it becomes under a finger.
      Mixed from --accent so the band is the page's own blue rather than a fourth grey, and
@@ -74,8 +92,9 @@
   --band-hover: color-mix(in srgb, var(--accent) 24%, transparent);
   --band-active: color-mix(in srgb, var(--accent) 32%, transparent);
 
-  /* Ink for text and glyphs sitting *on* a solid --accent / --ok / --danger fill, where
-     the page's --fg would vanish. It inverts with the theme: the fills are dark in day
+  /* Ink for text and glyphs sitting *on* a solid --accent / --ok / --danger background —
+     the ink tokens, not the lighter `-fill` ones, which never carry type. Used where the
+     page's --fg would vanish. It inverts with the theme: the fills are dark in day
      mode and light in night mode, so what stays legible on them flips too. */
   --on-accent: #ffffff;
 
@@ -106,9 +125,11 @@
     --warn: #fbbf24; /* amber-400 */
     --danger: #f87171; /* red-400 */
 
-    /* Night --warn is already a bright amber-400: light on near-black needs no separate
-       fill, so the bar and its label are the same colour here. */
+    /* The 400s are already bright: light on near-black needs no separate fill, so each
+       shape and the label beside it are the same colour here. */
     --warn-fill: var(--warn);
+    --ok-fill: var(--ok);
+    --danger-fill: var(--danger);
 
     /* Weaker mixes than the day theme: the night --accent is blue-400, so a little of it
        over a near-black card already separates the band from the body. */
