@@ -130,3 +130,24 @@
   letter-spacing: 0.05em;
   color: var(--muted);
 }
+
+/* The waiting panel's one line of explanation, above the queue itself. */
+.admin__waiting-body {
+  margin: 0;
+  padding: var(--space-3) var(--space-3) 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+/* The address in a waiting row is a direct flex child, with no `-main` column to give it a
+   shrinkable box — without min-width it would push the button off the row instead of
+   ellipsing. */
+.admin__waiting-grant {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.admin__person > .admin__email {
+  min-width: 0;
+  align-self: center;
+}

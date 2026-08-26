@@ -138,10 +138,17 @@ export const en = {
 
   admin: {
     open: 'Admin',
+    /** The same button when people are queued behind it — the badge shows a bare number,
+     *  so the count has to be said in full for a screen reader. */
+    openWaiting: (n: number) => `Admin — ${n} ${n === 1 ? 'person' : 'people'} waiting`,
     title: 'Admin',
     back: '← All camps',
     /** On the camp list, not in here: it changes what that list shows. */
     showAllCamps: 'Show every camp',
+    /** The to-do panel above the roster: only the people whose turn it is on you. Titled
+     *  with the count, because the number is the reason the panel is there at all. */
+    waitingTitle: (n: number) => `Waiting for activation (${n})`,
+    waitingBody: 'They signed in and can only join camps by code until you activate them.',
     peopleTitle: 'People',
     peopleEmpty: 'Nobody has signed in yet.',
     grantLabel: 'Email to activate',

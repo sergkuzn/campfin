@@ -11,6 +11,7 @@ import {
   MAX_CAMP_QUOTA,
   normalizeEmail,
   type RosterUser,
+  waitingForActivation,
 } from './accounts'
 import type { Account } from './types'
 
@@ -153,6 +154,36 @@ describe('buildRoster', () => {
 
   it('is empty for an empty app', () => {
     expect(buildRoster([], [])).toEqual([])
+  })
+})
+
+describe('waitingForActivation', () => {
+  const granted = account({ id: 'a1', email: 'anna@example.com' })
+  const pending = account({ id: 'a2', email: 'zoe@example.com' })
+
+  it('keeps only the people who signed in and have no grant', () => {
+    const roster = buildRoster(
+      [
+        { id: 'u1', email: 'anna@example.com', accountId: 'a1' },
+        { id: 'u2', email: 'ben@example.com', accountId: null },
+      ],
+      [granted],
+    )
+    expect(waitingForActivation(roster).map((entry) => entry.email)).toEqual(['ben@example.com'])
+  })
+
+  it('excludes a grant nobody has signed in against — that one is waiting on them', () => {
+    const roster = buildRoster([], [pending])
+    expect(waitingForActivation(roster)).toEqual([])
+  })
+
+  it('is empty when everyone is activated, and for an empty app', () => {
+    expect(
+      waitingForActivation(
+        buildRoster([{ id: 'u1', email: 'anna@example.com', accountId: 'a1' }], [granted]),
+      ),
+    ).toEqual([])
+    expect(waitingForActivation([])).toEqual([])
   })
 })
 

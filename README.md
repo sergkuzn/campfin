@@ -114,8 +114,10 @@ then to production (`pnpm db:push:prod`).
 ## Deploying
 
 `pnpm build` produces a fully static `dist/` — any free static host serves it (Vercel,
-Netlify, Cloudflare Pages). There is no server and no router, so no redirect rules are
-needed.
+Netlify, Cloudflare Pages). There is no router, so no redirect rules are needed. One
+serverless function comes along in `api/`: see **Signup alerts** below. It is optional —
+without it the app works exactly as before, you just find new signups by opening **Admin**
+rather than being told.
 
 1. Push `instant.schema.ts` and `instant.perms.ts` once with `pnpm db:push:dev`, then
    `pnpm db:push:prod`.
@@ -131,6 +133,51 @@ needed.
 
 Without step 4 nobody, including you, can create a camp: `camps.create` requires a grant.
 Joining an existing camp by its code keeps working regardless.
+
+### Signup alerts
+
+Signing up is open — an invited co-leader has to be able to create an account before anyone
+knows who they are — so a new address appears in the database and then waits for an admin to
+activate it. `api/request-access.ts` sends that as a Telegram message, so you find out
+without opening the app.
+
+Vercel picks a file up from `api/` with no configuration. Netlify and Cloudflare Pages look
+elsewhere by default (`netlify/functions` and `functions/`), so on those either point the
+build at `api/` or re-export the handler from the directory they expect — the body of the
+function is a standard `Request` → `Response` and does not change.
+
+The browser posts its own Instant refresh token; the function verifies it with Instant,
+reads the address off the *verified* token rather than off the request body, sends nothing
+if that address already has a grant, and messages the bot otherwise. It runs once per
+account per device.
+
+Five variables on the host, **none of them `VITE_`-prefixed** — that prefix is what makes
+Vite inline a value into the public bundle, and two of these are secrets. The right-hand
+column says how each is scoped in Vercel's per-environment settings (see **Environments**):
+
+| Variable | Where it comes from | Scope |
+|---|---|---|
+| `INSTANT_APP_ID` | the same app id as `VITE_INSTANT_APP_ID` | twice: Production, then Preview + Development |
+| `INSTANT_APP_ADMIN_TOKEN` | InstantDB dashboard → the app → Admin token. **Bypasses every permission rule** | twice — each Instant app has its own |
+| `APP_ENV` | `prod` or `dev`, mirroring `VITE_APP_ENV` | twice |
+| `TELEGRAM_BOT_TOKEN` | @BotFather → `/newbot` | once, all environments |
+| `TELEGRAM_CHAT_ID` | see below | once, all environments |
+
+One bot and one chat serve both environments; only the Instant half is per-environment.
+`APP_ENV` is what keeps the two apart in the chat — a dev signup arrives as *campfin DEV*,
+a production one as *campfin*, matching the two PWA names. It has no default on purpose:
+a deployment that cannot say which database it speaks for refuses to send at all.
+
+To get the chat id: message your new bot once (**a bot cannot message you first** — without
+this step `sendMessage` answers `chat not found`), then
+
+```bash
+curl "https://api.telegram.org/bot<TOKEN>/getUpdates" | jq '.result[0].message.chat.id'
+```
+
+For several admins, make a group, add the bot, post a message, and run the same command —
+group ids are negative, keep the minus sign. Adding an admin then means adding them to the
+group, with no redeploy.
 
 Serve over HTTPS: the service worker (and therefore offline use) will not install
 otherwise. After the first visit the app runs offline; writes queue and sync when the phone

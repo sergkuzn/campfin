@@ -22,6 +22,7 @@ import {
   normalizeEmail,
   type RosterEntry,
   type RosterUser,
+  waitingForActivation,
 } from '../lib/accounts'
 import { mapRows, toAccount, toCamp, toMembership } from '../lib/rows'
 import type { Account, Camp } from '../lib/types'
@@ -30,6 +31,8 @@ import { useWriteState } from './useWriteState'
 export type UseAdmin = {
   /** Everyone the admin can act on, signed-in and merely invited alike, sorted by address. */
   roster: RosterEntry[]
+  /** The subset of the roster that is a to-do: signed in, nobody has activated them. */
+  waiting: RosterEntry[]
   /** Every camp in the database, however it got there. */
   camps: Camp[]
   /** Who can reach what: the memberships of every camp, joined to the roster's addresses. */
@@ -77,6 +80,7 @@ export function useAdmin(enabled: boolean): UseAdmin {
   )
 
   const roster = useMemo(() => buildRoster(users, accounts), [users, accounts])
+  const waiting = useMemo(() => waitingForActivation(roster), [roster])
 
   const memberships = useMemo(
     () => (data?.camps ?? []).flatMap((camp) => mapRows(camp.members, toMembership)),
@@ -124,6 +128,7 @@ export function useAdmin(enabled: boolean): UseAdmin {
 
   return {
     roster,
+    waiting,
     camps,
     access,
     isLoading,

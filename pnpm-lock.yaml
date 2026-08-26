@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@instantdb/admin':
+        specifier: ^1.0.66
+        version: 1.0.66
       '@instantdb/react':
         specifier: ^1.0.49
         version: 1.0.49(react@19.2.7)
@@ -706,8 +709,18 @@ packages:
       '@noble/hashes':
         optional: true
 
+  '@instantdb/admin@1.0.66':
+    resolution: {integrity: sha512-FWB248I14fDmZ0jSTi/S2zajLKPupWU5/cmu5OoRgGYpPHaC8IbWvRtehmFObcCjJYUrbWYXzU+vZ1Q333d5pg==}
+
   '@instantdb/core@1.0.49':
     resolution: {integrity: sha512-DigxsPBZIpn5cjadM7A3o9u1Tb7akZmJqEhaFsnOLxcW7Ewgu4em2CxJnV7A2tE7NoC/lkDE4RAOz7GlkXvbiA==}
+
+  '@instantdb/core@1.0.66':
+    resolution: {integrity: sha512-63Ifi3SKNDxwVN9Rz5lZ3gZ1pq1WfVbhkE/kIl21n8aL4K0oHqNcAZSfQI5Qdx9vljnHc75EohU++UeTGJUseg==}
+
+  '@instantdb/eventsource@4.1.0-2':
+    resolution: {integrity: sha512-k2uzhsRzdD7hzV3fv+eoCRNeluZcj4pDfUKKAhvIS6xshc7zHkaM9/m3vxBgaYoNVmvOyaGp84TcHG0/Bp7k4g==}
+    engines: {node: '>=20.0.0'}
 
   '@instantdb/react-common@1.0.49':
     resolution: {integrity: sha512-f5r8KIKdyrZMZKAvU1svh2KMcA3fclaSuksKMRmBqLFCi024IWX1c63V7anWfcwOARBnAcZSvzgTgkK0MzEq6g==}
@@ -721,6 +734,12 @@ packages:
 
   '@instantdb/version@1.0.49':
     resolution: {integrity: sha512-yP3qhO2U0TWyceY23uM5+t93gDYG58q2nRj5nOb5GertRkk3Yc90+xdSZl9Uw62eYctV3y7gvf5743bZK47fJQ==}
+
+  '@instantdb/version@1.0.66':
+    resolution: {integrity: sha512-6jxLPemJHHLdIIhgkJSThdqN7Q+8M/isOzCcWQfE+OFUmC193Ei6Sbvpefl7tR8KTT1ohuE3XL+OpIt78wKkIQ==}
+
+  '@instantdb/webhooks@1.0.66':
+    resolution: {integrity: sha512-Wzw39j9RwF9JiYGJKVkp/w1WQFpuz5sEmWBnJquv/ytQ8fxtabKIxic1xz1hx+a+HmXdl8lZ56gcJbyfh0xwsA==}
 
   '@isaacs/cliui@9.0.0':
     resolution: {integrity: sha512-AokJm4tuBHillT+FpMtxQ60n8ObyXBatq7jD2/JA9dxbDDokKQm8KMht5ibGzLVU9IJDIKK4TPKgMHEYMn3lMg==}
@@ -1320,6 +1339,10 @@ packages:
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  cookie@1.1.1:
+    resolution: {integrity: sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==}
+    engines: {node: '>=18'}
 
   core-js-compat@3.49.0:
     resolution: {integrity: sha512-VQXt1jr9cBz03b331DFDCCP90b3fanciLkgiOoy8SBHy06gNf+vQ1A3WFLqG7I8TipYIKeYK9wxd0tUrvHcOZA==}
@@ -3362,11 +3385,30 @@ snapshots:
 
   '@exodus/bytes@1.15.1': {}
 
+  '@instantdb/admin@1.0.66':
+    dependencies:
+      '@instantdb/core': 1.0.66
+      '@instantdb/eventsource': 4.1.0-2
+      '@instantdb/version': 1.0.66
+      '@instantdb/webhooks': 1.0.66
+      cookie: 1.1.1
+      uuid: 11.1.1
+
   '@instantdb/core@1.0.49':
     dependencies:
       '@instantdb/version': 1.0.49
       mutative: 1.3.0
       uuid: 11.1.1
+
+  '@instantdb/core@1.0.66':
+    dependencies:
+      '@instantdb/version': 1.0.66
+      mutative: 1.3.0
+      uuid: 11.1.1
+
+  '@instantdb/eventsource@4.1.0-2':
+    dependencies:
+      eventsource-parser: 3.1.0
 
   '@instantdb/react-common@1.0.49(react@19.2.7)':
     dependencies:
@@ -3383,6 +3425,12 @@ snapshots:
       react: 19.2.7
 
   '@instantdb/version@1.0.49': {}
+
+  '@instantdb/version@1.0.66': {}
+
+  '@instantdb/webhooks@1.0.66':
+    dependencies:
+      '@instantdb/core': 1.0.66
 
   '@isaacs/cliui@9.0.0': {}
 
@@ -3875,6 +3923,8 @@ snapshots:
   common-tags@1.8.2: {}
 
   convert-source-map@2.0.0: {}
+
+  cookie@1.1.1: {}
 
   core-js-compat@3.49.0:
     dependencies:
