@@ -30,11 +30,11 @@
 }
 
 .movement--deposit_out {
-  border-inline-start-color: var(--warn);
+  border-inline-start-color: var(--warn-fill);
 }
 
 .movement--deposit_in {
-  border-inline-start-color: var(--ok);
+  border-inline-start-color: var(--ok-fill);
 }
 
 .movement--volunteer_in {

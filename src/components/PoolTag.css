@@ -10,19 +10,19 @@
   --pool-tint: #dbeafe;
 }
 .pool-tag--teal {
-  --pool-ink: #0f766e;
+  --pool-ink: #115e59;
   --pool-tint: #ccfbf1;
 }
 .pool-tag--green {
-  --pool-ink: #15803d;
+  --pool-ink: #166534;
   --pool-tint: #dcfce7;
 }
 .pool-tag--amber {
-  --pool-ink: #b45309;
+  --pool-ink: #92400e;
   --pool-tint: #fef3c7;
 }
 .pool-tag--orange {
-  --pool-ink: #c2410c;
+  --pool-ink: #9a3412;
   --pool-tint: #ffedd5;
 }
 .pool-tag--rose {

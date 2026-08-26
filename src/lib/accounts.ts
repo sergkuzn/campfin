@@ -133,6 +133,18 @@ export function buildRoster(
   return [...signedIn, ...pending].sort((a, b) => a.email.localeCompare(b.email))
 }
 
+/**
+ * The people waiting on the admin: signed in, no grant.
+ *
+ * The roster holds two different absences and only one of them is a to-do. A grant written
+ * to an address that has never signed in is waiting on *that person*; somebody who signed
+ * in with no grant is waiting on you. This is the second kind, and it is what the badge
+ * counts and the notification announces.
+ */
+export function waitingForActivation(roster: readonly RosterEntry[]): RosterEntry[] {
+  return roster.filter((entry) => entry.userId !== null && entry.account === null)
+}
+
 /** Is there already a grant for this address? Guards the grant-by-email field. */
 export function accountForEmail(accounts: readonly Account[], email: string): Account | undefined {
   const wanted = normalizeEmail(email)

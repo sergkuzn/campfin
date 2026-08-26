@@ -58,14 +58,21 @@ export default defineConfig(({ mode }) => {
           description: isProd
             ? 'Local-first camp budget tracker.'
             : 'Dev build of campfin — writes to the dev database.',
-          theme_color: isProd ? '#f5f5f5' : '#78350f', // the day theme's --bg; the running app rewrites it per theme
+          theme_color: isProd ? '#e7edf8' : '#78350f', // the day theme's --bg; the running app rewrites it per theme
           background_color: '#ffffff',
           display: 'standalone',
           start_url: '/',
           icons: [
             { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
             { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-            { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+            // A maskable icon is cropped to whatever shape the launcher uses, so it needs
+            // its own file with the mark pulled into the inner safe zone.
+            {
+              src: 'pwa-maskable-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
           ],
         },
         // Keep the service worker out of `vite dev` so HMR stays simple; flip it to try offline.

@@ -24,7 +24,7 @@ type Props = {
  */
 export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
   const t = useT()
-  const { roster, camps, access, isLoading, error, grant, setQuota, revoke } = admin
+  const { roster, waiting, camps, access, isLoading, error, grant, setQuota, revoke } = admin
   const [email, setEmail] = useState('')
   // Which grant is being revoked, if any. The entry itself rather than a boolean, so the
   // dialog can name the person it is about.
@@ -45,6 +45,31 @@ export function AdminScreen({ admin, onBack, onOpenCamp }: Props) {
   return (
     <Screen name="admin" back={{ label: t.admin.back, onClick: onBack }}>
       <h2 className="screen__title">{t.admin.title}</h2>
+
+      {/* A to-do list, deliberately duplicating rows from the register below. These people
+          also appear there with their full controls; up here they get one button, so the
+          panel reads as "what is waiting on you" rather than as a second roster. Hidden
+          entirely when nothing is queued, so an empty state never competes for the top of
+          the screen. */}
+      {waiting.length > 0 && (
+        <SlotPanel title={t.admin.waitingTitle(waiting.length)}>
+          <p className="admin__waiting-body">{t.admin.waitingBody}</p>
+          <ul className="admin__people">
+            {waiting.map((entry) => (
+              <li className="admin__person" key={entry.email}>
+                <span className="admin__email">{entry.email}</span>
+                <button
+                  className="btn btn--primary admin__waiting-grant"
+                  type="button"
+                  onClick={() => grant(entry.email)}
+                >
+                  {t.admin.grant}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </SlotPanel>
+      )}
 
       <SlotPanel title={t.admin.peopleTitle}>
         <form className="admin__grant" onSubmit={handleGrant}>

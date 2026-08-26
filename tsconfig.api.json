@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.api.tsbuildinfo",
+    "target": "es2023",
+    /* No "DOM": this runs on the host, not in a browser. `Request`, `Response` and `fetch`
+       come from @types/node, which has declared them globally since Node 18. */
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  /* The schema rides along so the admin client is typed against the same definition the
+     browser uses; it is also in the app project, which is harmless — both only typecheck. */
+  "include": ["api", "instant.schema.ts"]
+}

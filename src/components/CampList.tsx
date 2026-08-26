@@ -44,6 +44,8 @@ type Props = {
   access: CampAccess
   /** Admin only: whether the list is currently showing every camp in the database. */
   showAllCamps: boolean
+  /** Admin only: how many people have signed in and are waiting to be activated. */
+  waitingCount: number
   isLoading: boolean
   error: string | null
   onOpen: (campId: string) => void
@@ -58,6 +60,7 @@ export function CampList({
   userId,
   access,
   showAllCamps,
+  waitingCount,
   isLoading,
   error,
   onOpen,
@@ -111,8 +114,16 @@ export function CampList({
     <Screen name="camp-list">
       {access.isAdmin && (
         <div className="camp-list__admin">
-          <button className="camp-list__admin-link" type="button" onClick={onOpenAdmin}>
+          <button
+            className="camp-list__admin-link"
+            type="button"
+            /* The badge is a bare number, which a screen reader would read as a stray digit
+               beside the word "Admin"; the label says the whole sentence instead. */
+            aria-label={waitingCount > 0 ? t.admin.openWaiting(waitingCount) : undefined}
+            onClick={onOpenAdmin}
+          >
             {t.admin.open}
+            {waitingCount > 0 && <span className="camp-list__admin-badge">{waitingCount}</span>}
           </button>
           <label className="camp-list__admin-toggle">
             <input

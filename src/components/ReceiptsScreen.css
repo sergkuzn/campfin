@@ -146,7 +146,7 @@
 /* Still owed: the only tint on the row, and a quiet one — enough to find while scanning,
    not enough to shout. */
 .receipt__return--owed {
-  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+  border-color: color-mix(in srgb, var(--warn-fill) 65%, var(--border));
   color: color-mix(in srgb, var(--warn) 80%, var(--fg));
 }
 

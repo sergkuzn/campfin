@@ -1,7 +1,7 @@
 {
   "name": "campfin",
   "private": true,
-  "version": "0.5.1",
+  "version": "0.5.2",
   "type": "module",
   "scripts": {
     "vite:dev": "vite --mode dev",
@@ -19,6 +19,7 @@
     "db:push:prod": "pnpm dlx instant-cli@latest push --app \"$(grep -m1 '^VITE_INSTANT_APP_ID=' .env.prod.local | cut -d= -f2-)\""
   },
   "dependencies": {
+    "@instantdb/admin": "^1.0.66",
     "@instantdb/react": "^1.0.49",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

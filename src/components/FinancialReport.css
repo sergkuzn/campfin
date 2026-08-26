@@ -113,9 +113,9 @@
 /* Warnings are part of the report, not footnotes: they say the cash rest is not final. */
 .report__warnings {
   padding: var(--space-3) var(--space-4);
-  border-left: 3px solid var(--warn);
+  border-left: 3px solid var(--warn-fill);
   border-radius: 0 var(--radius) var(--radius) 0;
-  background-color: color-mix(in srgb, var(--warn) 10%, transparent);
+  background-color: color-mix(in srgb, var(--warn-fill) 10%, transparent);
 }
 
 .report__warnings-title {

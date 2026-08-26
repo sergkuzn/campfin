@@ -6,6 +6,7 @@ import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
 import { useMovements } from '../hooks/useMovements'
+import { useRequestAccess } from '../hooks/useRequestAccess'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import type { Session } from '../hooks/useSession'
 import { useViewHistory } from '../hooks/useViewHistory'
@@ -56,7 +57,11 @@ type Props = {
  */
 export function SignedInApp({ session }: Props) {
   // What this account may do app-wide, as opposed to what it may do inside one camp.
-  const { access } = useAccount(session.userId)
+  const { access, isLoading: accessLoading } = useAccount(session.userId)
+  // Tell the admins once, in the background, that this account is waiting on them. The
+  // `!accessLoading` matters: an unresolved query also has no account, and without it every
+  // already-granted leader would announce themselves on every cold start.
+  useRequestAccess(session.userId, !accessLoading && access.account === null)
   // Admin only, and off by default: your own camps are the ones you came here for, so
   // everyone else's stay behind a switch rather than burying them.
   const [showAllCamps, setShowAllCamps] = useState(false)
@@ -216,6 +221,7 @@ export function SignedInApp({ session }: Props) {
         userId={session.userId}
         access={access}
         showAllCamps={showAllCamps}
+        waitingCount={admin.waiting.length}
         isLoading={isLoading}
         error={error}
         onOpen={handleOpen}

@@ -36,10 +36,12 @@ export function otherTheme(theme: Theme): Theme {
 /**
  * The colour behind the phone's status bar and address bar, per theme. It has to match the
  * page's `--bg` or the chrome above the app reads as a different app; browsers cannot take
- * a `var()` here, so the two values are repeated from `index.css`.
+ * a `var()` here, so the two values are repeated from `index.css`. `palette.test.ts` reads
+ * both `--bg` declarations back out of the stylesheet and asserts they still match, because
+ * a copy nobody checks is a copy that goes stale — this one already had.
  */
 const THEME_COLORS: Record<Theme, string> = {
-  light: '#fafafa',
+  light: '#e7edf8',
   dark: '#0a0a0a',
 }
 
