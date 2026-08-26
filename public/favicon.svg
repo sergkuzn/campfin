@@ -6,7 +6,7 @@
        what breaks that silhouette.
        Two entry rows sit above a thin rule, and the bottom line is the total - an amount
        bar closed by a euro sign on the right, the way a printed total reads. -->
-  <rect width="512" height="512" rx="114" fill="#1c5fb5"/>
+  <rect width="512" height="512" rx="114" fill="#2f74cc"/>
 
   <!-- sheet, with the corner cut away and the fold drawn back over it -->
   <path d="M148,96 H320 L394,170 V386 a30,30 0 0 1 -30,30 H148 a30,30 0 0 1 -30,-30 V126 a30,30 0 0 1 30,-30 Z" fill="#f5f6f7"/>

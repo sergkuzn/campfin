@@ -79,7 +79,7 @@
 }
 
 .bars__track--warn .bars__fill {
-  background-color: var(--warn);
+  background-color: var(--warn-fill);
 }
 
 .bars__track--over .bars__fill {

@@ -66,7 +66,7 @@ button.slot-card:active {
   /* One pixel inside the card's own radius, so the band's curve sits on the card's border
      instead of cutting across it. */
   border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
-  background-color: color-mix(in srgb, var(--accent) 7%, transparent);
+  background-color: var(--band);
 }
 
 /* Full-strength text in the band: muted grey reads as a caption, and this names the card. */
@@ -76,11 +76,11 @@ button.slot-card:active {
 
 /* The band darkens with the card, so the press reads as one gesture on one target. */
 button.slot-card:hover .slot-card__head {
-  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+  background-color: var(--band-hover);
 }
 
 button.slot-card:active .slot-card__head {
-  background-color: color-mix(in srgb, var(--accent) 22%, transparent);
+  background-color: var(--band-active);
 }
 
 /* Accent-coloured and larger than the title: at 0.75rem the glyph reads as punctuation. */

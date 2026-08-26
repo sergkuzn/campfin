@@ -24,7 +24,7 @@
 /* Red border, not a red button in a plain box: the frame is what makes it read as a
    place you have arrived at rather than a control you might brush past. */
 .camp-settings__danger {
-  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--border));
 }
 
 /* The copy button is `--surface` by default, which is also the card's background —

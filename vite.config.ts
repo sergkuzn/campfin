@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => {
           description: isProd
             ? 'Local-first camp budget tracker.'
             : 'Dev build of campfin — writes to the dev database.',
-          theme_color: isProd ? '#f5f5f5' : '#78350f', // the day theme's --bg; the running app rewrites it per theme
+          theme_color: isProd ? '#e7edf8' : '#78350f', // the day theme's --bg; the running app rewrites it per theme
           background_color: '#ffffff',
           display: 'standalone',
           start_url: '/',
