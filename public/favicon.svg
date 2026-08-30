@@ -11,17 +11,17 @@
   <!-- sheet, with the corner cut away and the fold drawn back over it.
        It fills most of the tile and is taller than it is wide, the proportions of a
        printed page, so it never reads as a square label. -->
-  <path d="M128,44 H352 L412,104 V440 a28,28 0 0 1 -28,28 H128 a28,28 0 0 1 -28,-28 V72 a28,28 0 0 1 28,-28 Z" fill="#f5f6f7"/>
-  <path d="M352,44 L412,104 H372 a20,20 0 0 1 -20,-20 Z" fill="#4a90e8" opacity=".35"/>
+  <path d="M142,68 H340 L396,124 V418 a26,26 0 0 1 -26,26 H142 a26,26 0 0 1 -26,-26 V94 a26,26 0 0 1 26,-26 Z" fill="#f5f6f7"/>
+  <path d="M340,68 L396,124 H358 a18,18 0 0 1 -18,-18 Z" fill="#4a90e8" opacity=".35"/>
 
   <!-- entry rows -->
-  <rect x="140" y="168" width="188" height="28" rx="14" fill="#4a90e8"/>
-  <rect x="140" y="226" width="116" height="28" rx="14" fill="#4a90e8" opacity="0.65"/>
+  <rect x="154" y="185" width="170" height="27" rx="13.5" fill="#4a90e8"/>
+  <rect x="154" y="237" width="104" height="27" rx="13.5" fill="#4a90e8" opacity="0.65"/>
 
   <!-- rule, then the total line -->
-  <path d="M140,298 H372" stroke="#4a90e8" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
-  <rect x="140" y="344" width="132" height="28" rx="14" fill="#4a90e8"/>
-  <g transform="translate(340,358) scale(1.12) translate(-207,-306)" fill="none" stroke="#4a90e8" stroke-width="6.19" stroke-linecap="round">
+  <path d="M154,304 H356" stroke="#4a90e8" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+  <rect x="154" y="344" width="118" height="27" rx="13.5" fill="#4a90e8"/>
+  <g transform="translate(324,357) scale(1.08) translate(-207,-306)" fill="none" stroke="#4a90e8" stroke-width="6.19" stroke-linecap="round">
     <path d="M234.3,290.5 A25.3,25.3 0 1 0 234.3,321.5"/>
     <path d="M181.5,299.5 H230.0"/>
     <path d="M181.5,311.7 H225.0"/>
