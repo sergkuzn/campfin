@@ -112,8 +112,17 @@
   color: var(--muted);
 }
 
-.receipt__amount {
+/* The amount column: the group's money, with the deposit and the slip's total stacked
+   under it. Right-aligned so the three figures share one edge. */
+.receipt__figures {
   flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.receipt__amount {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -207,6 +216,8 @@
 .receipt__pfand {
   font-size: 0.75rem;
   color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* Closed, it is one ghost button and nothing else: nearly every receipt has no deposit on

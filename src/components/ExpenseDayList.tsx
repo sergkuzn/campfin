@@ -198,20 +198,26 @@ function ReceiptRow({
           </span>
         )}
 
-        {/* The headline amount is the group's money, so a receipt with a deposit on it says
-            what the paper slip says too — otherwise the row and the folder disagree and
-            neither explains why. */}
-        {hasPfand(expense) && (
-          <span className="receipt__pfand">
-            {pfandText(expense, t.receipts.pfand, format.euros)} ·{' '}
-            {t.receipts.pfand.rowTotal(format.euros(receiptTotalCents(expense)))}
-          </span>
-        )}
-
         {expense.note !== undefined && <span className="receipt__note">{expense.note}</span>}
       </div>
 
-      <span className="receipt__amount">{format.euros(expense.amountCents)}</span>
+      {/* The headline amount is the group's money, so a receipt with a deposit on it prints
+          the slip's own total underneath — otherwise the row and the folder disagree and
+          neither explains why. Both sit in the amount column so the three figures stack
+          right-aligned instead of splitting across the row. */}
+      <span className="receipt__figures">
+        <span className="receipt__amount">{format.euros(expense.amountCents)}</span>
+        {hasPfand(expense) && (
+          <>
+            <span className="receipt__pfand">
+              {pfandText(expense, t.receipts.pfand, format.euros)}
+            </span>
+            <span className="receipt__pfand">
+              {t.receipts.pfand.rowTotal(format.euros(receiptTotalCents(expense)))}
+            </span>
+          </>
+        )}
+      </span>
 
       <RowMenu
         label={expense.name}

@@ -522,7 +522,7 @@ export const en = {
       /** The button that opens the block, and the one that takes the pfand off again.
        *  The opening one is a plus beside the pfand mark, with no word of its own — so it
        *  carries `addLabel` for anyone who cannot see the picture. */
-      add: '＋',
+      add: '＋ Pfand',
       addLabel: 'Add a pfand',
       remove: 'Remove the pfand',
       legend: 'Pfand',
@@ -538,12 +538,12 @@ export const en = {
       /** The live readout under the block: the one number that tells the two modes apart. */
       groupLine: (amount: string) => `Group money spent: ${amount}`,
       /** On the receipt row. Both directions appear only when the receipt has both. */
-      rowPaid: (amount: string) => `Pfand +${amount}`,
-      rowReturned: (amount: string) => `Pfand −${amount}`,
-      rowBoth: (paid: string, returned: string) => `Pfand +${paid} / −${returned}`,
+      rowPaid: (amount: string) => `pfand: +${amount}`,
+      rowReturned: (amount: string) => `pfand: −${amount}`,
+      rowBoth: (paid: string, returned: string) => `pfand: +${paid} / −${returned}`,
       /** The figure printed on the paper slip, so a row here can be checked against the
        *  folder — the headline amount beside it is the group's money, which is different. */
-      rowTotal: (amount: string) => `receipt total ${amount}`,
+      rowTotal: (amount: string) => `total: ${amount}`,
     },
     dayTotal: (amount: string) => `${amount} that day`,
     count: (n: number) => `${n} ${n === 1 ? 'receipt' : 'receipts'}`,
