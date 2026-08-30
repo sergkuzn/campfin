@@ -15,8 +15,9 @@
 import { perDiemTotals, spentTotalCents } from './budget'
 import { custodyReading } from './movements'
 import { payerDebts } from './payers'
+import { pfandBalances, pfandLedger } from './pfand'
 import { type PoolSummary, receivedTotalCents, spendablePools } from './pools'
-import type { Expense, Movement, PerDiemBlock, Pool } from './types'
+import type { Expense, Movement, PerDiemBlock, PfandEntry, Pool } from './types'
 
 /**
  * What one row of the breakdown is about. A *code*, not a sentence: `src/lib/` never
@@ -30,6 +31,7 @@ export type SettlementWarningKind =
   | 'pool_overspent'
   | 'over_attended'
   | 'owed_to_payer'
+  | 'pfand_out'
 
 export type SettlementRow = {
   kind: SettlementRowKind
@@ -53,9 +55,13 @@ export type SettlementWarning =
       amountCents: number
     }
   | {
-      /** The money holder has not paid somebody back yet. */
-      kind: 'owed_to_payer'
-      /** Who is owed, as the newest receipt spells it. */
+      /**
+       * Two warnings about one person rather than a pool. `owed_to_payer` is camp money the
+       * holder has not returned; `pfand_out` is deposit money that person is still out,
+       * waiting to be reclaimed — different money, same shape.
+       */
+      kind: 'owed_to_payer' | 'pfand_out'
+      /** Who it is about, as the newest row spells it. */
       payerName: string
       amountCents: number
     }
@@ -78,13 +84,15 @@ export type SettlementInput = {
   blocks: PerDiemBlock[]
   expenses: Expense[]
   movements: Movement[]
+  /** The refunds typed at a shop; every other pfand line is derived from `expenses`. */
+  pfandEntries: PfandEntry[]
   /** The leader holding the cash, so what they still owe co-leaders can be flagged.
    *  Absent means nobody holds it, and then no receipt owes anybody anything. */
   moneyHolder?: string
 }
 
 export function computeSettlement(input: SettlementInput): Settlement {
-  const { summaries, blocks, expenses, movements, moneyHolder } = input
+  const { summaries, blocks, expenses, movements, pfandEntries, moneyHolder } = input
   const custody = custodyReading(summaries, movements)
 
   const rows: SettlementRow[] = []
@@ -134,6 +142,18 @@ export function computeSettlement(input: SettlementInput): Settlement {
           amountCents: debt.owedCents,
         }),
       ),
+      // Deposit still out. Not the camp's money either way — it is somebody's own,
+      // waiting on a trip to the shop — but it is the last thing anyone remembers at the
+      // end of camp, and the sheet is read once.
+      ...pfandBalances(pfandLedger(expenses, pfandEntries, moneyHolder))
+        .filter((balance) => balance.outstandingCents > 0)
+        .map(
+          (balance): SettlementWarning => ({
+            kind: 'pfand_out',
+            payerName: balance.name,
+            amountCents: balance.outstandingCents,
+          }),
+        ),
     ],
     pools: summaries,
   }

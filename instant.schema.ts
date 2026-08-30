@@ -23,6 +23,7 @@ import type {
   MemberRole,
   MovementKind,
   PerDiemVariant,
+  PfandEntryKind,
   PoolColor,
   PoolRole,
 } from './src/lib/types'
@@ -122,6 +123,15 @@ const _schema = i.schema({
       // flag rather than a second row: the budget was consumed when the receipt was paid,
       // so booking the payback as a movement would spend the pool twice.
       reimbursed: i.boolean().optional(),
+      // The deposit on this receipt, kept apart from `amountCents` because it is
+      // never the group's money — the person who paid is out this much of their own until
+      // it is reclaimed. `amountCents` is normalised on write to the money the pool
+      // actually spent, so every sum elsewhere stays a plain sum over receipts.
+      pfandPaidCents: i.number().optional(),
+      pfandReturnedCents: i.number().optional(),
+      // Which number was typed: the till total with the pfand inside it, or the goods
+      // alone. Editor memory only — it changes nothing about what the row means.
+      pfandInTotal: i.boolean().optional(),
       enteredBy: i.string().optional(),
       createdAt: i.number(),
     }),
@@ -137,6 +147,24 @@ const _schema = i.schema({
       // nothing reads this. Kept so rows written before that still load; new writes null it.
       completesDeposit: i.boolean().optional(),
       name: i.string(),
+      amountCents: i.number(),
+      date: i.string().indexed(),
+      note: i.string().optional(),
+      createdAt: i.number(),
+    }),
+
+    // Deposit money refunded at a shop with nothing bought — the one pfand fact that is not
+    // already on a receipt. A namespace of its own rather than more `movements` kinds: a
+    // movement is camp custody money keyed by pool, this is personal money keyed by a payer
+    // name, and folding them together would put pfand inside every custody reading.
+    pfandEntries: i.entity({
+      campId: i.string().indexed(),
+      // One value today. Kept, and indexed, because it is what tells a row apart from the
+      // transfers an earlier build stored here, which the ledger now derives instead.
+      kind: i.string<PfandEntryKind>().indexed(),
+      // Free text, like `expenses.paidBy` — the same person, spelled the same way, and
+      // compared through `payerKey` so a stray capital never splits one pocket in two.
+      payer: i.string(),
       amountCents: i.number(),
       date: i.string().indexed(),
       note: i.string().optional(),
@@ -195,6 +223,10 @@ const _schema = i.schema({
     movementCamp: {
       forward: { on: 'movements', has: 'one', label: 'camp', onDelete: 'cascade' },
       reverse: { on: 'camps', has: 'many', label: 'movements' },
+    },
+    pfandEntryCamp: {
+      forward: { on: 'pfandEntries', has: 'one', label: 'camp', onDelete: 'cascade' },
+      reverse: { on: 'camps', has: 'many', label: 'pfandEntries' },
     },
   },
 })

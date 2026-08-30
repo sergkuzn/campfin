@@ -62,13 +62,14 @@ function renderScreen(
   const { expenses = rows, pools = [food, tools], focusPoolId = null, moneyHolder } = options
   const saveExpense = vi.fn()
   const setReimbursed = vi.fn()
+  const deleteExpense = vi.fn()
   const stub: UseExpenses = {
     expenses,
     isLoading: false,
     error: null,
     saveExpense,
     setReimbursed,
-    deleteExpense: vi.fn(),
+    deleteExpense,
   }
   const user = userEvent.setup()
   render(
@@ -84,7 +85,7 @@ function renderScreen(
       />
     </I18nProvider>,
   )
-  return { user, saveExpense, setReimbursed }
+  return { user, saveExpense, setReimbursed, deleteExpense }
 }
 
 /** The receipt names in the order they are rendered — the one thing a sort changes. */
@@ -227,7 +228,7 @@ describe('ReceiptsScreen — how a row wears its pool', () => {
   it('spells out a pool that is gone, having no colour left to show it in', () => {
     renderScreen({ expenses: [expense({ id: 'x', name: 'Bakery', poolId: 'pool-deleted' })] })
 
-    const row = rowFor('Bakery')
+    const row = screen.getByText('Bakery').closest('li') as HTMLElement
     expect(row.className).not.toMatch(/pool-tag--/)
     expect(within(row).getByText(t.unknownPool)).toBeInTheDocument()
   })
@@ -356,26 +357,28 @@ describe('ReceiptsScreen — saying whose money it was', () => {
     expect(saveExpense).toHaveBeenCalledWith(expect.objectContaining({ paidBy: 'Ben' }))
   })
 
-  it('offers "already paid back" only once somebody else is named, and saves it settled', async () => {
-    const { user, saveExpense } = renderScreen({ moneyHolder: 'Anna' })
+  it('never asks whether the money is already back — that is the list row’s job', async () => {
+    // Settling up moves the payer's pfand with the money, which a checkbox here could not
+    // do. Two controls that looked the same and did different things is exactly the
+    // confusion this removes.
+    const { user } = renderScreen({ moneyHolder: 'Anna' })
     await startReceipt(user)
-
-    const returnedTick = () => screen.queryByRole('checkbox', { name: t.payer.returnedLabel })
-
-    await user.click(screen.getByRole('radio', { name: t.payer.holderOption('Anna') }))
-    expect(returnedTick()).not.toBeInTheDocument() // the holder cannot owe themselves
 
     await user.click(screen.getByRole('radio', { name: t.payer.otherOption }))
     await user.type(screen.getByLabelText(t.payer.newNameLabel), 'Ben')
 
-    const tick = returnedTick()
-    expect(tick).toBeInTheDocument()
-    if (tick !== null) await user.click(tick)
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+  })
+
+  it('carries a settled receipt through an edit rather than un-settling it', async () => {
+    const settled = expense({ id: 'a', name: 'Bakery', paidBy: 'Ben', reimbursed: true })
+    const { user, saveExpense } = renderScreen({ expenses: [settled], moneyHolder: 'Anna' })
+
+    await user.click(screen.getByRole('button', { name: en.rowMenu.open('Bakery') }))
+    await user.click(screen.getByRole('button', { name: en.rowMenu.edit }))
     await user.click(screen.getByRole('button', { name: t.save }))
 
-    expect(saveExpense).toHaveBeenCalledWith(
-      expect.objectContaining({ paidBy: 'Ben', reimbursed: true }),
-    )
+    expect(saveExpense).toHaveBeenCalledWith(expect.objectContaining({ reimbursed: true }))
   })
 
   it('no money holder set means the only answer is a name', async () => {
@@ -427,5 +430,109 @@ describe('PayerSelect — the two radios stay exclusive', () => {
     // would read as a second person who fronted the money.
     expect(screen.getByRole('radio', { name: t.payer.holderOption('Anna') })).toBeChecked()
     expect(screen.getByLabelText(t.payer.newNameLabel)).toHaveValue('')
+  })
+})
+
+describe('paying somebody back who also fronted pfand', () => {
+  /** Ben paid 8,00 € of camp money and 1,00 € of his own deposit on the same slip. */
+  const withPfand = expense({
+    id: 'a',
+    name: 'Bakery',
+    amountCents: 800,
+    paidBy: 'Ben',
+    pfandPaidCents: 100,
+    pfandInTotal: true,
+  })
+
+  it('shows the pfand on the row without moving the headline amount', () => {
+    renderScreen({ expenses: [withPfand], moneyHolder: 'Anna' })
+
+    const row = screen.getByText('Bakery').closest('li') as HTMLElement
+    expect(within(row).getByText(/^8,00/)).toBeInTheDocument()
+    expect(within(row).getByText(/Pfand \+1,00/)).toBeInTheDocument()
+    expect(within(row).getByText(/receipt total 9,00/)).toBeInTheDocument()
+  })
+
+  it('says where the deposit lands, and moves it with one write', async () => {
+    const { user, setReimbursed } = renderScreen({
+      expenses: [withPfand],
+      moneyHolder: 'Anna',
+    })
+
+    await user.click(screen.getByRole('button', { name: t.payer.returnButton }))
+    // A statement, not an option: after the return the deposit is the holder's.
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
+    expect(screen.getByText(/1,00.*moves to Anna/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: t.payer.confirmReturnLabel }))
+
+    // The flag is the whole write: the ledger reads it, so there is no second row to keep
+    // in step and nothing that can be left behind.
+    expect(setReimbursed).toHaveBeenCalledWith('a', true)
+  })
+
+  it('hands the deposit back when the return is undone', async () => {
+    const settled = { ...withPfand, reimbursed: true }
+    const { user, setReimbursed } = renderScreen({
+      expenses: [settled],
+      moneyHolder: 'Anna',
+    })
+
+    await user.click(screen.getByRole('button', { name: t.payer.returnedButton }))
+    expect(screen.getByText(/1,00.*goes back to Ben/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: t.payer.confirmUndoLabel }))
+    expect(setReimbursed).toHaveBeenCalledWith('a', false)
+  })
+
+  it('names the holder in the delete warning once the receipt has been paid back', async () => {
+    const settled = { ...withPfand, reimbursed: true }
+    const { user, deleteExpense } = renderScreen({
+      expenses: [settled],
+      moneyHolder: 'Anna',
+    })
+
+    await user.click(screen.getByRole('button', { name: en.rowMenu.open('Bakery') }))
+    await user.click(screen.getByRole('button', { name: en.rowMenu.delete }))
+
+    // The balance moving is invisible from this screen, so the question says it first —
+    // and it is Anna's balance now, because the return moved the deposit to her.
+    expect(screen.getByText(/Anna's pfand balance changes by/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: t.confirmDelete }))
+    expect(deleteExpense).toHaveBeenCalledWith('a')
+  })
+
+  it('names the payer in the delete warning while the receipt is still owed', async () => {
+    const { user } = renderScreen({ expenses: [withPfand], moneyHolder: 'Anna' })
+
+    await user.click(screen.getByRole('button', { name: en.rowMenu.open('Bakery') }))
+    await user.click(screen.getByRole('button', { name: en.rowMenu.delete }))
+
+    expect(screen.getByText(/Ben's pfand balance changes by/)).toBeInTheDocument()
+  })
+
+  it('names no pfand on a receipt that never had any', async () => {
+    const plain = expense({ id: 'a', name: 'Bakery', amountCents: 800, paidBy: 'Ben' })
+    const { user } = renderScreen({ expenses: [plain], moneyHolder: 'Anna' })
+
+    await user.click(screen.getByRole('button', { name: en.rowMenu.open('Bakery') }))
+    await user.click(screen.getByRole('button', { name: en.rowMenu.delete }))
+
+    expect(screen.queryByText(/pfand/i)).not.toBeInTheDocument()
+  })
+
+  it('says nothing about a deposit when the receipt carries none', async () => {
+    const plain = expense({ id: 'a', name: 'Bakery', amountCents: 800, paidBy: 'Ben' })
+    const { user, setReimbursed } = renderScreen({
+      expenses: [plain],
+      moneyHolder: 'Anna',
+    })
+
+    await user.click(screen.getByRole('button', { name: t.payer.returnButton }))
+    expect(screen.queryByText(/pfand/i)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: t.payer.confirmReturnLabel }))
+    expect(setReimbursed).toHaveBeenCalledWith('a', true)
   })
 })

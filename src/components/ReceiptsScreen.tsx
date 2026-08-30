@@ -7,7 +7,8 @@ import type { CampWindow } from '../lib/camps'
 import { todayIso } from '../lib/dates'
 import type { SaveExpenseInput } from '../lib/expenses'
 import { arrangeExpenses, type ExpenseSort, filterExpensesByPools } from '../lib/expenseViews'
-import { filterExpensesByDebt, unreimbursedTotalCents } from '../lib/payers'
+import { filterExpensesByDebt, isSamePayer, unreimbursedTotalCents } from '../lib/payers'
+import { hasPfand, netPfandCents, pfandOwner } from '../lib/pfand'
 import { type PoolSummary, spendablePools } from '../lib/pools'
 import { nextReceiptNumber, takenReceiptNumbers } from '../lib/receiptNumbers'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -112,11 +113,44 @@ export function ReceiptsScreen({
   // filtered list the row behind the dialog may not be the one you think it is.
   const returningName = returning?.paidBy?.trim() ?? ''
 
+  /**
+   * The deposit this receipt carries, when ticking it off would move it into a different
+   * pocket. Paying somebody back settles everything that receipt left them out, deposit
+   * included — so afterwards the books read as though the holder had stood at the till.
+   * Zero when nobody else paid, or when there was no deposit to move.
+   *
+   * Nothing is written for it: the ledger reads the same flag, so the transfer follows the
+   * receipt through every later edit and disappears with it on delete.
+   */
+  const movingPfandCents =
+    returning === undefined || moneyHolder === undefined || isSamePayer(returningName, moneyHolder)
+      ? 0
+      : netPfandCents(returning)
+
   const handleConfirmReturn = () => {
-    if (pendingReturn !== null) {
-      expenses.setReimbursed(pendingReturn.id, pendingReturn.repaid)
-    }
+    if (pendingReturn === null) return
+    expenses.setReimbursed(pendingReturn.id, pendingReturn.repaid)
     setPendingReturn(null)
+  }
+
+  /**
+   * What the return question says about the deposit: where it lands once the money is
+   * settled, where it goes back to on an undo, and nothing at all on the receipts — nearly
+   * all of them — that carry no deposit.
+   */
+  const pfandLines = (repaid: boolean): string[] => {
+    if (movingPfandCents === 0 || moneyHolder === undefined) return []
+    const payer = t.receipts.payer
+    const amount = format.euros(Math.abs(movingPfandCents))
+
+    if (!repaid) return [payer.confirmUndoPfandLine(amount, returningName)]
+    // A negative net means the receipt gave back more deposit than it charged, so the
+    // holder is taking on a refund that person has already had rather than a claim.
+    return [
+      movingPfandCents < 0
+        ? payer.confirmReturnPfandOwedLine(amount, moneyHolder)
+        : payer.confirmReturnPfandLine(amount, moneyHolder),
+    ]
   }
 
   const handleConfirmDelete = () => {
@@ -278,6 +312,9 @@ export function ReceiptsScreen({
                 pendingReturn.repaid
                   ? t.receipts.payer.confirmReturnLine(format.euros(returning.amountCents))
                   : t.receipts.payer.confirmUndoLine(format.euros(returning.amountCents)),
+                // What travels with the money. Said plainly rather than offered as an
+                // option: after a return the deposit is the holder's to reclaim.
+                ...pfandLines(pendingReturn.repaid),
               ]
         }
         confirmLabel={
@@ -295,7 +332,24 @@ export function ReceiptsScreen({
         lines={
           pending === undefined
             ? []
-            : [t.receipts.deleteLine(format.euros(pending.amountCents), pendingPoolName)]
+            : [
+                t.receipts.deleteLine(format.euros(pending.amountCents), pendingPoolName),
+                // Deleting a receipt moves somebody's pfand balance, and there is nothing on
+                // this screen that would show it — so the question says so before the tap
+                // rather than leaving it to be noticed on the pfand screen later.
+                ...(hasPfand(pending)
+                  ? [
+                      t.receipts.deletePfandLine(
+                        // Whoever the deposit sits with now — the payer, or the holder once
+                        // the receipt has been paid back.
+                        pfandOwner(pending, moneyHolder),
+                        // The *opposite* of what the receipt put into that pocket: taking
+                        // the row away is what moves the balance, and by this much.
+                        format.euros(-netPfandCents(pending)),
+                      ),
+                    ]
+                  : []),
+              ]
         }
         confirmLabel={t.receipts.confirmDelete}
         onConfirm={handleConfirmDelete}

@@ -231,6 +231,27 @@ export type Expense = {
   number?: number
   note?: string
   /**
+   * The deposit charged on this receipt, in cents. Absent means none, which is nearly
+   * every receipt.
+   *
+   * Pfand is never the group's money: whoever paid the receipt is out this much of their
+   * own until it is reclaimed. That is why `amountCents` above is *normalised* at save
+   * time to the money the pool actually spent — every sum in `budget.ts`, `burn.ts`,
+   * `pools.ts` and `report.ts` adds up receipts without knowing pfand exists, and none of
+   * them can forget to subtract it.
+   */
+  pfandPaidCents?: number
+  /** The deposit refunded on the same receipt, in cents. Absent means none. */
+  pfandReturnedCents?: number
+  /**
+   * Which number was typed into the amount box: `true` for the whole receipt total with the pfand
+   * folded inside it, absent for the goods alone with the pfand entered beside them.
+   *
+   * Editor memory, nothing more — `amountCents` means the same thing either way. Without
+   * it, re-opening a receipt would show a number the paper slip does not have.
+   */
+  pfandInTotal?: boolean
+  /**
    * Whose wallet the money came out of, as typed. Absent means "not tracked" — which is
    * every receipt written before this field existed, and the reason nothing had to be
    * backfilled: an untracked receipt owes nobody.
@@ -247,5 +268,39 @@ export type Expense = {
    */
   reimbursed?: boolean
   enteredBy?: string
+  createdAt: number
+}
+
+/**
+ * What a stored pfand row records — one thing only: packaging taken back to a shop for
+ * cash, buying nothing.
+ *
+ * Every other pfand fact is derived rather than stored. A deposit charged or refunded at a
+ * till is two amounts on the receipt that carries them, and a deposit changing owner —
+ * what happens when the money holder pays back the person who fronted it — is read off
+ * that receipt's `reimbursed` flag. Nothing about a receipt is therefore copied into a row
+ * that could go stale when the receipt is edited, or be left behind when it is deleted.
+ *
+ * A single-valued `kind` is kept on the row on purpose: it is what makes a row written by
+ * an earlier build, when a handover *was* stored, fall out at the guard rather than be
+ * counted a second time on top of the derived one.
+ */
+export type PfandEntryKind = 'refund'
+
+/** Deposit money coming back into one person's pocket at a shop, outside any receipt. */
+export type PfandEntry = {
+  id: string
+  campId: string
+  kind: PfandEntryKind
+  /**
+   * Whose own money this is, as typed. The same kind of value as `Expense.paidBy` and
+   * `Camp.moneyHolder` — free text, compared through `payerKey`, so pfand needs no
+   * namespace of people and no id to remap on import.
+   */
+  payer: string
+  /** Always positive. Which way it moves is the kind's business, not the sign's. */
+  amountCents: number
+  date: string // ISO
+  note?: string
   createdAt: number
 }

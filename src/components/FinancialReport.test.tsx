@@ -73,7 +73,13 @@ async function exportCsv(): Promise<string> {
       <FinancialReport
         camp={camp}
         report={buildReport({ summaries, blocks: [], expenses, movements })}
-        settlement={computeSettlement({ summaries, blocks: [], expenses, movements })}
+        settlement={computeSettlement({
+          summaries,
+          blocks: [],
+          expenses,
+          movements,
+          pfandEntries: [],
+        })}
         expenses={expenses}
         summaries={summaries}
         onBack={vi.fn()}

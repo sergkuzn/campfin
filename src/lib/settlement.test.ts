@@ -114,6 +114,7 @@ const settle = (over: Partial<SettlementInput> & { pools?: Pool[] } = {}) => {
     blocks,
     expenses,
     movements: over.movements ?? [],
+    pfandEntries: over.pfandEntries ?? [],
     moneyHolder: over.moneyHolder,
   })
 }
@@ -255,7 +256,13 @@ describe('computeSettlement', () => {
   })
 
   it('an empty camp settles to zeros with no rows', () => {
-    const s = computeSettlement({ summaries: [], blocks: [], expenses: [], movements: [] })
+    const s = computeSettlement({
+      summaries: [],
+      blocks: [],
+      expenses: [],
+      movements: [],
+      pfandEntries: [],
+    })
 
     expect(s).toEqual({
       receivedTotalCents: 0,
@@ -265,5 +272,43 @@ describe('computeSettlement', () => {
       warnings: [],
       pools: [],
     })
+  })
+})
+
+describe('pfand warnings', () => {
+  const drinks = (fields: Partial<Expense>): Expense => exp({ id: 'e-pf', ...fields })
+
+  it('flags a deposit somebody is still out', () => {
+    const s = settle({
+      expenses: [drinks({ paidBy: 'Anna', amountCents: 1900, pfandPaidCents: 100 })],
+    })
+    expect(s.warnings).toContainEqual({ kind: 'pfand_out', payerName: 'Anna', amountCents: 100 })
+  })
+
+  it('says nothing once the deposit has been reclaimed', () => {
+    const s = settle({
+      expenses: [drinks({ paidBy: 'Anna', amountCents: 1900, pfandPaidCents: 100 })],
+      pfandEntries: [
+        {
+          id: 'p1',
+          campId: 'c',
+          kind: 'refund',
+          payer: 'Anna',
+          amountCents: 100,
+          date: '2026-07-20',
+          createdAt: 5,
+        },
+      ],
+    })
+    expect(s.warnings.some((w) => w.kind === 'pfand_out')).toBe(false)
+  })
+
+  it('leaves every total untouched — pfand is nobody’s group money', () => {
+    const plain = settle({ expenses: [drinks({ paidBy: 'Anna', amountCents: 1900 })] })
+    const withPfand = settle({
+      expenses: [drinks({ paidBy: 'Anna', amountCents: 1900, pfandPaidCents: 100 })],
+    })
+    expect(withPfand.spentTotalCents).toBe(plain.spentTotalCents)
+    expect(withPfand.toReturnCents).toBe(plain.toReturnCents)
   })
 })

@@ -20,7 +20,11 @@ export type UseExpenses = {
   isLoading: boolean
   error: string | null
   saveExpense: (input: SaveExpenseInput) => void
-  /** Tick a receipt off as paid back, or un-tick it. */
+  /**
+   * Tick a receipt off as paid back, or un-tick it. This also moves the receipt's deposit:
+   * settling up covers it, so the pfand ledger reads the flag rather than storing a
+   * transfer of its own.
+   */
   setReimbursed: (expenseId: string, reimbursed: boolean) => void
   deleteExpense: (expenseId: string) => void
 }

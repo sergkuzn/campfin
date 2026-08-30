@@ -33,6 +33,11 @@ export function saveExpense(input: SaveExpenseInput): Promise<unknown> {
         note: input.note ?? null,
         paidBy: input.paidBy ?? null,
         reimbursed: input.reimbursed ?? null,
+        // Cleared the same way: taking the pfand off a receipt has to remove the attribute,
+        // or the old deposit would survive the edit and go on skewing the ledger.
+        pfandPaidCents: input.pfandPaidCents ?? null,
+        pfandReturnedCents: input.pfandReturnedCents ?? null,
+        pfandInTotal: input.pfandInTotal ?? null,
         createdAt,
       })
       // Permission rules can only traverse links, so the camp link is what makes this row
@@ -52,6 +57,11 @@ export function setExpenseReimbursed(expenseId: string, reimbursed: boolean): Pr
   return db.transact(chunk(db.tx.expenses[expenseId]).update({ reimbursed: reimbursed || null }))
 }
 
+/**
+ * Delete a receipt. Its deposit needs no cleanup of its own: the pfand ledger derives
+ * every line about a receipt from the receipt, so the balances re-net on the next render
+ * with nothing left pointing at a row that is gone.
+ */
 export function deleteExpense(expenseId: string): Promise<unknown> {
   return db.transact(chunk(db.tx.expenses[expenseId]).delete())
 }
