@@ -731,7 +731,8 @@ export const en = {
       count: (n: number) => `${n} ${n === 1 ? 'payment' : 'payments'}`,
     },
     pfand: {
-      /** The link into the pfand ledger from the receipts screen, where deposits are entered. */
+      /** Accessible name for the icon-only button that opens the pfand ledger from the
+       *  receipts screen, where deposits are entered. */
       overview: 'Pfand overview',
     },
   },

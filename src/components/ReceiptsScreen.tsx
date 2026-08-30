@@ -14,6 +14,7 @@ import { nextReceiptNumber, takenReceiptNumbers } from '../lib/receiptNumbers'
 import { ConfirmDialog } from './ConfirmDialog'
 import { ExpenseDayList } from './ExpenseDayList'
 import { ExpenseForm } from './ExpenseForm'
+import { PfandIcon } from './PfandIcon'
 import { ReceiptFilters } from './ReceiptFilters'
 import { Screen } from './Screen'
 import { Toast } from './Toast'
@@ -185,8 +186,13 @@ export function ReceiptsScreen({
       <header className="receipts__header">
         <h2 className="screen__title">{t.receipts.title}</h2>
         <div className="receipts__actions">
-          <button className="btn btn--ghost" type="button" onClick={onOpenPfand}>
-            {t.custody.pfand.overview}
+          <button
+            className="btn btn--ghost receipts__pfand"
+            type="button"
+            onClick={onOpenPfand}
+            aria-label={t.custody.pfand.overview}
+          >
+            <PfandIcon className="pfand-icon--tall" />
           </button>
           <button
             className="btn btn--primary"
