@@ -1,0 +1,36 @@
+/* Sized in `em` so the mark tracks whatever text it stands beside — a screen title, a
+   button label — instead of needing a pixel size for every place it appears. The artwork is
+   185×192 once the viewBox is cropped to it, so the height is the width times that ratio;
+   anything else distorts the crate.
+
+   Laid out as inline text rather than a flex child: the buttons it sits on are plain inline
+   boxes, and `vertical-align` sets it against the label's baseline, which is the thing it
+   should line up with. It follows the label everywhere it is used, hence the leading gap. */
+.pfand-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1.04em;
+  vertical-align: -0.2em;
+  margin-inline-start: 0.4em;
+}
+
+/* Beside a screen title it is the subject of the screen, not an ornament: full heading
+   height, and in the interactive blue so it reads as a mark rather than as a letter. */
+.pfand-icon--title {
+  width: 1.05em;
+  height: 1.09em;
+  vertical-align: -0.22em;
+  color: var(--accent);
+}
+
+/* On the button that opens the deposit block the mark grows into the padding the button
+   already has, rather than making it taller: negative block margins shrink what the icon
+   contributes to the line box back down to the label's own height, so the extra 0.7em of
+   crate hangs over the line — 0.35em each side, which is inside the button's vertical
+   padding. Change the height and the margin together or the button starts to grow. */
+.pfand-icon--tall {
+  width: 1.83em;
+  height: 1.9em;
+  margin-block: -0.35em;
+  vertical-align: middle;
+}

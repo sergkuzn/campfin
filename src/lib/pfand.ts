@@ -257,11 +257,6 @@ export function pfandBalanceCents(balances: PfandBalance[], name: string | undef
   return balances.find((balance) => payerKey(balance.name) === key)?.outstandingCents ?? 0
 }
 
-/** How much deposit money the camp's people are collectively out. */
-export function pfandOutstandingCents(balances: PfandBalance[]): number {
-  return balances.reduce((total, balance) => total + balance.outstandingCents, 0)
-}
-
 // --- The row guard -----------------------------------------------------------
 
 /** The door from an unknown database row into the typed world. */

@@ -5,15 +5,10 @@ import { useFormat, useT } from '../i18n'
 import type { CampWindow } from '../lib/camps'
 import { todayIso } from '../lib/dates'
 import { isSamePayer } from '../lib/payers'
-import {
-  isReceiptTxn,
-  type PfandBalance,
-  type PfandTxn,
-  pfandOutstandingCents,
-  type SavePfandInput,
-} from '../lib/pfand'
+import { isReceiptTxn, type PfandBalance, type PfandTxn, type SavePfandInput } from '../lib/pfand'
 import { ConfirmDialog } from './ConfirmDialog'
 import { PfandEntryForm } from './PfandEntryForm'
+import { PfandIcon } from './PfandIcon'
 import { RowMenu } from './RowMenu'
 import { Screen } from './Screen'
 import { Toast } from './Toast'
@@ -85,8 +80,6 @@ export function PfandScreen({
   // screen must not stay inert with no form to cancel.
   const locked = editing?.mode === 'new' || editingRow !== null
 
-  const outstandingCents = pfandOutstandingCents(balances)
-
   const handleSave = (input: SavePfandInput) => {
     pfand.saveEntry(input)
     setEditing(null)
@@ -121,7 +114,10 @@ export function PfandScreen({
   return (
     <Screen name="pfand" back={{ label: t.pfand.back, onClick: onBack }}>
       <header className="pfand__header">
-        <h2 className="screen__title">{t.pfand.title}</h2>
+        <h2 className="screen__title">
+          {t.pfand.title}
+          <PfandIcon className="pfand-icon--title" />
+        </h2>
       </header>
 
       <p className="slot-card__hint">{t.pfand.intro}</p>
@@ -151,10 +147,6 @@ export function PfandScreen({
               </li>
             ))}
           </ul>
-          <p className="pfand__total">
-            <span>{t.pfand.outstandingTotal}</span>
-            <strong>{format.euros(outstandingCents)}</strong>
-          </p>
         </section>
       )}
 

@@ -10,7 +10,6 @@ import {
   pfandDraftToInput,
   pfandIssues,
   pfandLedger,
-  pfandOutstandingCents,
   pfandOwner,
   receiptGroupCents,
   receiptTotalCents,
@@ -211,7 +210,6 @@ describe('pfandBalances', () => {
     const balances = pfandBalances(ledger)
     expect(pfandBalanceCents(balances, 'Anna')).toBe(0)
     expect(pfandBalanceCents(balances, 'Ben')).toBe(150)
-    expect(pfandOutstandingCents(balances)).toBe(150)
   })
 
   it('treats two spellings of one name as one pocket, showing the newest', () => {
@@ -230,12 +228,10 @@ describe('pfandBalances', () => {
     // rows say, and the screen is where it gets noticed.
     const ledger = pfandLedger([], [entry({ amountCents: 300 })])
     expect(pfandBalanceCents(pfandBalances(ledger), 'Anna')).toBe(-300)
-    expect(pfandOutstandingCents(pfandBalances(ledger))).toBe(-300)
   })
 
   it('is empty for an empty ledger', () => {
     expect(pfandBalances([])).toEqual([])
-    expect(pfandOutstandingCents([])).toBe(0)
     expect(pfandBalanceCents([], 'Anna')).toBe(0)
   })
 

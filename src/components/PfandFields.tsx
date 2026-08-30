@@ -1,5 +1,6 @@
 import './ReceiptsScreen.css'
 import { useFormat, useT } from '../i18n'
+import { PfandIcon } from './PfandIcon'
 
 type Props = {
   /** Whether the block is open. Closed means the receipt has no pfand at all. */
@@ -46,8 +47,10 @@ export function PfandFields({
         className="btn btn--ghost pfand-fields__add"
         type="button"
         onClick={() => onToggle(true)}
+        aria-label={t.receipts.pfand.addLabel}
       >
         {t.receipts.pfand.add}
+        <PfandIcon className="pfand-icon--tall" />
       </button>
     )
   }

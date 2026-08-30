@@ -519,8 +519,11 @@ export const en = {
      * carries none, and the common case must not pay for the rare one.
      */
     pfand: {
-      /** The button that opens the block, and the one that takes the pfand off again. */
-      add: '＋ Pfand',
+      /** The button that opens the block, and the one that takes the pfand off again.
+       *  The opening one is a plus beside the pfand mark, with no word of its own — so it
+       *  carries `addLabel` for anyone who cannot see the picture. */
+      add: '＋',
+      addLabel: 'Add a pfand',
       remove: 'Remove the pfand',
       legend: 'Pfand',
       /** Which number went into the amount box above. Asked as two options rather than
@@ -652,7 +655,6 @@ export const en = {
     balancesTitle: 'Out of pocket',
     /** The money holder's row is marked, the same crown the receipt form uses. */
     holderTag: (name: string) => `👑 ${name}`,
-    outstandingTotal: 'Total still out',
     /** A balance below zero: more deposit came back than went out. Rare and worth naming
      *  rather than drawing as a minus sign nobody notices. */
     overRefunded: "got someone else's pfand money",
