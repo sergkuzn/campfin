@@ -11,6 +11,11 @@
   gap: var(--space-2);
 }
 
+/* Icon-only button: drop the leading gap the mark carries for when it follows a label. */
+.receipts__pfand .pfand-icon {
+  margin-inline-start: 0;
+}
+
 .receipts__days {
   display: flex;
   flex-direction: column;
