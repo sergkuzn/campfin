@@ -17,7 +17,7 @@ import { todayIso } from '../lib/dates'
 import { exportFileName } from '../lib/exportFile'
 import { isCampAdmin, memberCount } from '../lib/members'
 import { type CustodyFocus, custodyReading } from '../lib/movements'
-import { pfandBalances, pfandLedger, pfandOutstandingCents } from '../lib/pfand'
+import { pfandBalances, pfandLedger } from '../lib/pfand'
 import { depositPools, everydayPool, summarisePools } from '../lib/pools'
 import { buildReport } from '../lib/report'
 import { computeSettlement } from '../lib/settlement'
@@ -257,6 +257,7 @@ export function SignedInApp({ session }: Props) {
         summaries={summaries}
         focusPoolId={view.poolId}
         onBack={goBack}
+        onOpenPfand={() => navigate({ screen: 'pfand', campId: openCamp.id })}
       />
     )
   }
@@ -337,15 +338,11 @@ export function SignedInApp({ session }: Props) {
       error={error ?? income.error ?? expenses.error ?? movements.error ?? pfand.error}
       hasExpenses={expenses.expenses.length > 0}
       custody={custody}
-      pfandOutCents={pfandOutstandingCents(balances)}
-      pfandPeopleCount={balances.length}
-      pfandTxnCount={pfandTxns.length}
       onBack={goBack}
       onOpenIncome={() => navigate({ screen: 'income', campId: openCamp.id })}
       onChangeHolder={(name: string) => setMoneyHolder(openCamp.id, name)}
       onOpenReceipts={(poolId) => navigate({ screen: 'receipts', campId: openCamp.id, poolId })}
       onOpenMovements={(focus) => navigate({ screen: 'movements', campId: openCamp.id, focus })}
-      onOpenPfand={() => navigate({ screen: 'pfand', campId: openCamp.id })}
       onOpenReport={() => navigate({ screen: 'report', campId: openCamp.id })}
       onOpenSettings={() => navigate({ screen: 'settings', campId: openCamp.id })}
     />

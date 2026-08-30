@@ -82,6 +82,7 @@ function renderScreen(
         summaries={pools.map(summary)}
         focusPoolId={focusPoolId}
         onBack={vi.fn()}
+        onOpenPfand={vi.fn()}
       />
     </I18nProvider>,
   )
@@ -519,7 +520,7 @@ describe('paying somebody back who also fronted pfand', () => {
     await user.click(screen.getByRole('button', { name: en.rowMenu.open('Bakery') }))
     await user.click(screen.getByRole('button', { name: en.rowMenu.delete }))
 
-    expect(screen.queryByText(/pfand/i)).not.toBeInTheDocument()
+    expect(within(screen.getByRole('dialog')).queryByText(/pfand/i)).not.toBeInTheDocument()
   })
 
   it('says nothing about a deposit when the receipt carries none', async () => {
@@ -530,7 +531,7 @@ describe('paying somebody back who also fronted pfand', () => {
     })
 
     await user.click(screen.getByRole('button', { name: t.payer.returnButton }))
-    expect(screen.queryByText(/pfand/i)).not.toBeInTheDocument()
+    expect(within(screen.getByRole('dialog')).queryByText(/pfand/i)).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: t.payer.confirmReturnLabel }))
     expect(setReimbursed).toHaveBeenCalledWith('a', true)

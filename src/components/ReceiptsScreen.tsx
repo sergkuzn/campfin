@@ -35,6 +35,9 @@ type Props = {
    *  screen mounts — from then on the chips are the user's. */
   focusPoolId: string | null
   onBack: () => void
+  /** Opens the pfand ledger. Deposits are entered on receipts here, so the ledger that
+   *  nets them lives one step away rather than on the dashboard. */
+  onOpenPfand: () => void
 }
 
 /** Which receipt is unlocked. One at a time — the same lock model as the income screen. */
@@ -48,6 +51,7 @@ export function ReceiptsScreen({
   summaries,
   focusPoolId,
   onBack,
+  onOpenPfand,
 }: Props) {
   const t = useT()
   const format = useFormat()
@@ -180,14 +184,19 @@ export function ReceiptsScreen({
     <Screen name="receipts" back={{ label: t.receipts.back, onClick: onBack }}>
       <header className="receipts__header">
         <h2 className="screen__title">{t.receipts.title}</h2>
-        <button
-          className="btn btn--primary"
-          type="button"
-          disabled={locked || spendable.length === 0}
-          onClick={() => setEditing({ mode: 'new' })}
-        >
-          {t.receipts.add}
-        </button>
+        <div className="receipts__actions">
+          <button className="btn btn--ghost" type="button" onClick={onOpenPfand}>
+            {t.custody.pfand.overview}
+          </button>
+          <button
+            className="btn btn--primary"
+            type="button"
+            disabled={locked || spendable.length === 0}
+            onClick={() => setEditing({ mode: 'new' })}
+          >
+            {t.receipts.add}
+          </button>
+        </div>
       </header>
 
       {/* A write that only failed to *sync* says nothing — Instant queues it. This is for

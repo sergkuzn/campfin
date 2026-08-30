@@ -10,7 +10,6 @@ import { BurnChart } from './BurnChart'
 import { CampSetup } from './CampSetup'
 import { DepositsStrip } from './DepositsStrip'
 import { FeeStrip } from './FeeStrip'
-import { PfandStrip } from './PfandStrip'
 import { PoolBars } from './PoolBars'
 import { Screen } from './Screen'
 import { SlotCard } from './SlotCard'
@@ -33,11 +32,6 @@ type Props = {
   hasExpenses: boolean
   /** Cash held rather than spent: the deposits and the participation fees. */
   custody: CustodyReading
-  /** The pfand ledger in three numbers: what is still out, over how many people, and how
-   *  many lines produced it. Derived by the parent so the card and the screen agree. */
-  pfandOutCents: number
-  pfandPeopleCount: number
-  pfandTxnCount: number
   onBack: () => void
   onOpenIncome: () => void
   /** Names the money holder from the setup checklist. A name only: the wallet can change
@@ -48,7 +42,6 @@ type Props = {
   onOpenReceipts: (poolId: string | null) => void
   /** Opens the movements screen on one half of the custody money. */
   onOpenMovements: (focus: CustodyFocus) => void
-  onOpenPfand: () => void
   onOpenReport: () => void
   onOpenSettings: () => void
 }
@@ -65,15 +58,11 @@ export function CampDashboard({
   error,
   hasExpenses,
   custody,
-  pfandOutCents,
-  pfandPeopleCount,
-  pfandTxnCount,
   onBack,
   onOpenIncome,
   onChangeHolder,
   onOpenReceipts,
   onOpenMovements,
-  onOpenPfand,
   onOpenReport,
   onOpenSettings,
 }: Props) {
@@ -86,7 +75,7 @@ export function CampDashboard({
   const everydayRemainingCents =
     summaries.find((summary) => summary.pool.role === 'everyday')?.remainingCents ?? 0
   // Both setup answers are compulsory, so a camp missing either shows the checklist rather
-  // than the hub — five blocks that cannot be trusted would hide the thing to do. Receipts
+  // than the hub — four blocks that cannot be trusted would hide the thing to do. Receipts
   // do not count: a receipt entered before the grant is unusual, and its "owed" marker is
   // meaningless until somebody holds the money anyway.
   const setUp = isCampSetUp(camp, funded)
@@ -191,19 +180,6 @@ export function CampDashboard({
           <FeeStrip heldCents={custody.feeHeldCents} count={custody.feeCount} />
         ) : (
           <p className="slot-card__hint">{t.custody.fee.empty}</p>
-        )}
-      </SlotCard>
-
-      <SlotCard
-        title={t.custody.pfand.title}
-        action={t.custody.pfand.open}
-        onOpen={onOpenPfand}
-        filled={pfandTxnCount > 0}
-      >
-        {pfandTxnCount === 0 ? (
-          <p className="slot-card__hint">{t.custody.pfand.empty}</p>
-        ) : (
-          <PfandStrip outCents={pfandOutCents} peopleCount={pfandPeopleCount} />
         )}
       </SlotCard>
 

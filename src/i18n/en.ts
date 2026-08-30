@@ -644,11 +644,11 @@ export const en = {
    */
   pfand: {
     title: 'Pfand',
-    back: '← Back to camp',
+    back: '← Back to receipts',
     /** Above the balances: what this screen is for, in one line. It has to say where a row
      *  comes from, because *Refund* on a balance is the only way to write one. */
     intro:
-      'Pfand (deposit) money, calculated from the receipts every time. Tap Refund on a balance to record money taken back at a shop with nothing bought.',
+      'Pfand (deposit) money, calculated from the receipts. Tap Refund on a balance to record money taken back at a shop with nothing bought.',
     balancesTitle: 'Out of pocket',
     /** The money holder's row is marked, the same crown the receipt form uses. */
     holderTag: (name: string) => `👑 ${name}`,
@@ -729,13 +729,8 @@ export const en = {
       count: (n: number) => `${n} ${n === 1 ? 'payment' : 'payments'}`,
     },
     pfand: {
-      title: 'Pfand',
-      empty: 'No deposit recorded yet.',
-      open: 'Open the pfand ledger',
-      /** The dashboard figure: what the camp's people are collectively out of pocket. */
-      out: 'Deposit still out',
-      settled: 'Every deposit is settled.',
-      count: (n: number) => `${n} ${n === 1 ? 'person' : 'people'}`,
+      /** The link into the pfand ledger from the receipts screen, where deposits are entered. */
+      overview: 'Pfand overview',
     },
   },
 
