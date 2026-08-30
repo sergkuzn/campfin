@@ -329,14 +329,14 @@ export const en = {
       },
     },
     aboutLabel: 'What is a pool?',
-    about:
-      '- An income pool is a separate wallet of money for a specific category of spending (f.i ."Group money", "Bike rent"). ' +
-      "- Each income pool can consist of one or several income sources. In most cases it's just onemptied." +
-      '- Each receipt can be assigned to one particular income pool.' +
-      '- "Deposit" is a specific type of income pool that needs to be fully returned at the end of the camp.' +
-      '- "Group money" is a built-in income pool for daily purchases that every camp has. ' +
-      '- The "Group money" pool has a "granted" section that describes what money was given and the "actual" section designed to reflect the actual composition of the camp if it\'s different from what has been planned, f.i., some participants didn\'t come or leave earlier than expected. ' +
-      'In this case some money cannot be used - it will be reserved for returning back and not be considered in calculations of remaining amount for spending.',
+    about: [
+      'An income pool is a separate wallet of money for a specific category of spending (e.g. "Group money", "Bike hire").',
+      "An income pool can consist of one or several income sources — in most cases it's just one.",
+      'Each receipt is assigned to one particular income pool.',
+      '"Deposit" is a type of income pool that has to be fully returned at the end of the camp.',
+      '"Group money" is a built-in income pool for daily purchases that every camp has.',
+      'The "Group money" pool has a "granted" section describing what money was given, and an "actual" section reflecting the real composition of the camp when it differs from the plan (e.g. some participants did not come, or left early). Money that can no longer be used is then reserved for returning and left out of the remaining-to-spend total.',
+    ],
     addIncomeTo: (name: string) => `Add income to ${name}`,
     editIncome: 'Edit income',
     deleteIncome: 'Delete income',
