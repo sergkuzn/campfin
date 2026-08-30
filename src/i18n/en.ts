@@ -329,10 +329,14 @@ export const en = {
       },
     },
     aboutLabel: 'What is a pool?',
-    about:
-      'A pool is a pot of money tracked on its own. "Group money" is the daily pot every ' +
-      'camp has; add another pool for a different purpose, or for a deposit you hand over ' +
-      'and get back. Every receipt belongs to one pool.',
+    about: [
+      'An income pool is a separate wallet of money for a specific category of spending (e.g. "Group money", "Bike hire").',
+      "An income pool can consist of one or several income sources — in most cases it's just one.",
+      'Each receipt is assigned to one particular income pool.',
+      '"Deposit" is a type of income pool that has to be fully returned at the end of the camp.',
+      '"Group money" is a built-in income pool for daily purchases that every camp has.',
+      'The "Group money" pool has a "granted" section describing what money was given, and an "actual" section reflecting the real composition of the camp when it differs from the plan (e.g. some participants did not come, or left early). Money that can no longer be used is then reserved for returning and left out of the remaining-to-spend total.',
+    ],
     addIncomeTo: (name: string) => `Add income to ${name}`,
     editIncome: 'Edit income',
     deleteIncome: 'Delete income',
@@ -478,13 +482,6 @@ export const en = {
       newNamePlaceholder: 'e.g. Ben',
       /** Shown instead of the first option when no holder has been named yet. */
       noHolder: 'No money holder yet — name one in camp settings, then this becomes a choice.',
-      /** In the editor, for a receipt somebody else paid: it may already have been settled
-       *  before it was ever typed in. */
-      returnedLabel: 'Paid back',
-      /** Behind the ⓘ button beside the checkbox, shown only on request rather than always,
-       *  since most taps of the checkbox need no explanation at all. */
-      returnedHint: 'Tick if the money holder has already returned this money.',
-      returnedInfoLabel: 'What does “Paid back” mean?',
       /** On the row itself. Only ever shown when someone other than the holder paid, so
        *  the common case costs no words at all. */
       paidByRow: (name: string) => `Paid by ${name}`,
@@ -497,10 +494,56 @@ export const en = {
       confirmUndoTitle: (name: string) => `Undo the return to ${name}?`,
       confirmUndoLine: (amount: string) => `${amount} goes back to being owed.`,
       confirmUndoLabel: 'Undo',
+      /**
+       * Returning somebody's money settles what that receipt left them out, deposit
+       * included — so the question says what will happen to the deposit rather than
+       * offering it as an option. Two lines, because a receipt that gave back more deposit
+       * than it charged moves the other way: the holder takes on a refund that person has
+       * already had.
+       */
+      confirmReturnPfandLine: (amount: string, holder: string) =>
+        `Its ${amount} of pfand moves to ${holder} too — it is ${holder}'s to reclaim from now on.`,
+      confirmReturnPfandOwedLine: (amount: string, holder: string) =>
+        `${holder} also takes on ${amount} of pfand already taken back.`,
+      /** Undoing a return hands the deposit back with the debt: the pfand follows the
+       *  receipt's flag, so there is never a transfer left standing on its own. */
+      confirmUndoPfandLine: (amount: string, name: string) =>
+        `Its ${amount} of pfand goes back to ${name} too.`,
       /** Under the list, beside the spent total. */
       owedTotal: 'Owed to others',
       filterUnpaid: 'Not repaid',
       emptyUnpaid: 'Nothing is waiting to be paid back.',
+    },
+    /**
+     * The deposit on a receipt. Folded away behind one button, because nearly every receipt
+     * carries none, and the common case must not pay for the rare one.
+     */
+    pfand: {
+      /** The button that opens the block, and the one that takes the pfand off again.
+       *  The opening one is a plus beside the pfand mark, with no word of its own — so it
+       *  carries `addLabel` for anyone who cannot see the picture. */
+      add: '＋ Pfand',
+      addLabel: 'Add a pfand',
+      remove: 'Remove the pfand',
+      legend: 'Pfand',
+      /** Which number went into the amount box above. Asked as two options rather than
+       *  guessed: a printed slip has the deposit inside its total, but a receipt
+       *  typed up afterwards is often the goods alone. */
+      modeLabel: 'The amount above is',
+      modeInTotal: 'the total, pfand included',
+      modeOnTop: 'the goods only, pfand on top',
+      paidLabel: 'Deposit charged (€)',
+      returnedLabel: 'Deposit refunded (€)',
+      amountPlaceholder: 'e.g. 1,00',
+      /** The live readout under the block: the one number that tells the two modes apart. */
+      groupLine: (amount: string) => `Group money spent: ${amount}`,
+      /** On the receipt row. Both directions appear only when the receipt has both. */
+      rowPaid: (amount: string) => `pfand: +${amount}`,
+      rowReturned: (amount: string) => `pfand: −${amount}`,
+      rowBoth: (paid: string, returned: string) => `pfand: +${paid} / −${returned}`,
+      /** The figure printed on the paper slip, so a row here can be checked against the
+       *  folder — the headline amount beside it is the group's money, which is different. */
+      rowTotal: (amount: string) => `total: ${amount}`,
     },
     dayTotal: (amount: string) => `${amount} that day`,
     count: (n: number) => `${n} ${n === 1 ? 'receipt' : 'receipts'}`,
@@ -521,6 +564,11 @@ export const en = {
     emptyFiltered: 'No receipts match the filters you picked.',
     deleteTitle: (name: string) => `Delete "${name}"?`,
     deleteLine: (amount: string, pool: string) => `${amount} goes back into ${pool}.`,
+    /** What else disappears with the receipt. Both lines are about the deposit, and
+     *  neither appears on a receipt that never had one — which is nearly all of them.
+     *  The amount is signed, because the deposit can move a balance either way. */
+    deletePfandLine: (name: string, amount: string) =>
+      `${name}'s pfand balance changes by ${amount} — the deposit on this receipt goes with it.`,
     confirmDelete: 'Delete',
     issues: {
       name: 'Say what this receipt was for.',
@@ -530,6 +578,9 @@ export const en = {
       number: 'A receipt number is a whole number: 1, 2, 3 — or leave it empty.',
       numberTaken: 'Another receipt already has that number.',
       paidBy: 'Say whose money paid for this — the money holder, or somebody else by name.',
+      pfand: 'A pfand amount is euros, e.g. 1,00 — or leave it empty.',
+      pfandOverAmount:
+        'The pfand is the whole amount, so no group money was spent. Record it on the pfand screen instead.',
     },
   },
 
@@ -590,6 +641,68 @@ export const en = {
   },
 
   /**
+   * The deposit, tracked per person rather than per pool. It is never the camp's
+   * money — whoever paid is out their own until it is reclaimed — so the wording here
+   * avoids "spent" and "budget" entirely, exactly as the custody screens do.
+   */
+  pfand: {
+    title: 'Pfand',
+    back: '← Back to receipts',
+    /** Above the balances: what this screen is for, in one line. It has to say where a row
+     *  comes from, because *Refund* on a balance is the only way to write one. */
+    intro:
+      'Pfand (deposit) money, calculated from the receipts. Tap Refund on a balance to record money taken back at a shop with nothing bought.',
+    balancesTitle: 'Out of pocket',
+    /** The money holder's row is marked, the same crown the receipt form uses. */
+    holderTag: (name: string) => `👑 ${name}`,
+    /** A balance below zero: more deposit came back than went out. Rare and worth naming
+     *  rather than drawing as a minus sign nobody notices. */
+    overRefunded: "got someone else's pfand money",
+    settled: 'settled',
+    /** The one action on a balance row. A balance below zero gets none: more has come back
+     *  than went out, and the row to correct is a receipt or a refund, not this. */
+    refundAction: 'Refund',
+    txnsTitle: 'Transactions',
+    empty: 'Nothing here yet — pfand on a receipt shows up on its own.',
+    /** What each ledger line is. `item` is the receipt the deposit was charged on. */
+    txnKinds: {
+      receipt_paid: (item: string) => `Deposit charged — ${item}`,
+      receipt_returned: (item: string) => `Deposit refunded — ${item}`,
+      refund: 'Refunded at the shop',
+    },
+    /** Receipt-derived lines are edited on the receipts screen, so their row says so
+     *  instead of offering a menu that cannot change anything. */
+    fromReceipt: 'from a receipt',
+    /** On a receipt somebody else paid and has since been paid back for: the deposit is the
+     *  holder's now, and the line has to say whose till trip it was. */
+    viaPayer: (name: string) => `taken over from ${name}`,
+    /** The one thing a stored row can be. Named rather than inlined so the delete question
+     *  and the form's heading cannot drift apart. */
+    kinds: {
+      refund: 'Refunded at the shop',
+    },
+    /** The form's heading. It names the person because the form no longer asks — it opened
+     *  from that person's balance row. */
+    formTitle: (name: string) => `Refunded at the shop — ${name}`,
+    dateLabel: 'Date',
+    amountLabel: 'Amount (€)',
+    amountPlaceholder: 'e.g. 1,00',
+    noteLabel: 'Note',
+    notePlaceholder: 'e.g. returned at Rewe',
+    save: 'Save',
+    cancel: 'Cancel',
+    count: (n: number) => `${n} ${n === 1 ? 'transaction' : 'transactions'}`,
+    deleteTitle: (name: string) => `Delete this pfand row for ${name}?`,
+    deleteLine: (kind: string, amount: string) => `${kind}, ${amount}.`,
+    confirmDelete: 'Delete',
+    issues: {
+      payer: 'Say whose money this is.',
+      amount: 'Enter an amount in euros, e.g. 1,00.',
+      date: 'Pick the date this happened.',
+    },
+  },
+
+  /**
    * The two custody blocks: money passing through your hands, split by where it goes next.
    * A deposit travels to a counterparty and comes back; the participation fees only go
    * onward to the organisation.
@@ -616,6 +729,10 @@ export const en = {
       open: 'Open the participation fee',
       held: 'To hand over to the organisation',
       count: (n: number) => `${n} ${n === 1 ? 'payment' : 'payments'}`,
+    },
+    pfand: {
+      /** The link into the pfand ledger from the receipts screen, where deposits are entered. */
+      overview: 'Pfand overview',
     },
   },
 
@@ -706,6 +823,10 @@ export const en = {
        *  the report: until it is settled, the cash box holds somebody else's money. */
       owedToPayer: (name: string, amount: string) =>
         `${name} is still owed ${amount} for receipts they paid themselves.`,
+      /** Deposit money not yet reclaimed. Never the camp's money — but it is the thing
+       *  everyone forgets, and the report is read once. */
+      pfandOut: (name: string, amount: string) =>
+        `${name} still has ${amount} of pfand out, not yet reclaimed.`,
     },
   },
 }

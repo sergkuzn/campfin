@@ -4,6 +4,7 @@ import type { CampWindow } from '../lib/camps'
 import {
   blankExpenseDraft,
   draftFromExpense,
+  draftGroupCents,
   type ExpenseDraft,
   expenseDraftToInput,
   expenseIssues,
@@ -17,6 +18,7 @@ import './PoolTag.css'
 import './ReceiptFilters.css'
 import { DateField } from './DateField'
 import { PayerSelect } from './PayerSelect'
+import { PfandFields } from './PfandFields'
 import { ReceiptNumberField } from './ReceiptNumberField'
 import { RequiredMark } from './RequiredMark'
 
@@ -160,12 +162,28 @@ export function ExpenseForm({
         />
       </label>
 
+      <PfandFields
+        open={draft.pfand}
+        inTotal={draft.pfandInTotal}
+        paid={draft.pfandPaid}
+        returned={draft.pfandReturned}
+        // Derived during render, like `issues`: it is a pure function of the draft, so
+        // storing it would only give it a chance to fall out of step.
+        groupCents={draftGroupCents(draft)}
+        onToggle={(pfand) => patch({ pfand })}
+        onChange={(fields) =>
+          patch({
+            pfandInTotal: fields.inTotal ?? draft.pfandInTotal,
+            pfandPaid: fields.paid ?? draft.pfandPaid,
+            pfandReturned: fields.returned ?? draft.pfandReturned,
+          })
+        }
+      />
+
       <PayerSelect
         value={draft.paidBy}
         moneyHolder={moneyHolder}
-        reimbursed={draft.reimbursed}
         onChange={(paidBy) => patch({ paidBy })}
-        onReimbursedChange={(reimbursed) => patch({ reimbursed })}
       />
 
       <label className="field">

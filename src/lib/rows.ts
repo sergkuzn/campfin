@@ -15,6 +15,7 @@ import { isCamp } from './camps'
 import { isExpense } from './expenses'
 import { isIncomeSource, isMovement, isPerDiemBlock, isPool } from './income'
 import { isMembership } from './members'
+import { isPfandEntry } from './pfand'
 import { isPoolColor } from './poolColors'
 import type {
   Account,
@@ -24,6 +25,7 @@ import type {
   Membership,
   Movement,
   PerDiemBlock,
+  PfandEntry,
   Pool,
 } from './types'
 
@@ -127,6 +129,7 @@ export function toExpense(row: unknown): Expense | null {
   if (!isExpense(value)) return null
   const { id, campId, poolId, name, amountCents, date, number, note, createdAt } = value
   const { paidBy, reimbursed, enteredBy } = value
+  const { pfandPaidCents, pfandReturnedCents, pfandInTotal } = value
   return {
     id,
     campId,
@@ -138,7 +141,19 @@ export function toExpense(row: unknown): Expense | null {
     note,
     paidBy,
     reimbursed,
+    pfandPaidCents,
+    pfandReturnedCents,
+    pfandInTotal,
     enteredBy,
     createdAt,
   }
+}
+
+export function toPfandEntry(row: unknown): PfandEntry | null {
+  const value = withoutNulls(row)
+  if (!isPfandEntry(value)) return null
+  const { id, campId, kind, payer, amountCents, date, note, createdAt } = value
+  // Listed field by field rather than spread: a row from an older build carries attributes
+  // this type no longer has, and copying them wholesale would smuggle them back in.
+  return { id, campId, kind, payer, amountCents, date, note, createdAt }
 }

@@ -6,6 +6,7 @@ import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
 import { useMovements } from '../hooks/useMovements'
+import { usePfand } from '../hooks/usePfand'
 import { useRequestAccess } from '../hooks/useRequestAccess'
 import { useScrollToTop } from '../hooks/useScrollToTop'
 import type { Session } from '../hooks/useSession'
@@ -16,6 +17,7 @@ import { todayIso } from '../lib/dates'
 import { exportFileName } from '../lib/exportFile'
 import { isCampAdmin, memberCount } from '../lib/members'
 import { type CustodyFocus, custodyReading } from '../lib/movements'
+import { pfandBalances, pfandLedger } from '../lib/pfand'
 import { depositPools, everydayPool, summarisePools } from '../lib/pools'
 import { buildReport } from '../lib/report'
 import { computeSettlement } from '../lib/settlement'
@@ -26,6 +28,7 @@ import { CampSettingsScreen } from './CampSettingsScreen'
 import { FinancialReport } from './FinancialReport'
 import { IncomeSetup } from './IncomeSetup'
 import { MovementsScreen } from './MovementsScreen'
+import { PfandScreen } from './PfandScreen'
 import { ReceiptsScreen } from './ReceiptsScreen'
 
 /**
@@ -43,6 +46,7 @@ type View =
   // filter from it once and owns the chips from then on.
   | { screen: 'receipts'; campId: string; poolId: string | null }
   | { screen: 'movements'; campId: string; focus: CustodyFocus }
+  | { screen: 'pfand'; campId: string }
   | { screen: 'report'; campId: string }
   | { screen: 'settings'; campId: string }
 
@@ -100,6 +104,7 @@ export function SignedInApp({ session }: Props) {
   const income = useIncome(openCampId)
   const expenses = useExpenses(openCampId)
   const movements = useMovements(openCampId)
+  const pfand = usePfand(openCampId)
 
   const { pools, sources, blocks } = income
   // The one place income and spending meet: every pool total on every screen comes from
@@ -117,6 +122,15 @@ export function SignedInApp({ session }: Props) {
   )
   const deposits = useMemo(() => depositPools(summaries), [summaries])
 
+  // The pfand ledger, computed once for the dashboard card, the pfand screen and the report:
+  // three places quoting the same balance, so they read it from one computation rather than
+  // three.
+  const pfandTxns = useMemo(
+    () => pfandLedger(expenses.expenses, pfand.entries, openCamp?.moneyHolder),
+    [expenses.expenses, pfand.entries, openCamp],
+  )
+  const balances = useMemo(() => pfandBalances(pfandTxns), [pfandTxns])
+
   // The camp's span, for the receipt date field: highlights those days and asks before
   // saving a receipt outside them.
   const campSpan = useMemo(() => campWindow(blocks), [blocks])
@@ -130,9 +144,10 @@ export function SignedInApp({ session }: Props) {
         blocks,
         expenses: expenses.expenses,
         movements: movements.movements,
+        pfandEntries: pfand.entries,
         moneyHolder: openCamp?.moneyHolder,
       }),
-    [summaries, blocks, expenses.expenses, movements.movements, openCamp],
+    [summaries, blocks, expenses.expenses, movements.movements, pfand.entries, openCamp],
   )
 
   // The same figures read as a statement: income, expenses, and the difference between
@@ -242,6 +257,7 @@ export function SignedInApp({ session }: Props) {
         summaries={summaries}
         focusPoolId={view.poolId}
         onBack={goBack}
+        onOpenPfand={() => navigate({ screen: 'pfand', campId: openCamp.id })}
       />
     )
   }
@@ -254,6 +270,20 @@ export function SignedInApp({ session }: Props) {
         movements={movements}
         deposits={deposits}
         custody={custody}
+        campWindow={campSpan}
+        onBack={goBack}
+      />
+    )
+  }
+
+  if (view.screen === 'pfand') {
+    return (
+      <PfandScreen
+        campId={openCamp.id}
+        pfand={pfand}
+        txns={pfandTxns}
+        balances={balances}
+        moneyHolder={openCamp.moneyHolder}
         campWindow={campSpan}
         onBack={goBack}
       />
@@ -305,7 +335,7 @@ export function SignedInApp({ session }: Props) {
       burn={burn}
       todayIso={today}
       isLoading={income.isLoading}
-      error={error ?? income.error ?? expenses.error ?? movements.error}
+      error={error ?? income.error ?? expenses.error ?? movements.error ?? pfand.error}
       hasExpenses={expenses.expenses.length > 0}
       custody={custody}
       onBack={goBack}

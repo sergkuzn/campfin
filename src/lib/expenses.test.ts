@@ -22,7 +22,10 @@ function draft(fields: Partial<ExpenseDraft> = {}): ExpenseDraft {
     number: '',
     note: '',
     paidBy: 'Anna',
-    reimbursed: false,
+    pfand: false,
+    pfandInTotal: true,
+    pfandPaid: '',
+    pfandReturned: '',
     ...fields,
   }
 }
@@ -123,13 +126,16 @@ describe('blankExpenseDraft', () => {
   it('defaults the date to today, pre-selects the pool and fills in the next number', () => {
     expect(blankExpenseDraft('2026-07-30', 'pool-2', 25)).toEqual({
       paidBy: '',
-      reimbursed: false,
       date: '2026-07-30',
       name: '',
       amount: '',
       poolId: 'pool-2',
       number: '25',
       note: '',
+      pfand: false,
+      pfandInTotal: true,
+      pfandPaid: '',
+      pfandReturned: '',
     })
   })
 
@@ -141,7 +147,6 @@ describe('blankExpenseDraft', () => {
 describe('the payer on a draft', () => {
   it('a new receipt picks nobody — whose money it was is a choice, not a default', () => {
     expect(blankExpenseDraft('2026-07-30', 'pool-2', 1).paidBy).toBe('')
-    expect(blankExpenseDraft('2026-07-30', 'pool-2', 1).reimbursed).toBe(false)
   })
 
   it('stores the name trimmed, and an empty field as no payer at all', () => {
@@ -156,25 +161,16 @@ describe('the payer on a draft', () => {
     expect(input?.reimbursed).toBeUndefined()
   })
 
-  it('ticking "already paid back" marks the receipt repaid', () => {
-    const input = expenseDraftToInput(draft({ paidBy: 'Ben', reimbursed: true }), 'c1', null, NONE)
-    expect(input?.reimbursed).toBe(true)
-  })
+  it('carries a settled receipt through an edit untouched', () => {
+    // Settling up is one tap on the list, and it moves the payer's pfand as well — so the
+    // editor must not be able to flip the flag on its own. An edit preserves it either way.
+    const repaid = expense({ paidBy: 'Ben', reimbursed: true })
+    expect(expenseDraftToInput(draft({ paidBy: 'Ben' }), 'c1', repaid, NONE)?.reimbursed).toBe(true)
 
-  it('un-ticking it on a settled receipt puts the money back to owed', () => {
-    const repaid: Expense = {
-      id: 'e1',
-      campId: 'c1',
-      poolId: 'pool-1',
-      name: 'Bread',
-      amountCents: 1250,
-      date: '2026-07-14',
-      paidBy: 'Ben',
-      reimbursed: true,
-      createdAt: 1,
-    }
-    const input = expenseDraftToInput(draft({ paidBy: 'Ben' }), 'c1', repaid, NONE)
-    expect(input?.reimbursed).toBeUndefined()
+    const owed = expense({ paidBy: 'Ben' })
+    expect(
+      expenseDraftToInput(draft({ paidBy: 'Ben' }), 'c1', owed, NONE)?.reimbursed,
+    ).toBeUndefined()
   })
 
   it('blocks the save until somebody is named — the field is compulsory', () => {
@@ -226,5 +222,100 @@ describe('isExpense', () => {
   it('rejects non-objects', () => {
     expect(isExpense(null)).toBe(false)
     expect(isExpense('e1')).toBe(false)
+  })
+})
+
+describe('pfand on a receipt', () => {
+  /** The block open, both amounts empty — the state the toggle lands on. */
+  function withPfand(fields: Partial<ExpenseDraft> = {}): ExpenseDraft {
+    return draft({ pfand: true, ...fields })
+  }
+
+  it('books the goods, not the whole total, when the pfand is inside the amount', () => {
+    const input = expenseDraftToInput(
+      withPfand({ amount: '20,00', pfandPaid: '1,00' }),
+      'c1',
+      null,
+      NONE,
+    )
+    expect(input?.amountCents).toBe(1900)
+    expect(input?.pfandPaidCents).toBe(100)
+    expect(input?.pfandInTotal).toBe(true)
+  })
+
+  it('leaves the amount alone when the pfand rides beside it', () => {
+    const input = expenseDraftToInput(
+      withPfand({ amount: '19,00', pfandPaid: '1,00', pfandInTotal: false }),
+      'c1',
+      null,
+      NONE,
+    )
+    expect(input?.amountCents).toBe(1900)
+    expect(input?.pfandInTotal).toBeUndefined()
+  })
+
+  it('adds a refund back onto the goods', () => {
+    // 10,00 € on the slip: 0,50 € of deposit charged, 0,75 € of it refunded.
+    const input = expenseDraftToInput(
+      withPfand({ amount: '10,00', pfandPaid: '0,50', pfandReturned: '0,75' }),
+      'c1',
+      null,
+      NONE,
+    )
+    expect(input?.amountCents).toBe(1025)
+    expect(input?.pfandReturnedCents).toBe(75)
+  })
+
+  it('drops the pfand when the block is closed, whatever is still typed in it', () => {
+    const input = expenseDraftToInput(
+      draft({ amount: '20,00', pfand: false, pfandPaid: '1,00' }),
+      'c1',
+      null,
+      NONE,
+    )
+    expect(input?.amountCents).toBe(2000)
+    expect(input?.pfandPaidCents).toBeUndefined()
+    expect(input?.pfandInTotal).toBeUndefined()
+  })
+
+  it('refuses an unreadable pfand amount', () => {
+    expect(expenseIssues(withPfand({ pfandPaid: 'x' }), NONE)).toContain('pfand')
+    expect(expenseIssues(withPfand({ pfandReturned: '-1' }), NONE)).toContain('pfand')
+  })
+
+  it('refuses a receipt total that is nothing but pfand', () => {
+    const issues = expenseIssues(withPfand({ amount: '1,00', pfandPaid: '1,00' }), NONE)
+    expect(issues).toContain('pfandOverAmount')
+  })
+
+  it('accepts empty pfand boxes as no pfand at all', () => {
+    expect(expenseIssues(withPfand(), NONE)).toEqual([])
+    expect(expenseDraftToInput(withPfand(), 'c1', null, NONE)?.pfandPaidCents).toBeUndefined()
+  })
+
+  it('round-trips a whole-total receipt back into the box it was typed in', () => {
+    const stored = expense({
+      amountCents: 1025,
+      pfandPaidCents: 50,
+      pfandReturnedCents: 75,
+      pfandInTotal: true,
+    })
+    const back = draftFromExpense(stored)
+    expect(back.amount).toBe('10,00')
+    expect(back.pfandPaid).toBe('0,50')
+    expect(back.pfandReturned).toBe('0,75')
+    expect(expenseDraftToInput(back, 'c1', stored, NONE)?.amountCents).toBe(1025)
+  })
+
+  it('round-trips a pfand-beside receipt without folding the total back in', () => {
+    const stored = expense({ amountCents: 1900, pfandPaidCents: 100 })
+    const back = draftFromExpense(stored)
+    expect(back.amount).toBe('19,00')
+    expect(back.pfandInTotal).toBe(false)
+    expect(expenseDraftToInput(back, 'c1', stored, NONE)?.amountCents).toBe(1900)
+  })
+
+  it('leaves a receipt without pfand with the block closed', () => {
+    expect(draftFromExpense(expense()).pfand).toBe(false)
   })
 })

@@ -248,7 +248,13 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
         </button>
       </header>
 
-      {showPoolHint && <p className="income__hint">{t.pools.about}</p>}
+      {showPoolHint && (
+        <ul className="income__hint">
+          {t.pools.about.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      )}
 
       {/* A write that only failed to *sync* says nothing — Instant queues it. This is for
           a write the server actually rejected. */}

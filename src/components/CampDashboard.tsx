@@ -75,7 +75,7 @@ export function CampDashboard({
   const everydayRemainingCents =
     summaries.find((summary) => summary.pool.role === 'everyday')?.remainingCents ?? 0
   // Both setup answers are compulsory, so a camp missing either shows the checklist rather
-  // than the hub — five blocks that cannot be trusted would hide the thing to do. Receipts
+  // than the hub — four blocks that cannot be trusted would hide the thing to do. Receipts
   // do not count: a receipt entered before the grant is unusual, and its "owed" marker is
   // meaningless until somebody holds the money anyway.
   const setUp = isCampSetUp(camp, funded)

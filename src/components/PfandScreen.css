@@ -1,0 +1,164 @@
+.pfand__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.pfand__section-title {
+  margin: 0 0 var(--space-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pfand__balance-rows,
+.pfand__txn-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pfand__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.pfand__total strong {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The balances read as the answer, so they get the solid card; the ledger below them is
+   the working that produced it. */
+.pfand-balance {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+
+.pfand-balance__main {
+  flex: 1 1 8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pfand-balance__name {
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.pfand-balance__note {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.pfand-balance__amount {
+  flex: 0 0 auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pfand-balance__actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* The same outline pill the receipt row's Return button wears, for the same reason: at one
+   or two per row a filled block would turn the list into a set of traffic lights. */
+.pfand-balance__action {
+  min-height: 1.75rem;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.pfand-balance__action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* One ledger line. Same row shape as a movement: the text grows, the amount and the ⋮ keep
+   their width. */
+.pfand-txn {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  /* Which way the money went, as a stripe down the leading edge — never the only signal,
+     since the amount beside it carries an explicit sign. */
+  border-inline-start: 3px solid var(--border);
+}
+
+.pfand-txn--out {
+  border-inline-start-color: var(--warn-fill);
+}
+
+.pfand-txn--back {
+  border-inline-start-color: var(--ok-fill);
+}
+
+.pfand-txn__main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0; /* lets a long name wrap instead of pushing the amount off the row */
+}
+
+.pfand-txn__payer {
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.pfand-txn__kind,
+.pfand-txn__meta,
+.pfand-txn__note {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.pfand-txn__amount {
+  flex: 0 0 auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Stands in for the ⋮ on a receipt-derived line, so the amounts stay in one column down a
+   list that mixes rows with menus and rows without. */
+.pfand-txn__no-menu {
+  flex: 0 0 2.25rem;
+}
+
+/* Whose refund this is, at the top of the form. A heading rather than a field: the name
+   came from the balance row that opened the card and cannot be changed here. */
+.pfand-form__title {
+  margin: 0;
+  font-weight: 600;
+}

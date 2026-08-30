@@ -1,9 +1,10 @@
 // The card's edge is painted with the palette classes, so the stylesheet that defines them
 // has to be loaded even though no PoolTag is rendered here.
 import './PoolTag.css'
-import { useFormat, useT } from '../i18n'
+import { type Dict, useFormat, useT } from '../i18n'
 import type { ExpenseView } from '../lib/expenseViews'
 import { isSamePayer, owedPayerName } from '../lib/payers'
+import { hasPfand, receiptTotalCents } from '../lib/pfand'
 import { poolColorOf } from '../lib/poolColors'
 import type { Expense, Pool } from '../lib/types'
 import { RowMenu } from './RowMenu'
@@ -101,6 +102,24 @@ type RowProps = {
   onToggleRepaid: (repaid: boolean) => void
 }
 
+/**
+ * The deposit line, in whichever of the three shapes the receipt has: bought, returned, or
+ * both. The signs are written out rather than left to `formatEuros`, so "+" and "−" line up
+ * whichever direction the row is. The labels are passed in — a plain function, not a
+ * component, so it must not reach for a hook of its own.
+ */
+function pfandText(
+  expense: Expense,
+  labels: Dict['receipts']['pfand'],
+  euros: (cents: number) => string,
+): string {
+  const paid = expense.pfandPaidCents ?? 0
+  const returned = expense.pfandReturnedCents ?? 0
+  if (paid > 0 && returned > 0) return labels.rowBoth(euros(paid), euros(returned))
+  if (paid > 0) return labels.rowPaid(euros(paid))
+  return labels.rowReturned(euros(returned))
+}
+
 function ReceiptRow({
   expense,
   pool,
@@ -182,7 +201,23 @@ function ReceiptRow({
         {expense.note !== undefined && <span className="receipt__note">{expense.note}</span>}
       </div>
 
-      <span className="receipt__amount">{format.euros(expense.amountCents)}</span>
+      {/* The headline amount is the group's money, so a receipt with a deposit on it prints
+          the slip's own total underneath — otherwise the row and the folder disagree and
+          neither explains why. Both sit in the amount column so the three figures stack
+          right-aligned instead of splitting across the row. */}
+      <span className="receipt__figures">
+        <span className="receipt__amount">{format.euros(expense.amountCents)}</span>
+        {hasPfand(expense) && (
+          <>
+            <span className="receipt__pfand">
+              {pfandText(expense, t.receipts.pfand, format.euros)}
+            </span>
+            <span className="receipt__pfand">
+              {t.receipts.pfand.rowTotal(format.euros(receiptTotalCents(expense)))}
+            </span>
+          </>
+        )}
+      </span>
 
       <RowMenu
         label={expense.name}

@@ -17,12 +17,18 @@
   font-size: 0.875rem;
 }
 
-/* The ⓘ paragraph under the header, shown only while it is asked for. */
+/* The ⓘ explainer under the header, shown only while it is asked for. One bullet
+   per point so the distinct facts read as a list rather than a wall of text. */
 .income__hint {
   margin: 0;
+  padding-left: 1.25rem;
   color: var(--muted);
   font-size: 0.8125rem;
   line-height: 1.5;
+}
+
+.income__hint li + li {
+  margin-top: var(--space-1);
 }
 
 /* Shared form shell: the fields wrap on a phone and sit in a row on wider screens. */

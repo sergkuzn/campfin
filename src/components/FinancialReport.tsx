@@ -60,28 +60,34 @@ export function FinancialReport({
 
   const warningText = (warning: SettlementWarning): string => {
     const amount = format.euros(warning.amountCents)
-    // Narrowing on `kind` is what makes the right fields visible in each branch: the payer
-    // warning has a name and no pool, the other three have a pool and no name.
-    if (warning.kind === 'owed_to_payer') {
-      return t.settlement.warnings.owedToPayer(warning.payerName, amount)
-    }
-
-    const pool = warning.pool?.name ?? ''
+    const warnings = t.settlement.warnings
+    // One switch rather than a person/pool split: narrowing on the discriminant one case at
+    // a time is what hands each branch the fields it actually has, and it makes a new kind
+    // a compile error here rather than a warning that renders as nothing.
     switch (warning.kind) {
+      case 'owed_to_payer':
+        return warnings.owedToPayer(warning.payerName, amount)
+      case 'pfand_out':
+        return warnings.pfandOut(warning.payerName, amount)
       case 'deposit_at_vendor':
-        return t.settlement.warnings.depositAtVendor(pool, amount)
+        return warnings.depositAtVendor(warning.pool?.name ?? '', amount)
       case 'pool_overspent':
-        return t.settlement.warnings.poolOverspent(pool, amount)
+        return warnings.poolOverspent(warning.pool?.name ?? '', amount)
       case 'over_attended':
-        return t.settlement.warnings.overAttended(pool, amount)
+        return warnings.overAttended(warning.pool?.name ?? '', amount)
     }
   }
 
   /** A key that tells two warnings of the same kind apart — by pool, or by person. */
-  const warningKey = (warning: SettlementWarning): string =>
-    warning.kind === 'owed_to_payer'
-      ? `owed_to_payer-${warning.payerName}`
-      : `${warning.kind}-${warning.pool?.id ?? 'none'}`
+  const warningKey = (warning: SettlementWarning): string => {
+    switch (warning.kind) {
+      case 'owed_to_payer':
+      case 'pfand_out':
+        return `${warning.kind}-${warning.payerName}`
+      default:
+        return `${warning.kind}-${warning.pool?.id ?? 'none'}`
+    }
+  }
 
   /**
    * The Repaid column, in the three states a reader needs to tell apart: yes, no while it

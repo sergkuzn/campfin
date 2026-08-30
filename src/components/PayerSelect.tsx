@@ -8,31 +8,26 @@ type Props = {
   value: string
   /** Who holds the camp cash, named in camp settings. Undefined until one is. */
   moneyHolder: string | undefined
-  /** Whether the payer has already been paid back. Only asked when somebody else paid. */
-  reimbursed: boolean
   onChange: (name: string) => void
-  onReimbursedChange: (reimbursed: boolean) => void
 }
 
 /**
- * Who paid for this receipt, and — when that was not the money holder — whether they have
- * been paid back yet.
+ * Who paid for this receipt.
  *
  * Two radios rather than a dropdown of everyone seen before: in practice there are two
  * answers, "out of the camp cash" and "somebody fronted it", and a list of past names made
  * the common answer as much work as the rare one. **Neither is selected to begin with**, so
  * whose money it was is a decision rather than a default that gets saved unnoticed.
  *
+ * Whether that person has been paid back is *not* asked here. Settling up is one tap on the
+ * list row, and it now moves the payer's pfand as well — a checkbox in the editor could
+ * only set the flag, so the two ways of saying the same thing would have meant two
+ * different things.
+ *
  * The component holds no draft of its own — it renders the value it is given and reports
  * changes upward, so the same markup serves a new receipt and an edited one.
  */
-export function PayerSelect({
-  value,
-  moneyHolder,
-  reimbursed,
-  onChange,
-  onReimbursedChange,
-}: Props) {
+export function PayerSelect({ value, moneyHolder, onChange }: Props) {
   const t = useT()
 
   const trimmed = value.trim()
@@ -42,8 +37,6 @@ export function PayerSelect({
   // Everything else is derived, which is what keeps an edited receipt selecting the right
   // radio with no effect to synchronise it.
   const [otherPicked, setOtherPicked] = useState(false)
-  // The "paid back" explanation costs a line only when asked for, by whoever taps the ⓘ.
-  const [showReturnedHint, setShowReturnedHint] = useState(false)
 
   // An explicit pick of "someone else" wins over what the name happens to say, so typing
   // the holder's own name into that box cannot leave both radios lit at once.
@@ -78,10 +71,9 @@ export function PayerSelect({
         </label>
       )}
 
-      {/* The radio, the name field, and (once there is a name to owe) the "paid back"
-          checkbox all read as one answer, so they share a row rather than a line each. The
-          radio carries no visible text — the name field beside it already says what
-          choosing it means. */}
+      {/* The radio and the name field read as one answer, so they share a row rather than a
+          line each. The radio carries no visible text — the name field beside it already
+          says what choosing it means. */}
       <div className="payer__other">
         <input
           type="radio"
@@ -99,39 +91,7 @@ export function PayerSelect({
           placeholder={t.receipts.payer.newNamePlaceholder}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
         />
-
-        {/* Only once there is somebody who *could* be owed. A receipt can be typed in days
-            after the cash was already handed over, so the editor has to be able to say "this
-            one is already settled" without a trip through the list — but the holder can
-            never owe themselves, whichever radio put their name in the box. */}
-        {isOther && trimmed !== '' && !namesHolder && (
-          <>
-            <label className="payer__returned">
-              <input
-                type="checkbox"
-                checked={reimbursed}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  onReimbursedChange(event.target.checked)
-                }
-              />
-              <span className="field__check-label">{t.receipts.payer.returnedLabel}</span>
-            </label>
-            <button
-              type="button"
-              className="info-button"
-              aria-expanded={showReturnedHint}
-              aria-label={t.receipts.payer.returnedInfoLabel}
-              onClick={() => setShowReturnedHint((shown) => !shown)}
-            >
-              ⓘ
-            </button>
-          </>
-        )}
       </div>
-
-      {isOther && trimmed !== '' && !namesHolder && showReturnedHint && (
-        <p className="field__hint">{t.receipts.payer.returnedHint}</p>
-      )}
     </fieldset>
   )
 }
