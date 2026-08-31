@@ -563,15 +563,20 @@ export const en = {
     unknownPool: 'Unknown pool',
     /** Sorting and filtering the list. The totals below the list follow the filter, so the
      *  wording says which receipts are being counted. */
+    /** Accessible name for the sort picker; not shown, since the picker sits where a sort
+     *  control is expected and its options spell out what it does. */
     sortLabel: 'Sort by',
+    /** An arrow instead of words: the axis (date or number) carries the meaning, and ↓/↑
+     *  read as newest/oldest and highest/lowest without a phrase. */
     sorts: {
-      date_desc: 'Date — newest first',
-      date_asc: 'Date — oldest first',
-      number_asc: 'Number — 1 upwards',
-      number_desc: 'Number — highest first',
+      date_desc: 'Date ↓',
+      date_asc: 'Date ↑',
+      number_asc: 'Number ↑',
+      number_desc: 'Number ↓',
     },
     /** Tapping every chip on is the same as tapping every chip off, so the chips settle on
-     *  "none lit" for both — there is no all-lit state to explain, and no All chip. */
+     *  "none lit" for both — there is no all-lit state to explain, and no All chip.
+     *  Accessible name for the chip group, not shown — coloured pool chips are self-evident. */
     filterLabel: 'Show pools',
     filterCount: (shown: number, total: number) => `${shown} of ${total} receipts shown`,
     emptyFiltered: 'No receipts match the filters you picked.',
@@ -665,7 +670,7 @@ export const en = {
      *  comes from, because *Refund* on a balance is the only way to write one. */
     intro:
       'Pfand (deposit) money, automatically calculated from the receipts. Tap "Refund" to record return of the money from a shop. (When Pfand is a part of the receipt with other purchases, it should be managed in the "Receipts" section).',
-    balancesTitle: 'Out of pocket',
+    balancesTitle: 'Personal money spent',
     /** The money holder's row is marked, the same crown the receipt form uses. */
     holderTag: (name: string) => `👑 ${name}`,
     /** A balance below zero: more deposit came back than went out. Rare and worth naming

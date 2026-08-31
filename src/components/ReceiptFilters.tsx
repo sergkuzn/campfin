@@ -44,9 +44,9 @@ export function ReceiptFilters({
           sits outside the <label>, so tapping it does not also focus the select. */}
       <div className="filters__row">
         <label className="filters__sort">
-          <span className="filters__label">{t.receipts.sortLabel}</span>
           <select
             className="input"
+            aria-label={t.receipts.sortLabel}
             value={sort}
             // The value of a <select> is always a string, so it is narrowed back to the union
             // here — the one place the cast lives, rather than in every caller.
@@ -75,8 +75,10 @@ export function ReceiptFilters({
       </div>
 
       {pools.length > 1 && (
-        <div className="filters__pools">
-          <span className="filters__label">{t.receipts.filterLabel}</span>
+        <fieldset className="filters__pools">
+          {/* The group needs a name for a screen reader, but the coloured chips make it
+              plain on screen — so the legend carries the text and is visually hidden. */}
+          <legend className="visually-hidden">{t.receipts.filterLabel}</legend>
           <div className="filters__chips">
             {pools.map((pool) => (
               <button
@@ -92,7 +94,7 @@ export function ReceiptFilters({
               </button>
             ))}
           </div>
-        </div>
+        </fieldset>
       )}
     </div>
   )
