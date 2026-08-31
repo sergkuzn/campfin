@@ -30,6 +30,19 @@
   margin-top: var(--space-1);
 }
 
+/* The per-pool ⓘ explainer on the Group money header — same look as the screen-level one. */
+.pool__hint {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.pool__hint li + li {
+  margin-top: var(--space-1);
+}
+
 /* Shared form shell: the fields wrap on a phone and sit in a row on wider screens. */
 
 .type-menu {

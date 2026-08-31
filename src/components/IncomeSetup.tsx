@@ -420,6 +420,9 @@ function PoolSection({
   // The everyday pool outlives every source in it, so it offers no Delete at all.
   const deletable = pool.role !== 'everyday'
   const isDeposit = pool.role === 'deposit'
+  const isEveryday = pool.role === 'everyday'
+  // The "how Group money works" explainer, revealed on demand on the everyday pool only.
+  const [showAbout, setShowAbout] = useState(false)
 
   // A pool holding exactly one income is one thing, not a box inside a box: the header
   // speaks for both, so the income's Edit and Delete join the pool's own menu.
@@ -446,6 +449,19 @@ function PoolSection({
         <h3 className="pool__name">
           <PoolTag pool={pool} variant="dot" />
           {pool.name}
+          {/* Sits inside the heading, right after the name, so it reads as part of the
+              label rather than a control floating in the header. */}
+          {isEveryday && (
+            <button
+              className="info-button"
+              type="button"
+              aria-expanded={showAbout}
+              aria-label={t.pools.everydayAboutLabel}
+              onClick={() => setShowAbout((shown) => !shown)}
+            >
+              ⓘ
+            </button>
+          )}
           {/* Money that is only passing through: it is in the camp's hands but never the
               camp's to spend, which is worth saying on the pot itself. */}
           {isDeposit && <span className="pool__badge">{t.pools.roles.deposit.label}</span>}
@@ -464,6 +480,14 @@ function PoolSection({
         )}
         <RowMenu label={pool.name} disabled={locked} items={menu} />
       </header>
+
+      {isEveryday && showAbout && (
+        <ul className="pool__hint">
+          {t.pools.everydayAbout.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      )}
 
       {isDeposit && sources.length > 0 && <p className="pool__note">{t.pools.depositNote}</p>}
 

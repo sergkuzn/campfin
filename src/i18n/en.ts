@@ -333,12 +333,20 @@ export const en = {
     },
     aboutLabel: 'What is a pool?',
     about: [
-      'An income pool is a separate wallet of money for a specific category of spending (e.g. "Group money", "Bike hire").',
-      "An income pool can consist of one or several income sources — in most cases it's just one.",
-      'Each receipt is assigned to one particular income pool.',
-      '"Deposit" is a type of income pool that has to be fully returned at the end of the camp.',
-      '"Group money" is a built-in income pool for daily purchases that every camp has.',
-      'The "Group money" pool has a "granted" section describing what money was given, and an "actual" section reflecting the real composition of the camp when it differs from the plan (e.g. some participants did not come, or left early). Money that can no longer be used is then reserved for returning and left out of the remaining-to-spend total.',
+      'A pool is a separate wallet for one category of spending, for example "Group money" or "Bike hire".',
+      'A pool may hold one income source or several; usually one.',
+      'Each receipt is charged to exactly one pool.',
+      'A "Deposit" pool is money that must be returned in full at the end of the camp.',
+      'Every camp starts with the "Group money" pool.',
+    ],
+    /** The ⓘ on the built-in everyday pool's header — how that one pool works, kept
+     *  apart from the generic pool facts above so a first visit need not read both. */
+    everydayAboutLabel: 'How does Group money work?',
+    everydayAbout: [
+      "Group money covers the camp's everyday purchases, such as food.",
+      'Fund it with a "Per person, per day" income: people × days × rate. This is the normal choice.',
+      'The "granted" section records the attendance the money was calculated for - this is the received amount.',
+      'The "actual" section is needed when the group composition differs (f.i. if participants cancelled or left early). The gap is reserved for return and excluded from the amount left to spend.',
     ],
     addIncomeTo: (name: string) => `Add income to ${name}`,
     editIncome: 'Edit income',
