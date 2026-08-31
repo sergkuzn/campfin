@@ -529,21 +529,21 @@ export const en = {
       /** Which number went into the amount box above. Asked as two options rather than
        *  guessed: a printed slip has the deposit inside its total, but a receipt
        *  typed up afterwards is often the goods alone. */
-      modeLabel: 'The amount above is',
-      modeInTotal: 'the total, pfand included',
-      modeOnTop: 'the goods only, pfand on top',
+      modeLabel: 'The amount above',
+      modeInTotal: 'includes Pfand',
+      modeOnTop: 'does not include Pfand',
       paidLabel: 'Deposit charged (€)',
       returnedLabel: 'Deposit refunded (€)',
       amountPlaceholder: 'e.g. 1,00',
       /** The live readout under the block: the one number that tells the two modes apart. */
       groupLine: (amount: string) => `Group money spent: ${amount}`,
       /** On the receipt row. Both directions appear only when the receipt has both. */
-      rowPaid: (amount: string) => `pfand: +${amount}`,
-      rowReturned: (amount: string) => `pfand: −${amount}`,
-      rowBoth: (paid: string, returned: string) => `pfand: +${paid} / −${returned}`,
+      rowPaid: (amount: string) => `Pfand: +${amount}`,
+      rowReturned: (amount: string) => `Pfand: −${amount}`,
+      rowBoth: (paid: string, returned: string) => `Pfand: +${paid} / −${returned}`,
       /** The figure printed on the paper slip, so a row here can be checked against the
        *  folder — the headline amount beside it is the group's money, which is different. */
-      rowTotal: (amount: string) => `total: ${amount}`,
+      rowTotal: (amount: string) => `Total: ${amount}`,
     },
     dayTotal: (amount: string) => `${amount} that day`,
     count: (n: number) => `${n} ${n === 1 ? 'receipt' : 'receipts'}`,
@@ -651,7 +651,7 @@ export const en = {
     /** Above the balances: what this screen is for, in one line. It has to say where a row
      *  comes from, because *Refund* on a balance is the only way to write one. */
     intro:
-      'Pfand (deposit) money, calculated from the receipts. Tap Refund on a balance to record money taken back at a shop with nothing bought.',
+      'Pfand (deposit) money, automatically calculated from the receipts. Tap "Refund" to record return of the money from a shop. (When Pfand is a part of the receipt with other purchases, it should be managed in the "Receipts" section).',
     balancesTitle: 'Out of pocket',
     /** The money holder's row is marked, the same crown the receipt form uses. */
     holderTag: (name: string) => `👑 ${name}`,
@@ -774,10 +774,10 @@ export const en = {
       total: 'Total cash rest',
       empty: 'Nothing left over — every pot is spent to the cent.',
       rows: {
-        poolUnspent: (pool: string) => `${pool} — unspent`,
-        poolUnusable: (pool: string) => `${pool} — not eligible for spending`,
-        depositReturn: (pool: string) => `Deposit ${pool} — to be refunded`,
-        fee: 'Participation fee to hand over',
+        poolUnspent: (pool: string) => `${pool}: unspent`,
+        poolUnusable: (pool: string) => `${pool}: reserved`,
+        depositReturn: (pool: string) => `${pool}: deposit`,
+        fee: 'Participation fee',
         orphanSpent: 'Spent from a deleted pool',
       },
     },
