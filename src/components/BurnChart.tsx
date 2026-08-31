@@ -6,24 +6,29 @@ import {
   LineChart,
   ReferenceLine,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
 import { useFormat, useT } from '../i18n'
 import { axisTicks, niceAxisTop } from '../lib/axis'
-import type { Burn, BurnPoint } from '../lib/burn'
+import type { Burn } from '../lib/burn'
 
 type Props = {
   burn: Burn
   todayIso: string
 }
 
-/** Room reserved for the money labels, and the gap kept at the right edge. Shared by the
- *  axis, the chart margin and the legend, which has to know where the plot area starts and
- *  ends to sit over its middle rather than the whole SVG's. */
-const AXIS_WIDTH = 64
+/** The gap kept at the right edge, and the room the plot leaves above the highest point. */
 const PLOT_MARGIN = { top: 4, right: 8, bottom: 0, left: 0 }
+
+/** Room the money labels need, as an upper bound at 11px: the widest tick this chart will
+ *  draw, plus the gap Recharts leaves between the text and the plot (its tick line and tick
+ *  margin). Measured rather than fixed, so a €430 camp does not reserve the width a €10.000
+ *  one needs and leave the curves floating in the middle of the box. */
+function axisWidth(labels: string[]): number {
+  const widest = labels.reduce((max, label) => Math.max(max, label.length), 0)
+  return Math.ceil(widest * 6.6) + 10
+}
 
 /**
  * Cumulative allowance against cumulative spending, one point per camp day.
@@ -32,6 +37,8 @@ const PLOT_MARGIN = { top: 4, right: 8, bottom: 0, left: 0 }
  * day *is* the unit of this data. The spending line stops at today (`actualCents` is
  * `null` afterwards, and `connectNulls={false}` respects that) rather than running flat
  * to the end of the camp, which would read as "we stopped spending".
+ *
+ * The chart takes no input at all — see `.burn__canvas` in the stylesheet.
  */
 export function BurnChart({ burn, todayIso }: Props) {
   const t = useT()
@@ -50,6 +57,8 @@ export function BurnChart({ burn, todayIso }: Props) {
     0,
   )
   const scale = niceAxisTop(highestCents)
+  const ticks = axisTicks(scale)
+  const yAxisWidth = axisWidth(ticks.map(format.eurosRounded))
 
   return (
     <div className="burn">
@@ -74,28 +83,13 @@ export function BurnChart({ burn, todayIso }: Props) {
             />
             <YAxis
               domain={[0, scale.topCents]}
-              ticks={axisTicks(scale)}
+              ticks={ticks}
               tickFormatter={format.eurosRounded}
               tickLine={false}
               axisLine={false}
               stroke="var(--muted)"
               fontSize={11}
-              width={AXIS_WIDTH}
-            />
-            <Tooltip
-              formatter={(value) => (typeof value === 'number' ? format.euros(value) : '')}
-              labelFormatter={(_label, payload) => {
-                // Recharts hands back the whole row it drew, so the tooltip can show the
-                // real date even though the axis only carries the day of the month.
-                const point = payload?.[0]?.payload as BurnPoint | undefined
-                return point === undefined ? '' : format.day(point.date)
-              }}
-              contentStyle={{
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)',
-                fontSize: '0.75rem',
-              }}
+              width={yAxisWidth}
             />
             {/* The legend's wrapper spans the whole SVG, so its centred text would sit over
                 the plot *plus* the money axis — visibly left of the curves. Padding the
@@ -106,7 +100,7 @@ export function BurnChart({ burn, todayIso }: Props) {
               wrapperStyle={{
                 fontSize: '0.75rem',
                 boxSizing: 'border-box',
-                paddingLeft: AXIS_WIDTH,
+                paddingLeft: yAxisWidth,
                 paddingRight: PLOT_MARGIN.right,
               }}
             />
@@ -125,7 +119,6 @@ export function BurnChart({ burn, todayIso }: Props) {
               // A dot left to its defaults is drawn white with a coloured ring, which reads
               // as a hollow marker at this size; filling it makes each day one solid point.
               dot={{ r: 2.5, fill: 'var(--accent)', strokeWidth: 0 }}
-              activeDot={{ r: 4, fill: 'var(--accent)', strokeWidth: 0 }}
             />
             <Line
               type="linear"
@@ -134,7 +127,6 @@ export function BurnChart({ burn, todayIso }: Props) {
               stroke={actualColor}
               strokeWidth={2}
               dot={{ r: 2.5, fill: actualColor, strokeWidth: 0 }}
-              activeDot={{ r: 4, fill: actualColor, strokeWidth: 0 }}
               // Without this a gap would be bridged, drawing spending we have not made.
               connectNulls={false}
             />

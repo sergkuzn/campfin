@@ -7,8 +7,13 @@
 
 /* ResponsiveContainer measures this box, and a percentage height would collapse to zero
    inside a flex column — the height comes from the chart's own prop, so the wrapper only
-   has to stop the SVG from forcing the page wider than the phone. */
+   has to stop the SVG from forcing the page wider than the phone.
+
+   The chart is a picture, not a control: every hover and touch state Recharts draws is
+   driven by pointer events on the SVG, so refusing them here leaves nothing to activate —
+   no popup swallowing the screen on a tap that had nothing to say. */
 .burn__canvas {
   width: 100%;
   overflow: hidden;
+  pointer-events: none;
 }
