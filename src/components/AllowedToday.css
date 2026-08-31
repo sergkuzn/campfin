@@ -61,6 +61,18 @@
   color: var(--danger);
 }
 
+/* The word under the overspent amount, sized like the label above it so the headline reads
+   as one block and the figure keeps all the weight. */
+.allowed__over {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--danger);
+}
+
 /* A 2×2 table as four grid columns — label, value, label, value — filled row by row, which
    is what pairs "spent today" with "days left" on one row and the two remainders on the
    next. Each label/value pair gets its own two columns sized to its own content, so the
@@ -114,7 +126,8 @@
     font-size: 1.15rem;
   }
 
-  .allowed__label {
+  .allowed__label,
+  .allowed__over {
     font-size: 0.625rem;
   }
 

@@ -439,8 +439,9 @@ export const en = {
     title: 'Daily burn',
     allowedToday: 'Left today',
     /** The headline goes red rather than negative-with-a-minus: "you are €40 over" is
-     *  what a leader needs to read, not "−40 allowed". */
-    overspentBy: (amount: string) => `${amount} over`,
+     *  what a leader needs to read, not "−40 allowed". Stands on its own line under the
+     *  amount, so an overspend never widens the headline into the figures beside it. */
+    over: 'over',
     /** The four figures beside the headline are labelled, not spelled out in sentences:
      *  a leader reads this table at a till, and a label next to a number is quicker than
      *  prose around it. Kept short so two of them fit across a phone. */

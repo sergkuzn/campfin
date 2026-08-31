@@ -56,7 +56,6 @@ describe('the English dictionary', () => {
     expect(en.attendance.comparison('€2.180,00', '€1.880,00')).toContain('€1.880,00')
     expect(en.attendance.goesBack('€300,00')).toContain('€300,00')
     expect(en.attendance.overAttended('€120,00')).toContain('€120,00')
-    expect(en.burn.overspentBy('€40,00')).toContain('€40,00')
     expect(en.burn.chartAlt(14)).toContain('14')
     expect(en.report.difference.rows.poolUnspent('Group money')).toContain('Group money')
     expect(en.report.difference.rows.depositReturn('Bikes')).toContain('Bikes')
