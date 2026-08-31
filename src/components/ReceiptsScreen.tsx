@@ -29,7 +29,7 @@ type Props = {
   campWindow: CampWindow | null
   expenses: UseExpenses
   /** This camp's pools — every one of them, so a row can still be named after its pool.
-   *  Spending and deposits are separate blocks on the dashboard and stay separate here:
+   *  Receipts and deposits are separate blocks on the dashboard and stay separate here:
    *  only the spendable ones are offered to the picker and the filter. */
   summaries: PoolSummary[]
   /** The pool the screen opens filtered to, or null for the whole list. Read once, when the

@@ -50,7 +50,7 @@ const fundedPool: PoolSummary = {
 }
 
 /** Somebody else's money passing through: it belongs to the deposits block, never to the
- *  spending bars. */
+ *  pool bars. */
 const depositPool: PoolSummary = {
   ...emptyPool,
   pool: { id: 'pool-d', campId: 'c1', name: 'Bus deposit', role: 'deposit', createdAt: 2 },
@@ -112,7 +112,7 @@ describe('CampDashboard', () => {
 
     expect(screen.getByText(en.setup.title)).toBeInTheDocument()
     // The blocks that would all be empty stay away until there is something in them.
-    expect(screen.queryByText(en.dashboard.spending)).not.toBeInTheDocument()
+    expect(screen.queryByText(en.dashboard.receipts)).not.toBeInTheDocument()
     expect(screen.queryByText(en.burn.title)).not.toBeInTheDocument()
     expect(screen.queryByText(en.report.title)).not.toBeInTheDocument()
   })
@@ -123,7 +123,7 @@ describe('CampDashboard', () => {
     renderDashboard({ camp, summaries: [fundedPool] })
 
     expect(screen.getByText(en.setup.title)).toBeInTheDocument()
-    expect(screen.queryByText(en.dashboard.spending)).not.toBeInTheDocument()
+    expect(screen.queryByText(en.dashboard.receipts)).not.toBeInTheDocument()
   })
 
   it('waits for the query before claiming the camp is empty', () => {
@@ -162,7 +162,7 @@ describe('CampDashboard', () => {
   it('shows the money blocks once both setup steps are answered', () => {
     renderDashboard({ summaries: [fundedPool] })
 
-    expect(screen.getByText(en.dashboard.spending)).toBeInTheDocument()
+    expect(screen.getByText(en.dashboard.receipts)).toBeInTheDocument()
     expect(screen.getByText(en.report.title)).toBeInTheDocument()
     expect(screen.queryByText(en.setup.title)).not.toBeInTheDocument()
   })
@@ -182,7 +182,7 @@ describe('CampDashboard', () => {
     renderDashboard({ hasExpenses: true })
 
     expect(screen.getByText(en.setup.title)).toBeInTheDocument()
-    expect(screen.queryByText(en.dashboard.spending)).not.toBeInTheDocument()
+    expect(screen.queryByText(en.dashboard.receipts)).not.toBeInTheDocument()
   })
 
   it('opens the settings screen from the gear', async () => {
@@ -200,7 +200,7 @@ describe('CampDashboard', () => {
     expect(screen.queryByText(en.camps.status.finished)).not.toBeInTheDocument()
   })
 
-  it('opens the whole receipt list from anywhere on the spending card', async () => {
+  it('opens the whole receipt list from anywhere on the receipts card', async () => {
     const { user, onOpenReceipts } = renderDashboard({ summaries: [fundedPool, depositPool] })
 
     // The card is one button; a pool's own figures are part of its accessible name, so
@@ -214,14 +214,14 @@ describe('CampDashboard', () => {
 
     // One button for the card, not one per pool: a nested control would be both invalid
     // inside a <button> and a second target on a row that is only there to be read.
-    const spending = screen.getByRole('button', { name: new RegExp(en.dashboard.spending) })
-    expect(within(spending).queryAllByRole('button')).toHaveLength(0)
+    const receipts = screen.getByRole('button', { name: new RegExp(en.dashboard.receipts) })
+    expect(within(receipts).queryAllByRole('button')).toHaveLength(0)
 
     await user.click(screen.getByText(fundedPool.pool.name))
     expect(onOpenReceipts).toHaveBeenCalledWith(null)
   })
 
-  it('keeps deposits out of the spending block — they have a block of their own', () => {
+  it('keeps deposits out of the receipts block — they have a block of their own', () => {
     renderDashboard({ summaries: [fundedPool, depositPool] })
 
     expect(screen.getByText(fundedPool.pool.name)).toBeInTheDocument()

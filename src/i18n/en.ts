@@ -185,7 +185,7 @@ export const en = {
     receivedTotal: 'Received total',
     noIncome: 'No income sources yet.',
     setUpIncome: 'Set up income →',
-    spending: 'Spending',
+    receipts: 'Receipts',
     noReceipts: 'No receipts yet.',
     /** Not drawn: the block's title row is the button, and this is what names its
      *  destination for a screen reader, which cannot read a chevron. */

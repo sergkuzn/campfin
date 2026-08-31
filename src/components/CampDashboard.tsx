@@ -146,7 +146,7 @@ export function CampDashboard({
       </section>
 
       <SlotCard
-        title={t.dashboard.spending}
+        title={t.dashboard.receipts}
         action={t.dashboard.openReceipts}
         onOpen={() => onOpenReceipts(null)}
         filled={funded || hasExpenses}
