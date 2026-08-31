@@ -5,6 +5,11 @@
   gap: var(--space-3);
 }
 
+/* Title takes the leftover width so the ⓘ toggle sits at the end of the row. */
+.pfand__title {
+  flex: 1;
+}
+
 .pfand__section-title {
   margin: 0 0 var(--space-2);
   font-size: 0.8125rem;

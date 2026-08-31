@@ -66,6 +66,9 @@ export function PfandScreen({
   const format = useFormat()
 
   const [editing, setEditing] = useState<Editing | null>(null)
+  // On demand rather than always on screen: the "what is this screen" note is a question
+  // you have once, and a permanent paragraph costs every later visit a scroll.
+  const [showIntro, setShowIntro] = useState(false)
   // Ids only: the confirm question derives its numbers at render time, so it can never
   // quote a stale amount.
   const [pendingId, setPendingId] = useState<string | null>(null)
@@ -114,13 +117,22 @@ export function PfandScreen({
   return (
     <Screen name="pfand" back={{ label: t.pfand.back, onClick: onBack }}>
       <header className="pfand__header">
-        <h2 className="screen__title">
+        <h2 className="screen__title pfand__title">
           {t.pfand.title}
           <PfandIcon className="pfand-icon--title" />
         </h2>
+        <button
+          className="info-button"
+          type="button"
+          aria-expanded={showIntro}
+          aria-label={t.pfand.introLabel}
+          onClick={() => setShowIntro((shown) => !shown)}
+        >
+          ⓘ
+        </button>
       </header>
 
-      <p className="slot-card__hint">{t.pfand.intro}</p>
+      {showIntro && <p className="slot-card__hint">{t.pfand.intro}</p>}
 
       {/* A write that only failed to *sync* says nothing — Instant queues it. This is for a
           write the server actually rejected. */}

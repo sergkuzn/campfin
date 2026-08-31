@@ -670,6 +670,8 @@ export const en = {
      *  comes from, because *Refund* on a balance is the only way to write one. */
     intro:
       'Pfand (deposit) money, automatically calculated from the receipts. Tap "Refund" to record return of the money from a shop. (When Pfand is a part of the receipt with other purchases, it should be managed in the "Receipts" section).',
+    /** Label for the ⓘ toggle that reveals `intro`. */
+    introLabel: 'What is this screen?',
     balancesTitle: 'Personal money spent',
     /** The money holder's row is marked, the same crown the receipt form uses. */
     holderTag: (name: string) => `👑 ${name}`,
