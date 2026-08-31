@@ -117,7 +117,7 @@ export function PfandScreen({
   return (
     <Screen name="pfand" back={{ label: t.pfand.back, onClick: onBack }}>
       <header className="pfand__header">
-        <h2 className="screen__title pfand__title">
+        <h2 className="screen__title">
           {t.pfand.title}
           <PfandIcon className="pfand-icon--title" />
         </h2>

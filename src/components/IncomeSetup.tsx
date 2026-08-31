@@ -226,7 +226,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   return (
     <Screen name="income" back={{ label: t.income.back, onClick: onBack }}>
       <header className="income__header">
-        <h2 className="screen__title income__title">{t.income.title}</h2>
+        <h2 className="screen__title">{t.income.title}</h2>
         {/* On demand rather than always on screen: "what is a pool" is a question you have
             once, and a permanent paragraph would cost every later visit a scroll. */}
         <button
@@ -239,7 +239,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
           ⓘ
         </button>
         <button
-          className="btn btn--primary"
+          className="btn btn--primary income__add"
           type="button"
           disabled={locked}
           onClick={() => setEditing({ mode: 'pool' })}
