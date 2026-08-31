@@ -379,13 +379,22 @@ export const en = {
     fallbackLabel: 'Block',
     nameLabel: 'Block name',
     namePlaceholder: 'e.g. Participants',
+    /** Opens the optional name field, which stays out of the way until it is asked for —
+     *  a single block takes its meaning from the pool it sits under. */
+    nameAdd: '＋ Name this block',
+    /** The three field labels are read out rather than drawn: in the editor the fields sit
+     *  inside the sentence they compute, where the words between them say what each one is.
+     *  The read-only card still prints them. */
     peopleLabel: 'Number of people',
     peoplePlaceholder: 'e.g. 12',
     rateLabel: 'Rate per person / day (€)',
     ratePlaceholder: 'e.g. 8,00',
+    /** The words between the two inputs, which stand in for their labels. */
+    peopleGlue: 'people ×',
+    rateGlue: '€ per day',
     datesLabel: 'Dates',
     datesPlaceholder: 'Pick a start and end date',
-    add: '＋ Add empty block',
+    add: '＋ Add block',
     copyLast: '＋ Copy previous block',
     personDays: (n: number) => `${n} person-day${n === 1 ? '' : 's'}`,
     personDaysUnknown: '— person-days',

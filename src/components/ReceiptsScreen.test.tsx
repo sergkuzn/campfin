@@ -450,8 +450,8 @@ describe('paying somebody back who also fronted pfand', () => {
 
     const row = screen.getByText('Bakery').closest('li') as HTMLElement
     expect(within(row).getByText(/^8,00/)).toBeInTheDocument()
-    expect(within(row).getByText(/pfand: \+1,00/)).toBeInTheDocument()
-    expect(within(row).getByText(/^total: 9,00/)).toBeInTheDocument()
+    expect(within(row).getByText(/Pfand: \+1,00/)).toBeInTheDocument()
+    expect(within(row).getByText(/^Total: 9,00/)).toBeInTheDocument()
   })
 
   it('says where the deposit lands, and moves it with one write', async () => {

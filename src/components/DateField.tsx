@@ -26,6 +26,8 @@ type RangeProps = {
 
 type Props = (SingleProps | RangeProps) & {
   id?: string
+  /** Names the trigger for screen readers where no visible <label> points at it. */
+  ariaLabel?: string
 }
 
 function labelFor(props: Props, formatDay: (iso: string) => string): string {
@@ -94,6 +96,7 @@ export function DateField(props: Props) {
         className="date-field__trigger"
         ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
+        aria-label={props.ariaLabel}
         aria-expanded={open}
       >
         {labelFor(props, format.day) || ' '}
