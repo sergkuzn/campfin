@@ -193,6 +193,9 @@ export const en = {
     /** Shown until the camp has its daily grant — nothing per-day can be computed
      *  without it, so the chart and "allowed today" stay hidden. */
     setupCallout: 'Add the daily group allowance income to start tracking.',
+    /** Names the group of blocks where money is written down — receipts, deposits, the
+     *  fee — as against the chart above and the report below, which only read it back. */
+    entriesGroup: 'Entries',
     openSettings: 'Camp settings',
   },
 
