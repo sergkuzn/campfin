@@ -23,14 +23,16 @@
   gap: var(--space-2);
 }
 
-.card__name {
+/* Name over kind, filling the row so the amount and menu stay at the far end. */
+.card__title {
   flex: 1;
-  font-size: 0.9375rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
-.card__kind-inline {
-  color: var(--muted);
-  font-size: 0.75rem;
+.card__name {
+  font-size: 0.9375rem;
 }
 
 .card__amount {

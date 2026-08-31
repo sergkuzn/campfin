@@ -93,8 +93,12 @@ export function IncomeSourceCard({ amountCents, disabled, menu, ...body }: CardP
   return (
     <article className="card">
       <header className="card__header">
-        <span className="card__name">{label}</span>
-        <span className="card__kind-inline">{t.income.kinds[body.source.kind].label}</span>
+        <div className="card__title">
+          <span className="card__name">{label}</span>
+          {/* The kind sits under the name, not beside it, so the eye reads
+              "name, then what it is" in one column instead of scanning across. */}
+          <span className="card__kind">{t.income.kinds[body.source.kind].label}</span>
+        </div>
         <span className="card__amount">{format.euros(amountCents)}</span>
         <RowMenu label={label} disabled={disabled} items={menu} />
       </header>
