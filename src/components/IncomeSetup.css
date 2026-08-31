@@ -175,8 +175,64 @@
   font-size: 0.75rem;
 }
 
-/* Two fields side by side, stacking on a narrow phone. The basis lives here, on the
-   row axis, where it means width. */
+/* The one block a source usually has needs no frame around it: nothing sits beside it to
+   be told apart from, and the card it lives in is already a box. */
+.block--solo {
+  padding: 0;
+  border: 0;
+}
+
+/* The fields inside the sum they compute: `[12] people × [8,00] € per day`. Wraps onto a
+   second line on a narrow phone, which is why the glue words follow the input they
+   belong to rather than sitting between two of them. */
+.block__formula {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+}
+
+.block__glue {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* Sized to the value each holds, so the box itself says how much is expected: a headcount
+   is two or three digits, a daily rate four or five. Written as `.input.block__…` so the
+   width beats `.input { width: 100% }` whichever stylesheet the bundler emits first —
+   equal specificity would leave it to file order. */
+.input.block__persons {
+  width: 5rem;
+}
+
+.input.block__rate {
+  width: 6rem;
+}
+
+/* The optional name, borderless until focused — it is a caption over the block, not
+   another thing to fill in. */
+.input.block__name {
+  border-color: transparent;
+  padding-left: 0;
+  background: none;
+}
+
+.input.block__name:focus {
+  border-color: var(--border);
+  padding-left: var(--space-2);
+}
+
+/* Offers the name field in the same quiet voice as .blocks__add. */
+.block__name-add {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
 
 .block__remove {
   position: absolute;

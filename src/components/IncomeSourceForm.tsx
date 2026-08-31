@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useFormat, useT } from '../i18n'
 import {
+  blankBlockDraft,
   blockDraftCents,
   draftFromSource,
   draftIssues,
@@ -38,7 +39,13 @@ export function IncomeSourceForm({ campId, kind, pool, source, blocks, onSave, o
   // One state object rather than six useStates: one setter to thread, and `patch`
   // keeps updates immutable. The function form of useState runs the initialiser only
   // on the first render — otherwise draftFromSource would rebuild it on every keystroke.
-  const [draft, setDraft] = useState<SourceDraft>(() => draftFromSource(kind, source, blocks))
+  const [draft, setDraft] = useState<SourceDraft>(() => {
+    const initial = draftFromSource(kind, source, blocks)
+    // A per-diem source is worthless without a block, so a new card opens on the fields
+    // rather than on a button that produces them.
+    if (initial.kind !== 'per_diem' || initial.blocks.length > 0) return initial
+    return { ...initial, blocks: [blankBlockDraft(crypto.randomUUID())] }
+  })
 
   // The "leave it blank" hint costs a line only when asked for, by whoever taps the ⓘ —
   // the same on-demand pattern as the "paid back" explanation on a receipt.
@@ -102,16 +109,20 @@ export function IncomeSourceForm({ campId, kind, pool, source, blocks, onSave, o
       {kind === 'per_diem' ? (
         <>
           <PerDiemBlocksEditor blocks={draft.blocks} onChange={(b) => patch({ blocks: b })} />
-          <footer className="income__totals">
-            <p className="income__total-row">
-              <span>{t.income.personDaysTotal}</span>
-              <strong>{totalPersonDays}</strong>
-            </p>
-            <p className="income__total-row">
-              <span>{t.income.sourceTotal}</span>
-              <strong>{format.euros(draftTotalCents)}</strong>
-            </p>
-          </footer>
+          {/* A single block already prints these two numbers on its own summary line —
+              repeating them under it would be the same sum twice. */}
+          {draft.blocks.length > 1 && (
+            <footer className="income__totals">
+              <p className="income__total-row">
+                <span>{t.income.personDaysTotal}</span>
+                <strong>{totalPersonDays}</strong>
+              </p>
+              <p className="income__total-row">
+                <span>{t.income.sourceTotal}</span>
+                <strong>{format.euros(draftTotalCents)}</strong>
+              </p>
+            </footer>
+          )}
         </>
       ) : (
         <label className="field">

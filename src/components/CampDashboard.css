@@ -39,5 +39,28 @@
   font-size: 0.875rem;
 }
 
-/* The number the whole camp ends on. Big, because it is the one figure that gets typed
-   into a transfer form. */
+/* The blocks money is entered through — receipts, deposits, the fee — held together as one
+   block, apart from the chart above and the report below, which only read the money back.
+
+   Two signals do the grouping, and neither adds a frame: the cards sit at half the screen's
+   gap, so proximity alone separates them from their neighbours, and a rail runs down the
+   left of all three. The rail is the title band's own accent, at the band's pressed strength
+   so 2px of it stays visible on a near-black page as well as a white one. */
+.dashboard__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--band-active);
+}
+
+/* Sized like a card's title so the caption reads as a label over the group, not as a
+   heading competing with the camp name. */
+.dashboard__group-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}

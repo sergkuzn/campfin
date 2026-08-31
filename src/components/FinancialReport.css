@@ -33,8 +33,15 @@
 
 .report__table {
   width: 100%;
+  /* Fixed layout so the amount column is the same width in all three tables — otherwise
+     each one sizes it to its own widest number and the "Amount" header drifts. */
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.875rem;
+}
+
+.report__table thead th.report__amount {
+  width: 8rem;
 }
 
 .report__table th {

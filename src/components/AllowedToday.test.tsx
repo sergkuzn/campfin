@@ -51,7 +51,9 @@ describe('AllowedToday', () => {
   it('names an overspend instead of showing a minus sign', () => {
     renderHeadline({ allowedTodayCents: -4000 }, -800)
 
-    expect(screen.getByText(en.burn.overspentBy(euros(4000)))).toBeInTheDocument()
+    expect(screen.getByText(euros(4000))).toBeInTheDocument()
+    // The word stands on its own line, so it is its own element rather than part of the amount.
+    expect(screen.getByText(en.burn.over)).toBeInTheDocument()
     // An overspent pool has nothing left rather than a negative amount left.
     expect(statValue(en.burn.moneyLeft)).toBe(euros(0))
   })

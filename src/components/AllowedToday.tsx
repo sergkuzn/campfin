@@ -40,12 +40,13 @@ export function AllowedToday({ burn, remainingCents }: Props) {
       <div className="allowed__headline">
         <p className="allowed__label">{t.burn.allowedToday}</p>
         {/* An overspend is shown as a positive amount plus the word "over": a minus sign in
-            front of a euro figure is easy to miss on a phone at a till. */}
+            front of a euro figure is easy to miss on a phone at a till. The word sits under
+            the amount rather than after it, so going over grows the headline downwards
+            instead of widening it and pushing the figures beside it onto their own line. */}
         <p className={over ? 'allowed__amount allowed__amount--over' : 'allowed__amount'}>
-          {over
-            ? t.burn.overspentBy(format.euros(-burn.allowedTodayCents))
-            : format.euros(burn.allowedTodayCents)}
+          {over ? format.euros(-burn.allowedTodayCents) : format.euros(burn.allowedTodayCents)}
         </p>
+        {over && <p className="allowed__over">{t.burn.over}</p>}
       </div>
       {/* Filled row by row, so the left pair explains today's headline and the right pair
           says what the rest of the camp has to live on. Reading order stays the DOM order,

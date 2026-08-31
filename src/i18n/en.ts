@@ -185,7 +185,7 @@ export const en = {
     receivedTotal: 'Received total',
     noIncome: 'No income sources yet.',
     setUpIncome: 'Set up income →',
-    spending: 'Spending',
+    receipts: 'Receipts',
     noReceipts: 'No receipts yet.',
     /** Not drawn: the block's title row is the button, and this is what names its
      *  destination for a screen reader, which cannot read a chevron. */
@@ -193,6 +193,9 @@ export const en = {
     /** Shown until the camp has its daily grant — nothing per-day can be computed
      *  without it, so the chart and "allowed today" stay hidden. */
     setupCallout: 'Add the daily group allowance income to start tracking.',
+    /** Names the group of blocks where money is written down — receipts, deposits, the
+     *  fee — as against the chart above and the report below, which only read it back. */
+    entriesGroup: 'Entries',
     openSettings: 'Camp settings',
   },
 
@@ -379,13 +382,22 @@ export const en = {
     fallbackLabel: 'Block',
     nameLabel: 'Block name',
     namePlaceholder: 'e.g. Participants',
+    /** Opens the optional name field, which stays out of the way until it is asked for —
+     *  a single block takes its meaning from the pool it sits under. */
+    nameAdd: '＋ Name this block',
+    /** The three field labels are read out rather than drawn: in the editor the fields sit
+     *  inside the sentence they compute, where the words between them say what each one is.
+     *  The read-only card still prints them. */
     peopleLabel: 'Number of people',
     peoplePlaceholder: 'e.g. 12',
     rateLabel: 'Rate per person / day (€)',
     ratePlaceholder: 'e.g. 8,00',
+    /** The words between the two inputs, which stand in for their labels. */
+    peopleGlue: 'people ×',
+    rateGlue: '€ per day',
     datesLabel: 'Dates',
     datesPlaceholder: 'Pick a start and end date',
-    add: '＋ Add empty block',
+    add: '＋ Add block',
     copyLast: '＋ Copy previous block',
     personDays: (n: number) => `${n} person-day${n === 1 ? '' : 's'}`,
     personDaysUnknown: '— person-days',
@@ -427,8 +439,9 @@ export const en = {
     title: 'Daily burn',
     allowedToday: 'Left today',
     /** The headline goes red rather than negative-with-a-minus: "you are €40 over" is
-     *  what a leader needs to read, not "−40 allowed". */
-    overspentBy: (amount: string) => `${amount} over`,
+     *  what a leader needs to read, not "−40 allowed". Stands on its own line under the
+     *  amount, so an overspend never widens the headline into the figures beside it. */
+    over: 'over',
     /** The four figures beside the headline are labelled, not spelled out in sentences:
      *  a leader reads this table at a till, and a label next to a number is quicker than
      *  prose around it. Kept short so two of them fit across a phone. */
@@ -529,21 +542,21 @@ export const en = {
       /** Which number went into the amount box above. Asked as two options rather than
        *  guessed: a printed slip has the deposit inside its total, but a receipt
        *  typed up afterwards is often the goods alone. */
-      modeLabel: 'The amount above is',
-      modeInTotal: 'the total, pfand included',
-      modeOnTop: 'the goods only, pfand on top',
+      modeLabel: 'The amount above',
+      modeInTotal: 'includes Pfand',
+      modeOnTop: 'does not include Pfand',
       paidLabel: 'Deposit charged (€)',
       returnedLabel: 'Deposit refunded (€)',
       amountPlaceholder: 'e.g. 1,00',
       /** The live readout under the block: the one number that tells the two modes apart. */
       groupLine: (amount: string) => `Group money spent: ${amount}`,
       /** On the receipt row. Both directions appear only when the receipt has both. */
-      rowPaid: (amount: string) => `pfand: +${amount}`,
-      rowReturned: (amount: string) => `pfand: −${amount}`,
-      rowBoth: (paid: string, returned: string) => `pfand: +${paid} / −${returned}`,
+      rowPaid: (amount: string) => `Pfand: +${amount}`,
+      rowReturned: (amount: string) => `Pfand: −${amount}`,
+      rowBoth: (paid: string, returned: string) => `Pfand: +${paid} / −${returned}`,
       /** The figure printed on the paper slip, so a row here can be checked against the
        *  folder — the headline amount beside it is the group's money, which is different. */
-      rowTotal: (amount: string) => `total: ${amount}`,
+      rowTotal: (amount: string) => `Total: ${amount}`,
     },
     dayTotal: (amount: string) => `${amount} that day`,
     count: (n: number) => `${n} ${n === 1 ? 'receipt' : 'receipts'}`,
@@ -651,7 +664,7 @@ export const en = {
     /** Above the balances: what this screen is for, in one line. It has to say where a row
      *  comes from, because *Refund* on a balance is the only way to write one. */
     intro:
-      'Pfand (deposit) money, calculated from the receipts. Tap Refund on a balance to record money taken back at a shop with nothing bought.',
+      'Pfand (deposit) money, automatically calculated from the receipts. Tap "Refund" to record return of the money from a shop. (When Pfand is a part of the receipt with other purchases, it should be managed in the "Receipts" section).',
     balancesTitle: 'Out of pocket',
     /** The money holder's row is marked, the same crown the receipt form uses. */
     holderTag: (name: string) => `👑 ${name}`,
@@ -774,10 +787,10 @@ export const en = {
       total: 'Total cash rest',
       empty: 'Nothing left over — every pot is spent to the cent.',
       rows: {
-        poolUnspent: (pool: string) => `${pool} — unspent`,
-        poolUnusable: (pool: string) => `${pool} — not eligible for spending`,
-        depositReturn: (pool: string) => `Deposit ${pool} — to be refunded`,
-        fee: 'Participation fee to hand over',
+        poolUnspent: (pool: string) => `${pool}: unspent`,
+        poolUnusable: (pool: string) => `${pool}: reserved`,
+        depositReturn: (pool: string) => `${pool}: deposit`,
+        fee: 'Participation fee',
         orphanSpent: 'Spent from a deleted pool',
       },
     },

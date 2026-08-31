@@ -145,43 +145,53 @@ export function CampDashboard({
         )}
       </section>
 
-      <SlotCard
-        title={t.dashboard.spending}
-        action={t.dashboard.openReceipts}
-        onOpen={() => onOpenReceipts(null)}
-        filled={funded || hasExpenses}
-      >
-        {funded || hasExpenses ? (
-          <>
-            {!hasExpenses && <p className="slot-card__hint">{t.dashboard.noReceipts}</p>}
-            <PoolBars summaries={summaries} />
-          </>
-        ) : (
-          <p className="slot-card__hint">{t.dashboard.noIncome}</p>
-        )}
-      </SlotCard>
+      {/* The three blocks money is entered through, grouped away from the chart above
+          and the report below, which only read it back. `aria-labelledby` makes the
+          caption the group's accessible name, so the grouping is announced and not
+          merely drawn. */}
+      <section className="dashboard__group" aria-labelledby="dashboard-entries">
+        <h3 className="dashboard__group-title" id="dashboard-entries">
+          {t.dashboard.entriesGroup}
+        </h3>
 
-      <SlotCard
-        title={t.custody.deposits.title}
-        action={t.custody.deposits.open}
-        onOpen={() => onOpenMovements('deposits')}
-        filled={custody.statuses.length > 0}
-      >
-        <DepositsStrip statuses={custody.statuses} />
-      </SlotCard>
+        <SlotCard
+          title={t.dashboard.receipts}
+          action={t.dashboard.openReceipts}
+          onOpen={() => onOpenReceipts(null)}
+          filled={funded || hasExpenses}
+        >
+          {funded || hasExpenses ? (
+            <>
+              {!hasExpenses && <p className="slot-card__hint">{t.dashboard.noReceipts}</p>}
+              <PoolBars summaries={summaries} />
+            </>
+          ) : (
+            <p className="slot-card__hint">{t.dashboard.noIncome}</p>
+          )}
+        </SlotCard>
 
-      <SlotCard
-        title={t.custody.fee.title}
-        action={t.custody.fee.open}
-        onOpen={() => onOpenMovements('fee')}
-        filled={custody.feeHeldCents > 0}
-      >
-        {custody.feeHeldCents > 0 ? (
-          <FeeStrip heldCents={custody.feeHeldCents} count={custody.feeCount} />
-        ) : (
-          <p className="slot-card__hint">{t.custody.fee.empty}</p>
-        )}
-      </SlotCard>
+        <SlotCard
+          title={t.custody.deposits.title}
+          action={t.custody.deposits.open}
+          onOpen={() => onOpenMovements('deposits')}
+          filled={custody.statuses.length > 0}
+        >
+          <DepositsStrip statuses={custody.statuses} />
+        </SlotCard>
+
+        <SlotCard
+          title={t.custody.fee.title}
+          action={t.custody.fee.open}
+          onOpen={() => onOpenMovements('fee')}
+          filled={custody.feeHeldCents > 0}
+        >
+          {custody.feeHeldCents > 0 ? (
+            <FeeStrip heldCents={custody.feeHeldCents} count={custody.feeCount} />
+          ) : (
+            <p className="slot-card__hint">{t.custody.fee.empty}</p>
+          )}
+        </SlotCard>
+      </section>
 
       <SlotCard
         title={t.report.title}
