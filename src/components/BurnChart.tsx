@@ -60,7 +60,7 @@ export function BurnChart({ burn, todayIso }: Props) {
       <div className="burn__canvas" role="img" aria-label={t.burn.chartAlt(burn.points.length)}>
         {/* ResponsiveContainer measures its parent, so the chart has to be given a height
             in CSS or as a prop — an SVG has no intrinsic size to fall back on. */}
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={190}>
           <LineChart data={burn.points} margin={PLOT_MARGIN}>
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
             <XAxis
