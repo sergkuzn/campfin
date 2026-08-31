@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { axisTicks, niceAxisTop } from './axis'
+import { axisTicks, niceAxisTop, spacedTicks } from './axis'
 
 describe('niceAxisTop', () => {
   it('covers the data', () => {
@@ -41,5 +41,32 @@ describe('axisTicks', () => {
 
   it('handles a single-step axis', () => {
     expect(axisTicks({ topCents: 100, stepCents: 100 })).toEqual([0, 100])
+  })
+})
+
+describe('spacedTicks', () => {
+  const days = (n: number) => Array.from({ length: n }, (_, i) => i + 1)
+
+  it('keeps every value when they all fit', () => {
+    expect(spacedTicks(days(6), 9)).toEqual([1, 2, 3, 4, 5, 6])
+  })
+
+  it('spaces a fortnight evenly rather than by label width', () => {
+    // The collision-based thinning this replaces gave 1…10, 12, 15.
+    expect(spacedTicks(days(15), 9)).toEqual([1, 3, 5, 7, 9, 11, 13, 15])
+  })
+
+  it('drops the last value rather than closing the gap unevenly', () => {
+    expect(spacedTicks(days(14), 9)).toEqual([1, 3, 5, 7, 9, 11, 13])
+  })
+
+  it('never returns more than the labels asked for', () => {
+    for (let length = 1; length <= 120; length++) {
+      expect(spacedTicks(days(length), 9).length).toBeLessThanOrEqual(9)
+    }
+  })
+
+  it('handles a camp with no days at all', () => {
+    expect(spacedTicks([], 9)).toEqual([])
   })
 })

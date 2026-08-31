@@ -17,3 +17,18 @@
   overflow: hidden;
   pointer-events: none;
 }
+
+/* A gridline is one hairline, and the plot's height is whatever the phone gives it — so
+   the six lines land on fractional y coordinates and each gets antialiased across two
+   device pixels at partial alpha. On a dark background the worst-placed one fades out
+   completely, which is why a €400 line could go missing while €300 and €500 stayed.
+   Snapping these lines to whole pixels makes all six render identically.
+
+   Scoped to the grid and the today marker on purpose: the data curves are diagonal and
+   need their antialiasing, so `crispEdges` on the whole SVG would leave them jagged.
+
+   Set here rather than as a Recharts prop — it filters props against an allowlist of SVG
+   attributes that does not include `shape-rendering`, so the prop would be dropped. */
+.burn__canvas :is(.recharts-cartesian-grid line, .recharts-reference-line-line) {
+  shape-rendering: crispEdges;
+}

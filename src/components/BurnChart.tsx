@@ -10,7 +10,7 @@ import {
   YAxis,
 } from 'recharts'
 import { useFormat, useT } from '../i18n'
-import { axisTicks, niceAxisTop } from '../lib/axis'
+import { axisTicks, niceAxisTop, spacedTicks } from '../lib/axis'
 import type { Burn } from '../lib/burn'
 
 type Props = {
@@ -20,6 +20,11 @@ type Props = {
 
 /** The gap kept at the right edge, and the room the plot leaves above the highest point. */
 const PLOT_MARGIN = { top: 4, right: 8, bottom: 0, left: 0 }
+
+/** How many day labels the x-axis carries at most. Nine two-digit labels at 11px sit
+ *  comfortably across the plot area of the narrowest phone this runs on; the days between
+ *  them still get a point and a gridline, they just go unlabelled. */
+const DAY_LABELS = 9
 
 /** Room the money labels need, as an upper bound at 11px: the widest tick this chart will
  *  draw, plus the gap Recharts leaves between the text and the plot (its tick line and tick
@@ -78,8 +83,13 @@ export function BurnChart({ burn, todayIso }: Props) {
               stroke="var(--muted)"
               fontSize={11}
               // Long camps would crowd the axis; thinning labels keeps every *point*.
-              interval="preserveStartEnd"
-              minTickGap={12}
+              // `interval={0}` means "draw exactly the ticks given" — without it Recharts
+              // thins the list again by label width, which is what made the gaps ragged.
+              ticks={spacedTicks(
+                burn.points.map((p) => p.dayLabel),
+                DAY_LABELS,
+              )}
+              interval={0}
             />
             <YAxis
               domain={[0, scale.topCents]}
@@ -114,8 +124,10 @@ export function BurnChart({ burn, todayIso }: Props) {
               dataKey="theoreticalCents"
               name={t.burn.theoretical}
               stroke="var(--accent)"
-              strokeWidth={2}
-              strokeDasharray="5 4"
+              // Thinner than the spending line and drawn solid: the allowance is the
+              // reference the eye measures against, so it should not compete with the
+              // curve that carries the news.
+              strokeWidth={1.5}
               // A dot left to its defaults is drawn white with a coloured ring, which reads
               // as a hollow marker at this size; filling it makes each day one solid point.
               dot={{ r: 2.5, fill: 'var(--accent)', strokeWidth: 0 }}
