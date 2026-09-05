@@ -287,7 +287,7 @@ export const en = {
   income: {
     // Reachable from both the dashboard and camp settings, and ← returns to whichever it
     // was — so the label cannot name a destination the way the other screens' do.
-    back: '← Back',
+    back: '← Back to camp settings',
     title: 'Set up income',
     /** Only ever seen if a camp somehow has no pools at all — every camp is born with one. */
     empty: 'No pools yet — tap ＋ Add pool.',
