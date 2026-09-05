@@ -58,3 +58,22 @@ export function axisTicks({ topCents, stepCents }: AxisScale): number[] {
   for (let value = 0; value <= topCents; value += stepCents) ticks.push(value)
   return ticks
 }
+
+/**
+ * Every nth value of `values`, starting at the first, where n is the smallest stride that
+ * fits the list into `maxLabels` slots.
+ *
+ * A chart library thins a crowded axis by walking it and dropping whatever collides with
+ * the label before it, which spaces the survivors by their *width*: one-digit days all
+ * fit, two-digit ones do not, and a fortnight comes out labelled 1…10, 12, 15. A fixed
+ * stride spaces them by position instead, so the gaps read as regular even though the
+ * last day may end up unlabelled.
+ *
+ * Generic over the value type: it selects by index and never looks inside an element, so
+ * it works for the axis' label strings here and for numbers elsewhere. `maxLabels` below
+ * one would divide by zero, so it is floored at one — a single label.
+ */
+export function spacedTicks<T>(values: T[], maxLabels: number): T[] {
+  const stride = Math.ceil(values.length / Math.max(1, maxLabels))
+  return values.filter((_, index) => index % stride === 0)
+}

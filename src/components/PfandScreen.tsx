@@ -7,6 +7,7 @@ import { todayIso } from '../lib/dates'
 import { isSamePayer } from '../lib/payers'
 import { isReceiptTxn, type PfandBalance, type PfandTxn, type SavePfandInput } from '../lib/pfand'
 import { ConfirmDialog } from './ConfirmDialog'
+import { InfoToggle } from './InfoToggle'
 import { PfandEntryForm } from './PfandEntryForm'
 import { PfandIcon } from './PfandIcon'
 import { RowMenu } from './RowMenu'
@@ -66,6 +67,9 @@ export function PfandScreen({
   const format = useFormat()
 
   const [editing, setEditing] = useState<Editing | null>(null)
+  // On demand rather than always on screen: the "what is this screen" note is a question
+  // you have once, and a permanent paragraph costs every later visit a scroll.
+  const [showIntro, setShowIntro] = useState(false)
   // Ids only: the confirm question derives its numbers at render time, so it can never
   // quote a stale amount.
   const [pendingId, setPendingId] = useState<string | null>(null)
@@ -118,9 +122,19 @@ export function PfandScreen({
           {t.pfand.title}
           <PfandIcon className="pfand-icon--title" />
         </h2>
+        <InfoToggle
+          label={t.pfand.introLabel}
+          open={showIntro}
+          controls="pfand-intro"
+          onToggle={() => setShowIntro((shown) => !shown)}
+        />
       </header>
 
-      <p className="slot-card__hint">{t.pfand.intro}</p>
+      {showIntro && (
+        <p className="slot-card__hint" id="pfand-intro">
+          {t.pfand.intro}
+        </p>
+      )}
 
       {/* A write that only failed to *sync* says nothing — Instant queues it. This is for a
           write the server actually rejected. */}

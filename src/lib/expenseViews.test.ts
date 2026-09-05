@@ -122,13 +122,53 @@ describe('groupExpensesByDay', () => {
     expect(days.map((d) => d.date)).toEqual(['2026-07-15', '2026-07-13', '2026-07-12'])
   })
 
-  it('puts the newest row first inside a day', () => {
+  it('falls back to the newest row first when a day carries no numbers', () => {
     const days = groupExpensesByDay([
       expense({ id: 'a', createdAt: 100 }),
       expense({ id: 'b', createdAt: 300 }),
       expense({ id: 'c', createdAt: 200 }),
     ])
     expect(days[0]?.expenses.map((e) => e.id)).toEqual(['b', 'c', 'a'])
+  })
+
+  it('puts the highest receipt number first inside a day, whatever order they were typed', () => {
+    const days = groupExpensesByDay([
+      expense({ id: 'a', number: 2, createdAt: 300 }),
+      expense({ id: 'b', number: 5, createdAt: 100 }),
+      expense({ id: 'c', number: 3, createdAt: 200 }),
+    ])
+    expect(days[0]?.expenses.map((e) => e.id)).toEqual(['b', 'c', 'a'])
+  })
+
+  it('turns a day’s numbers round with the days', () => {
+    const days = groupExpensesByDay(
+      [
+        expense({ id: 'a', number: 2, createdAt: 300 }),
+        expense({ id: 'b', number: 5, createdAt: 100 }),
+        expense({ id: 'c', number: 3, createdAt: 200 }),
+      ],
+      'asc',
+    )
+    expect(days[0]?.expenses.map((e) => e.id)).toEqual(['a', 'c', 'b'])
+  })
+
+  it('keeps an unnumbered row beside the big numbers at either end of a day', () => {
+    const rows = [
+      expense({ id: 'a', number: 2 }),
+      expense({ id: 'b' }),
+      expense({ id: 'c', number: 5 }),
+    ]
+    expect(groupExpensesByDay(rows, 'desc')[0]?.expenses.map((e) => e.id)).toEqual(['b', 'c', 'a'])
+    expect(groupExpensesByDay(rows, 'asc')[0]?.expenses.map((e) => e.id)).toEqual(['a', 'c', 'b'])
+  })
+
+  it('separates two unnumbered rows in a numbered day by entry time', () => {
+    const days = groupExpensesByDay([
+      expense({ id: 'a', number: 4 }),
+      expense({ id: 'b', createdAt: 100 }),
+      expense({ id: 'c', createdAt: 300 }),
+    ])
+    expect(days[0]?.expenses.map((e) => e.id)).toEqual(['c', 'b', 'a'])
   })
 
   it('orders two rows written in the same millisecond identically on both phones', () => {

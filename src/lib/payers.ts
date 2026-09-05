@@ -1,5 +1,6 @@
 /**
- * Who fronted the cash for a receipt, and what the money holder still owes them.
+ * Who fronted the cash for a row, and what the money holder still owes them. Receipts and
+ * other expenses both answer that question the same way, so both go through here.
  *
  * A payer is a **name typed on the receipt**, not a row in a namespace of its own. That
  * choice costs a rename — correcting a misspelling means editing the receipts that carry
@@ -16,12 +17,26 @@
 
 import type { Expense } from './types'
 
+/**
+ * The parts of a row this module actually reads. A *structural* type rather than
+ * `Expense`, so the same debt arithmetic serves receipts and the poolless other expenses:
+ * both say who fronted the money, how much, and whether it has been paid back, and nothing
+ * here needs to know which namespace the row came from.
+ */
+export type PayerRow = {
+  amountCents: number
+  paidBy?: string
+  reimbursed?: boolean
+  createdAt: number
+}
+
 /** One payer's outstanding total. Always positive — settled people are not listed. */
 export type PayerDebt = {
-  /** As typed, for display: the spelling the newest receipt used. */
+  /** As typed, for display: the spelling the newest row used. */
   name: string
   owedCents: number
-  receiptCount: number
+  /** How many rows make it up, receipts and other expenses together. */
+  rowCount: number
 }
 
 /** How many receipts change sides when the holder does. */
@@ -62,7 +77,7 @@ export function isSamePayer(a: string | undefined, b: string | undefined): boole
  * With no holder named the whole idea is dormant — there is no one for the debt to be
  * owed *by*, so nothing is owed.
  */
-export function owedPayerName(expense: Expense, moneyHolder: string | undefined): string | null {
+export function owedPayerName(expense: PayerRow, moneyHolder: string | undefined): string | null {
   if (expense.reimbursed === true) return null
   if (!isNamed(moneyHolder) || !isNamed(expense.paidBy)) return null
   if (payerKey(expense.paidBy) === payerKey(moneyHolder)) return null
@@ -71,7 +86,7 @@ export function owedPayerName(expense: Expense, moneyHolder: string | undefined)
 
 /** Money the holder has not paid back yet: someone else fronted it, and nobody has ticked
  *  it off. */
-export function owesPayer(expense: Expense, moneyHolder: string | undefined): boolean {
+export function owesPayer(expense: PayerRow, moneyHolder: string | undefined): boolean {
   return owedPayerName(expense, moneyHolder) !== null
 }
 
@@ -108,7 +123,7 @@ export function knownPayers(expenses: Expense[], moneyHolder: string | undefined
  * What the holder owes each person, largest debt first — that is the order you settle up
  * in. People who are square do not appear.
  */
-export function payerDebts(expenses: Expense[], moneyHolder: string | undefined): PayerDebt[] {
+export function payerDebts(expenses: PayerRow[], moneyHolder: string | undefined): PayerDebt[] {
   const byKey = new Map<string, PayerDebt & { newestAt: number }>()
 
   for (const expense of expenses) {
@@ -118,14 +133,14 @@ export function payerDebts(expenses: Expense[], moneyHolder: string | undefined)
     const debt = byKey.get(key)
 
     if (debt === undefined) {
-      const seed = { name, owedCents: expense.amountCents, receiptCount: 1 }
+      const seed = { name, owedCents: expense.amountCents, rowCount: 1 }
       byKey.set(key, { ...seed, newestAt: expense.createdAt })
       continue
     }
 
     debt.owedCents += expense.amountCents
-    debt.receiptCount += 1
-    // Same rule as the picker: the newest receipt decides how the name is spelled.
+    debt.rowCount += 1
+    // Same rule as the picker: the newest row decides how the name is spelled.
     if (expense.createdAt > debt.newestAt) {
       debt.name = name
       debt.newestAt = expense.createdAt
@@ -133,13 +148,13 @@ export function payerDebts(expenses: Expense[], moneyHolder: string | undefined)
   }
 
   return [...byKey.values()]
-    .map(({ name, owedCents, receiptCount }) => ({ name, owedCents, receiptCount }))
+    .map(({ name, owedCents, rowCount }) => ({ name, owedCents, rowCount }))
     .sort((a, b) => b.owedCents - a.owedCents || a.name.localeCompare(b.name))
 }
 
 /** Everything the holder still owes, across everyone. */
 export function unreimbursedTotalCents(
-  expenses: Expense[],
+  expenses: PayerRow[],
   moneyHolder: string | undefined,
 ): number {
   return expenses.reduce(
@@ -148,12 +163,18 @@ export function unreimbursedTotalCents(
   )
 }
 
-/** Only the receipts still owed. `false` means no filter, so the caller need not branch. */
-export function filterExpensesByDebt(
-  expenses: Expense[],
+/**
+ * Only the rows still owed. `false` means no filter, so the caller need not branch.
+ *
+ * Generic over the row type rather than fixed to `Expense`: the constraint is what lets it
+ * read the payer fields, and returning `T[]` is what hands the caller back its own rows
+ * instead of the narrower shape this module reads.
+ */
+export function filterExpensesByDebt<T extends PayerRow>(
+  expenses: T[],
   unpaidOnly: boolean,
   moneyHolder: string | undefined,
-): Expense[] {
+): T[] {
   if (!unpaidOnly) return expenses
   return expenses.filter((expense) => owesPayer(expense, moneyHolder))
 }
@@ -167,7 +188,7 @@ export function filterExpensesByDebt(
  * count what clearing the holder would do.
  */
 export function holderChangeImpact(
-  expenses: Expense[],
+  expenses: PayerRow[],
   current: string | undefined,
   next: string | null,
 ): HolderChange {

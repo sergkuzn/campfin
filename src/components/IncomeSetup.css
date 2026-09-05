@@ -1,14 +1,13 @@
-/* On top of the global `.screen__title`: this header wraps, so the title takes the
-   leftover width and pushes the ⓘ toggle to the end of the row. */
-.income__title {
-  flex: 1;
-}
-
 .income__header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+}
+
+/* The ⓘ toggle sits directly after the heading; the add button is pushed to the row end. */
+.income__add {
+  margin-left: auto;
 }
 
 .income__empty {
@@ -28,6 +27,19 @@
 }
 
 .income__hint li + li {
+  margin-top: var(--space-1);
+}
+
+/* The per-pool ⓘ explainer on the Group money header — same look as the screen-level one. */
+.pool__hint {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.pool__hint li + li {
   margin-top: var(--space-1);
 }
 

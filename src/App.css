@@ -13,10 +13,12 @@
   min-height: 100dvh; /* dvh = dynamic viewport height, correct on mobile with browser chrome */
   max-width: 28rem;
   margin-inline: auto; /* logical shorthand for margin-left + margin-right: centers it */
-  padding: var(--space-6);
+  /* Less headroom above the brand than beside and below it — the top of the page is dead
+     space on a phone, and it pushed every screen's title down. */
+  padding: var(--space-4) var(--space-6) var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-4);
 }
 
 .app__header {

@@ -13,6 +13,7 @@ import {
 } from '../lib/drafts'
 import type { IncomeKind, IncomeSource, PerDiemBlock, Pool } from '../lib/types'
 import { FormIssues } from './FormIssues'
+import { InfoToggle } from './InfoToggle'
 import { PerDiemBlocksEditor } from './PerDiemBlocksEditor'
 import { RequiredMark } from './RequiredMark'
 
@@ -84,15 +85,12 @@ export function IncomeSourceForm({ campId, kind, pool, source, blocks, onSave, o
         <label className="field">
           <span className="field__label">
             {t.income.nameLabel}
-            <button
-              type="button"
-              className="info-button"
-              aria-expanded={showNameHint}
-              aria-label={t.income.nameHintLabel}
-              onClick={() => setShowNameHint((shown) => !shown)}
-            >
-              ⓘ
-            </button>
+            <InfoToggle
+              label={t.income.nameHintLabel}
+              open={showNameHint}
+              controls="income-name-hint"
+              onToggle={() => setShowNameHint((shown) => !shown)}
+            />
           </span>
           <input
             className="input"
@@ -102,7 +100,11 @@ export function IncomeSourceForm({ campId, kind, pool, source, blocks, onSave, o
             }
             placeholder={pool.name}
           />
-          {showNameHint && <span className="field__hint">{t.income.nameHint}</span>}
+          {showNameHint && (
+            <span className="field__hint" id="income-name-hint">
+              {t.income.nameHint}
+            </span>
+          )}
         </label>
       )}
 

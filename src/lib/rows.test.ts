@@ -40,6 +40,10 @@ describe('toCamp', () => {
     })
   })
 
+  it('carries the camp’s hidden entry cards through', () => {
+    expect(toCamp({ ...campRow, hiddenEntries: 'fee,other' })?.hiddenEntries).toBe('fee,other')
+  })
+
   it('drops a camp row without a join code', () => {
     expect(toCamp({ id: 'c1', name: 'Moorwerder', createdAt: 1 })).toBeNull()
   })

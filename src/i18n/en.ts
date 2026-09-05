@@ -196,6 +196,21 @@ export const en = {
     /** Names the group of blocks where money is written down — receipts, deposits, the
      *  fee — as against the chart above and the report below, which only read it back. */
     entriesGroup: 'Entries',
+    /** Opens the group's configure mode, where every card — including the ones this camp
+     *  has hidden — is shown with a Hide/Show button of its own. */
+    customiseEntries: 'Customise',
+    doneCustomising: 'Done',
+    /** Sits under the caption while customising, since a group that suddenly grows two
+     *  cards and stops leading anywhere needs one line saying why. */
+    customiseHint: 'Choose the cards this camp uses. Receipts always shows.',
+    /** Drawn on the per-card buttons. The card's own title is right beside them, so the
+     *  bare verb is all the eye needs. */
+    hide: 'Hide',
+    show: 'Show',
+    /** The same buttons' accessible names. A screen reader reaches the button without the
+     *  title beside it, where "Hide" alone would not say which card it acts on. */
+    hideEntry: (title: string) => `Hide ${title}`,
+    showEntry: (title: string) => `Show ${title}`,
     openSettings: 'Camp settings',
   },
 
@@ -333,12 +348,20 @@ export const en = {
     },
     aboutLabel: 'What is a pool?',
     about: [
-      'An income pool is a separate wallet of money for a specific category of spending (e.g. "Group money", "Bike hire").',
-      "An income pool can consist of one or several income sources — in most cases it's just one.",
-      'Each receipt is assigned to one particular income pool.',
-      '"Deposit" is a type of income pool that has to be fully returned at the end of the camp.',
-      '"Group money" is a built-in income pool for daily purchases that every camp has.',
-      'The "Group money" pool has a "granted" section describing what money was given, and an "actual" section reflecting the real composition of the camp when it differs from the plan (e.g. some participants did not come, or left early). Money that can no longer be used is then reserved for returning and left out of the remaining-to-spend total.',
+      'A pool is a separate wallet for one category of spending, for example "Group money" or "Bike hire".',
+      'A pool may hold one income source or several; usually one.',
+      'Each receipt is charged to exactly one pool.',
+      'A "Deposit" pool is money that must be returned in full at the end of the camp.',
+      'Every camp starts with the "Group money" pool.',
+    ],
+    /** The ⓘ on the built-in everyday pool's header — how that one pool works, kept
+     *  apart from the generic pool facts above so a first visit need not read both. */
+    everydayAboutLabel: 'How does Group money work?',
+    everydayAbout: [
+      "Group money covers the camp's everyday purchases, such as food.",
+      'Fund it with a "Per person, per day" income: people × days × rate. This is the normal choice.',
+      'The "granted" section records the attendance the money was calculated for - this is the received amount.',
+      'The "actual" section is needed when the group composition differs (f.i. if participants cancelled or left early). The gap is reserved for return and excluded from the amount left to spend.',
     ],
     addIncomeTo: (name: string) => `Add income to ${name}`,
     editIncome: 'Edit income',
@@ -449,12 +472,34 @@ export const en = {
     medianDay: 'Median day',
     daysLeft: 'Days left',
     moneyLeft: 'Total left',
-    theoretical: 'Allowed',
+    /** The plan line's name in the chart legend. "Theoretical" rather than "Allowed":
+     *  the curve is what an even spread would have cost by each day, not a limit anybody
+     *  enforces — and the headline beside it already owns the word "left". */
+    theoretical: 'Theoretical',
     actual: 'Spent',
     today: 'Today',
     /** Screen-reader replacement for the chart: the curve is decorative for anyone who
      *  cannot see it, and the numbers above already say where the camp stands. */
     chartAlt: (days: number) => `Cumulative allowance and spending over ${days} camp days.`,
+    /** The ⓘ beside the title. Both headline figures are derived numbers whose names
+     *  do not give their meaning away, so the folded text explains them rather than the
+     *  chart, which the legend already labels. */
+    aboutLabel: 'What do Left today and Median day mean?',
+    /** Nested on purpose: the two facts about "Left today" belong to that term, and a flat
+     *  list would read as four unrelated sentences. */
+    about: [
+      {
+        text: '"Left today"',
+        sub: [
+          'How much you can still spend today and stay in line with the theoretical plan.',
+          'When it reads "over", spending has already passed what the plan allowed by today.',
+        ],
+      },
+      {
+        text: '"Median day" — what the plan gives a typical camp day to spend.',
+        sub: [],
+      },
+    ],
   },
 
   receipts: {
@@ -563,15 +608,20 @@ export const en = {
     unknownPool: 'Unknown pool',
     /** Sorting and filtering the list. The totals below the list follow the filter, so the
      *  wording says which receipts are being counted. */
+    /** Accessible name for the sort picker; not shown, since the picker sits where a sort
+     *  control is expected and its options spell out what it does. */
     sortLabel: 'Sort by',
+    /** An arrow instead of words: the axis (date or number) carries the meaning, and ↓/↑
+     *  read as newest/oldest and highest/lowest without a phrase. */
     sorts: {
-      date_desc: 'Date — newest first',
-      date_asc: 'Date — oldest first',
-      number_asc: 'Number — 1 upwards',
-      number_desc: 'Number — highest first',
+      date_desc: 'Date ↓',
+      date_asc: 'Date ↑',
+      number_asc: 'Number ↑',
+      number_desc: 'Number ↓',
     },
     /** Tapping every chip on is the same as tapping every chip off, so the chips settle on
-     *  "none lit" for both — there is no all-lit state to explain, and no All chip. */
+     *  "none lit" for both — there is no all-lit state to explain, and no All chip.
+     *  Accessible name for the chip group, not shown — coloured pool chips are self-evident. */
     filterLabel: 'Show pools',
     filterCount: (shown: number, total: number) => `${shown} of ${total} receipts shown`,
     emptyFiltered: 'No receipts match the filters you picked.',
@@ -665,7 +715,9 @@ export const en = {
      *  comes from, because *Refund* on a balance is the only way to write one. */
     intro:
       'Pfand (deposit) money, automatically calculated from the receipts. Tap "Refund" to record return of the money from a shop. (When Pfand is a part of the receipt with other purchases, it should be managed in the "Receipts" section).',
-    balancesTitle: 'Out of pocket',
+    /** Label for the ⓘ toggle that reveals `intro`. */
+    introLabel: 'What is this screen?',
+    balancesTitle: 'Personal money spent',
     /** The money holder's row is marked, the same crown the receipt form uses. */
     holderTag: (name: string) => `👑 ${name}`,
     /** A balance below zero: more deposit came back than went out. Rare and worth naming
@@ -720,6 +772,49 @@ export const en = {
    * A deposit travels to a counterparty and comes back; the participation fees only go
    * onward to the organisation.
    */
+  /**
+   * Out-of-pocket spending: what the camp's income does not cover and the organisation is
+   * expected to compensate. Deliberately not called a receipt anywhere — the word means the
+   * numbered slip in the camp's folder, and this is a claim rather than one of those.
+   */
+  otherExpenses: {
+    title: 'Other expenses',
+    back: '← Back to camp',
+    add: '＋ Add an expense',
+    /** Both empty states — the dashboard card and the list — say the same thing, because
+     *  they are the same fact seen from two screens. */
+    empty: 'No other expenses added yet.',
+    /** What the screen is for. Folded away behind the ⓘ beside the title: it answers a
+     *  question you have once, and it would cost a line on every visit after that. */
+    hint: 'Spending no income pool covers.',
+    /** Accessible name for that ⓘ, which is a glyph a screen reader cannot read. */
+    infoLabel: 'What counts as an other expense?',
+    /** Screen-reader-only, like every block's `open` — see `dashboard.openReceipts`. */
+    open: 'Open other expenses',
+    dateLabel: 'Date',
+    nameLabel: 'What was bought',
+    namePlaceholder: 'e.g. Replacement tent pole',
+    amountLabel: 'Amount (€)',
+    amountPlaceholder: 'e.g. 24,90',
+    noteLabel: 'Note',
+    notePlaceholder: 'e.g. invoice sent to the office',
+    save: 'Save',
+    cancel: 'Cancel',
+    /** What the organisation owes back, all rows together. */
+    total: 'To be compensated',
+    count: (n: number) => `${n} ${n === 1 ? 'expense' : 'expenses'}`,
+    /** Blocking the save. One sentence each, in the order the form asks them. */
+    issues: {
+      name: 'Say what was bought.',
+      amount: 'Enter an amount greater than zero.',
+      date: 'Pick a date.',
+      paidBy: 'Say whose money it was.',
+    },
+    deleteTitle: (name: string) => `Delete "${name}"?`,
+    deleteLine: (amount: string) => `${amount} will no longer be claimed back.`,
+    confirmDelete: 'Delete',
+  },
+
   custody: {
     deposits: {
       title: 'Deposits',
@@ -779,8 +874,20 @@ export const en = {
       title: 'Expenses',
       /** A receipt whose pool was deleted: still money out, so still on the report. */
       unknownPool: 'Deleted pool',
+      /** The group heading over the out-of-pocket rows, listed one at a time. They carry no
+       *  subtotal — the table's own foot is what adds the money out up. */
+      other: 'Other expenses',
       total: 'Total expenses',
       empty: 'No receipts yet.',
+      /** The switch above the table. It changes the arithmetic, not just what is drawn, so
+       *  it says which way is on rather than naming an action. */
+      includeOther: 'Count "other expenses"',
+      /** Accessible name for the ⓘ beside that switch — a glyph a screen reader cannot read. */
+      includeOtherInfo: 'What counting other expenses does',
+      /** What the switch actually changes, folded away behind that ⓘ: it is read once, and
+       *  a paragraph above the table on every visit would push the numbers off the screen. */
+      includeOtherHint:
+        'Spending no pool covers — paid from own pocket. Expected to be refunded by the organization.',
     },
     difference: {
       title: 'Cash rest',
@@ -792,7 +899,15 @@ export const en = {
         depositReturn: (pool: string) => `${pool}: deposit`,
         fee: 'Participation fee',
         orphanSpent: 'Spent from a deleted pool',
+        otherExpenses: 'Other expenses, paid out of pocket',
       },
+      /** Shown under the table when the rest has gone negative: the sheet no longer says
+       *  what goes back, it says what is owed, and to whom. */
+      owedByOrg: (amount: string, holder: string) =>
+        `More was spent than came in: the organisation owes ${holder} ${amount}.`,
+      /** The same, with nobody named as the money holder yet. */
+      owedByOrgNoHolder: (amount: string) =>
+        `More was spent than came in: the organisation owes ${amount}.`,
     },
     /** The report is arithmetic over what was typed in, which is not the same as what
      *  happened — so it says so, on screen and in print. */
@@ -817,6 +932,9 @@ export const en = {
       repaid: 'Repaid',
       repaidYes: 'yes',
       repaidNo: 'no',
+      /** The itemised out-of-pocket table at the foot of the file, written only when the
+       *  switch above the expenses table is on. */
+      otherTitle: 'Other expenses',
     },
   },
 

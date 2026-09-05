@@ -7,6 +7,7 @@ import type {
   Expense,
   FeeMovement,
   Movement,
+  OtherExpense,
   PerDiemBlock,
   PerDiemSource,
   Pool,
@@ -129,6 +130,9 @@ const report = (over: Partial<ReportInput> & { pools?: Pool[] } = {}) => {
     blocks,
     expenses,
     movements: over.movements ?? [],
+    otherExpenses: over.otherExpenses ?? [],
+    // Counted unless a test says otherwise, matching the report's own default.
+    includeOther: over.includeOther ?? true,
   })
 }
 
@@ -257,7 +261,14 @@ describe('buildReport', () => {
   })
 
   it('an empty camp reports zeros and no lines', () => {
-    const r = buildReport({ summaries: [], blocks: [], expenses: [], movements: [] })
+    const r = buildReport({
+      summaries: [],
+      blocks: [],
+      expenses: [],
+      movements: [],
+      otherExpenses: [],
+      includeOther: true,
+    })
 
     expect(r).toEqual({
       advance: [],
@@ -265,10 +276,74 @@ describe('buildReport', () => {
       fee: null,
       incomeTotalCents: 0,
       expenses: [],
+      other: null,
       expenseTotalCents: 0,
       difference: [],
       differenceCents: 0,
     })
+  })
+})
+
+/** Money no pool paid for: the one expense that can push the rest below zero. */
+const other = (over: Partial<OtherExpense> = {}): OtherExpense => ({
+  id: 'o1',
+  campId: 'c',
+  name: 'Tent pole',
+  amountCents: 5000,
+  date: '2026-07-03',
+  paidBy: 'Ben',
+  createdAt: 10,
+  ...over,
+})
+
+describe('other expenses on the report', () => {
+  it('adds them to the expense total and takes them off the rest', () => {
+    const r = report({ otherExpenses: [other({ amountCents: 5000 })] })
+
+    expect(r.other?.totalCents).toBe(5000)
+    // Nothing was spent from a pool, so the whole expense total is the out-of-pocket money.
+    expect(r.expenseTotalCents).toBe(5000)
+    expect(r.difference).toContainEqual({
+      kind: 'other_expenses',
+      pool: null,
+      amountCents: -5000,
+    })
+    expect(sum(r.difference)).toBe(r.differenceCents)
+    expect(r.differenceCents).toBe(r.incomeTotalCents - 5000)
+  })
+
+  it('lists them oldest first, whatever order they arrive in', () => {
+    const r = report({
+      otherExpenses: [
+        other({ id: 'o2', date: '2026-07-09' }),
+        other({ id: 'o1', date: '2026-07-03' }),
+        // Same day as o1: `createdAt` breaks the tie, so both phones sort it identically.
+        other({ id: 'o3', date: '2026-07-03', createdAt: 20 }),
+      ],
+    })
+
+    expect(r.other?.items.map((item) => item.id)).toEqual(['o1', 'o3', 'o2'])
+  })
+
+  it('drops the section and the difference line when they are switched off', () => {
+    const r = report({ otherExpenses: [other()], includeOther: false })
+
+    expect(r.other).toBeNull()
+    expect(r.expenseTotalCents).toBe(0)
+    expect(r.difference.some((line) => line.kind === 'other_expenses')).toBe(false)
+  })
+
+  it('leaves the section off when there are none, switched on or not', () => {
+    expect(report({ otherExpenses: [] }).other).toBeNull()
+  })
+
+  it('takes the rest below zero when they outrun the income', () => {
+    // The camp's whole income is 90_000 (per-diem 62_000 + material 8_000 + Kaution 20_000).
+    const r = report({ otherExpenses: [other({ amountCents: 100_000 })] })
+
+    expect(r.differenceCents).toBeLessThan(0)
+    // Still exact: the difference table explains the negative total line by line.
+    expect(sum(r.difference)).toBe(r.differenceCents)
   })
 })
 

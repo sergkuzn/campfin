@@ -41,6 +41,21 @@ describe('isCamp', () => {
   it('rejects a wrongly-typed field', () => {
     expect(isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: '1' })).toBe(false)
   })
+  it('rejects a wrongly-typed optional field', () => {
+    // The optional fields are guarded too: a number where a string belongs would reach the
+    // screens as one, since nothing downstream re-checks.
+    expect(
+      isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: 1, hiddenEntries: 2 }),
+    ).toBe(false)
+    expect(
+      isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: 1, moneyHolder: 2 }),
+    ).toBe(false)
+  })
+  it('accepts a camp carrying its hidden entry cards', () => {
+    expect(
+      isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: 1, hiddenEntries: 'fee' }),
+    ).toBe(true)
+  })
   it('ignores fields it does not know, so an older export still reads', () => {
     expect(
       isCamp({

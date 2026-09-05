@@ -125,8 +125,8 @@ describe('payerDebts', () => {
       expense({ id: 'c', paidBy: 'Ben', amountCents: 750 }),
     ]
     expect(payerDebts(rows, 'Anna')).toEqual([
-      { name: 'Chris', owedCents: 2000, receiptCount: 1 },
-      { name: 'Ben', owedCents: 1250, receiptCount: 2 },
+      { name: 'Chris', owedCents: 2000, rowCount: 1 },
+      { name: 'Ben', owedCents: 1250, rowCount: 2 },
     ])
   })
 
@@ -135,7 +135,7 @@ describe('payerDebts', () => {
       expense({ id: 'a', paidBy: 'ben', amountCents: 500, createdAt: 1 }),
       expense({ id: 'b', paidBy: 'Ben', amountCents: 500, createdAt: 2 }),
     ]
-    expect(payerDebts(rows, 'Anna')).toEqual([{ name: 'Ben', owedCents: 1000, receiptCount: 2 }])
+    expect(payerDebts(rows, 'Anna')).toEqual([{ name: 'Ben', owedCents: 1000, rowCount: 2 }])
   })
 
   it('leaves out people who are square', () => {

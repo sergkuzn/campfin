@@ -1,0 +1,29 @@
+/* The card's title row: the title takes the line, the ⓘ sits right after the name rather
+   than out at the card's edge, so the two read as one label with a question attached. */
+.burn-info__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* The unfolded explainer — same muted, small-type look as the ⓘ hints on the income
+   screens, so a disclosure reads the same wherever it is opened. */
+.burn-info__hint {
+  margin: var(--space-2) 0 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.burn-info__hint li + li {
+  margin-top: var(--space-1);
+}
+
+/* The sub-points of a term: hollow markers and a tighter gap keep them subordinate to the
+   bullet above rather than reading as three items of one list. */
+.burn-info__hint ul {
+  margin: var(--space-1) 0 0;
+  padding-left: 1rem;
+  list-style-type: circle;
+}

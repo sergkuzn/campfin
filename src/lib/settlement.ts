@@ -17,7 +17,7 @@ import { custodyReading } from './movements'
 import { payerDebts } from './payers'
 import { pfandBalances, pfandLedger } from './pfand'
 import { type PoolSummary, receivedTotalCents, spendablePools } from './pools'
-import type { Expense, Movement, PerDiemBlock, PfandEntry, Pool } from './types'
+import type { Expense, Movement, OtherExpense, PerDiemBlock, PfandEntry, Pool } from './types'
 
 /**
  * What one row of the breakdown is about. A *code*, not a sentence: `src/lib/` never
@@ -84,6 +84,11 @@ export type SettlementInput = {
   blocks: PerDiemBlock[]
   expenses: Expense[]
   movements: Movement[]
+  /**
+   * Out-of-pocket spending no pool covers. It changes no pool total, so it never reaches
+   * the rows — but somebody is still owed for it, so it joins the receipts in the debts.
+   */
+  otherExpenses: OtherExpense[]
   /** The refunds typed at a shop; every other pfand line is derived from `expenses`. */
   pfandEntries: PfandEntry[]
   /** The leader holding the cash, so what they still owe co-leaders can be flagged.
@@ -92,7 +97,7 @@ export type SettlementInput = {
 }
 
 export function computeSettlement(input: SettlementInput): Settlement {
-  const { summaries, blocks, expenses, movements, pfandEntries, moneyHolder } = input
+  const { summaries, blocks, expenses, movements, otherExpenses, pfandEntries, moneyHolder } = input
   const custody = custodyReading(summaries, movements)
 
   const rows: SettlementRow[] = []
@@ -135,7 +140,9 @@ export function computeSettlement(input: SettlementInput): Settlement {
       // Not money going back to the organisation — an IOU between the leaders. It belongs
       // on the sheet all the same: until it is settled, the cash box holds money that is
       // somebody else's, and the sheet is read once, at the end.
-      ...payerDebts(expenses, moneyHolder).map(
+      // Both row kinds in one call, so a leader who fronted a receipt *and* an out-of-pocket
+      // purchase is owed one figure rather than being named twice on the same sheet.
+      ...payerDebts([...expenses, ...otherExpenses], moneyHolder).map(
         (debt): SettlementWarning => ({
           kind: 'owed_to_payer',
           payerName: debt.name,

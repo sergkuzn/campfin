@@ -6,6 +6,7 @@ import { useCamps } from '../hooks/useCamps'
 import { useExpenses } from '../hooks/useExpenses'
 import { useIncome } from '../hooks/useIncome'
 import { useMovements } from '../hooks/useMovements'
+import { useOtherExpenses } from '../hooks/useOtherExpenses'
 import { usePfand } from '../hooks/usePfand'
 import { useRequestAccess } from '../hooks/useRequestAccess'
 import { useScrollToTop } from '../hooks/useScrollToTop'
@@ -17,6 +18,7 @@ import { todayIso } from '../lib/dates'
 import { exportFileName } from '../lib/exportFile'
 import { isCampAdmin, memberCount } from '../lib/members'
 import { type CustodyFocus, custodyReading } from '../lib/movements'
+import { otherExpensesTotalCents } from '../lib/otherExpenses'
 import { pfandBalances, pfandLedger } from '../lib/pfand'
 import { depositPools, everydayPool, summarisePools } from '../lib/pools'
 import { buildReport } from '../lib/report'
@@ -28,6 +30,7 @@ import { CampSettingsScreen } from './CampSettingsScreen'
 import { FinancialReport } from './FinancialReport'
 import { IncomeSetup } from './IncomeSetup'
 import { MovementsScreen } from './MovementsScreen'
+import { OtherExpensesScreen } from './OtherExpensesScreen'
 import { PfandScreen } from './PfandScreen'
 import { ReceiptsScreen } from './ReceiptsScreen'
 
@@ -46,6 +49,7 @@ type View =
   // filter from it once and owns the chips from then on.
   | { screen: 'receipts'; campId: string; poolId: string | null }
   | { screen: 'movements'; campId: string; focus: CustodyFocus }
+  | { screen: 'other'; campId: string }
   | { screen: 'pfand'; campId: string }
   | { screen: 'report'; campId: string }
   | { screen: 'settings'; campId: string }
@@ -80,6 +84,7 @@ export function SignedInApp({ session }: Props) {
     createCamp,
     renameCamp,
     setMoneyHolder,
+    setHiddenEntries,
     deleteCamp,
     clearError,
   } = useCamps(session.userId, access.isAdmin && showAllCamps)
@@ -100,11 +105,18 @@ export function SignedInApp({ session }: Props) {
   const openCamp = 'campId' in view ? camps.find((c) => c.id === view.campId) : undefined
   const openCampId = openCamp?.id ?? ''
 
-  // Three queries per open camp: passing '' skips them entirely while the list is showing.
+  // One query per namespace an open camp needs: passing '' skips them entirely while the
+  // list is showing.
   const income = useIncome(openCampId)
   const expenses = useExpenses(openCampId)
   const movements = useMovements(openCampId)
+  const other = useOtherExpenses(openCampId)
   const pfand = usePfand(openCampId)
+  // Whether out-of-pocket spending counts towards the report's totals. It lives here rather
+  // than on the report screen because it is an input to `buildReport` below — a copy down
+  // there could disagree with the numbers it is drawn beside. On by default: the money was
+  // spent, and hiding it is the deliberate act.
+  const [includeOther, setIncludeOther] = useState(true)
 
   const { pools, sources, blocks } = income
   // The one place income and spending meet: every pool total on every screen comes from
@@ -144,10 +156,19 @@ export function SignedInApp({ session }: Props) {
         blocks,
         expenses: expenses.expenses,
         movements: movements.movements,
+        otherExpenses: other.otherExpenses,
         pfandEntries: pfand.entries,
         moneyHolder: openCamp?.moneyHolder,
       }),
-    [summaries, blocks, expenses.expenses, movements.movements, pfand.entries, openCamp],
+    [
+      summaries,
+      blocks,
+      expenses.expenses,
+      movements.movements,
+      other.otherExpenses,
+      pfand.entries,
+      openCamp,
+    ],
   )
 
   // The same figures read as a statement: income, expenses, and the difference between
@@ -160,8 +181,10 @@ export function SignedInApp({ session }: Props) {
         blocks,
         expenses: expenses.expenses,
         movements: movements.movements,
+        otherExpenses: other.otherExpenses,
+        includeOther,
       }),
-    [summaries, blocks, expenses.expenses, movements.movements],
+    [summaries, blocks, expenses.expenses, movements.movements, other.otherExpenses, includeOther],
   )
 
   // One clock read per render, shared by the status pill, the burn math and the chart's
@@ -276,6 +299,18 @@ export function SignedInApp({ session }: Props) {
     )
   }
 
+  if (view.screen === 'other') {
+    return (
+      <OtherExpensesScreen
+        campId={openCamp.id}
+        moneyHolder={openCamp.moneyHolder}
+        campWindow={campSpan}
+        otherExpenses={other}
+        onBack={goBack}
+      />
+    )
+  }
+
   if (view.screen === 'pfand') {
     return (
       <PfandScreen
@@ -298,6 +333,9 @@ export function SignedInApp({ session }: Props) {
         settlement={settlement}
         expenses={expenses.expenses}
         summaries={summaries}
+        hasOtherExpenses={other.otherExpenses.length > 0}
+        includeOther={includeOther}
+        onIncludeOtherChange={setIncludeOther}
         onBack={goBack}
         onExportCsv={handleExportCsv}
       />
@@ -335,16 +373,21 @@ export function SignedInApp({ session }: Props) {
       burn={burn}
       todayIso={today}
       isLoading={income.isLoading}
-      error={error ?? income.error ?? expenses.error ?? movements.error ?? pfand.error}
+      error={
+        error ?? income.error ?? expenses.error ?? movements.error ?? other.error ?? pfand.error
+      }
       hasExpenses={expenses.expenses.length > 0}
+      otherExpensesTotalCents={otherExpensesTotalCents(other.otherExpenses)}
       custody={custody}
       onBack={goBack}
       onOpenIncome={() => navigate({ screen: 'income', campId: openCamp.id })}
       onChangeHolder={(name: string) => setMoneyHolder(openCamp.id, name)}
       onOpenReceipts={(poolId) => navigate({ screen: 'receipts', campId: openCamp.id, poolId })}
       onOpenMovements={(focus) => navigate({ screen: 'movements', campId: openCamp.id, focus })}
+      onOpenOtherExpenses={() => navigate({ screen: 'other', campId: openCamp.id })}
       onOpenReport={() => navigate({ screen: 'report', campId: openCamp.id })}
       onOpenSettings={() => navigate({ screen: 'settings', campId: openCamp.id })}
+      onSetHiddenEntries={(hiddenEntries) => setHiddenEntries(openCamp.id, hiddenEntries)}
     />
   )
 }

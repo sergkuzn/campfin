@@ -1,12 +1,14 @@
+import { useState } from 'react'
 import './FinancialReport.css'
 import { useFormat, useT } from '../i18n'
 import { csvAmount, toCsv } from '../lib/csv'
 import { sourceLabel } from '../lib/income'
-import { isSamePayer } from '../lib/payers'
+import { isSamePayer, type PayerRow } from '../lib/payers'
 import type { PoolSummary } from '../lib/pools'
 import type { DifferenceLine, FinancialReport as Report } from '../lib/report'
 import type { Settlement, SettlementWarning } from '../lib/settlement'
 import type { Camp, Expense } from '../lib/types'
+import { InfoToggle } from './InfoToggle'
 import { Screen } from './Screen'
 
 type Props = {
@@ -18,6 +20,13 @@ type Props = {
   /** Every receipt, for the itemised half of the CSV. */
   expenses: Expense[]
   summaries: PoolSummary[]
+  /** Whether any out-of-pocket expense exists at all. The switch below only appears when
+   *  one does — a control that can change nothing is worse than no control. */
+  hasOtherExpenses: boolean
+  /** Whether they are being counted. Owned by the parent, because it is what the report was
+   *  built with — a copy here could disagree with the numbers on screen. */
+  includeOther: boolean
+  onIncludeOtherChange: (include: boolean) => void
   onBack: () => void
   /** The parent owns the filename and the download; this screen owns the content. */
   onExportCsv: (text: string) => void
@@ -34,11 +43,18 @@ export function FinancialReport({
   settlement,
   expenses,
   summaries,
+  hasOtherExpenses,
+  includeOther,
+  onIncludeOtherChange,
   onBack,
   onExportCsv,
 }: Props) {
   const t = useT()
   const format = useFormat()
+
+  // Whether the ⓘ beside the switch is unfolded. Closed to begin with: what the switch does
+  // is read once, and a paragraph above the table would push the numbers down every visit.
+  const [hintOpen, setHintOpen] = useState(false)
 
   // Difference kinds are *codes*; the sentences live in the dictionary. A switch with no
   // default is what makes a future kind a compile error here instead of a blank cell.
@@ -55,6 +71,8 @@ export function FinancialReport({
         return t.report.difference.rows.fee
       case 'orphan_spent':
         return t.report.difference.rows.orphanSpent
+      case 'other_expenses':
+        return t.report.difference.rows.otherExpenses
     }
   }
 
@@ -94,9 +112,9 @@ export function FinancialReport({
    * is still owed, and blank when there was nothing to pay back — either nobody was
    * tracked, or the money holder paid it out of their own cash anyway.
    */
-  const repaidCell = (expense: Expense): string => {
-    if (expense.paidBy === undefined || isSamePayer(expense.paidBy, camp.moneyHolder)) return ''
-    return expense.reimbursed === true ? t.report.csv.repaidYes : t.report.csv.repaidNo
+  const repaidCell = (row: PayerRow): string => {
+    if (row.paidBy === undefined || isSamePayer(row.paidBy, camp.moneyHolder)) return ''
+    return row.reimbursed === true ? t.report.csv.repaidYes : t.report.csv.repaidNo
   }
 
   const handleExportCsv = () => {
@@ -133,6 +151,14 @@ export function FinancialReport({
           line.pool?.name ?? t.report.expenses.unknownPool,
           csvAmount(line.spentCents),
         ]),
+        // Follows the switch above the table: a file that disagreed with the screen it was
+        // exported from would be the worse of the two to hand to an accountant.
+        ...(report.other === null
+          ? []
+          : [
+              [t.report.expenses.other],
+              ...report.other.items.map((item) => [item.name, csvAmount(item.amountCents)]),
+            ]),
         [t.report.expenses.total, csvAmount(report.expenseTotalCents)],
 
         [],
@@ -170,6 +196,31 @@ export function FinancialReport({
             // still owed, and empty when nobody fronted the money.
             repaidCell(expense),
           ]),
+
+        // Only when they are being counted, and with the same columns as the receipts above
+        // minus the ones that belong to a pool — there is no number and no pot to name.
+        ...(report.other === null
+          ? []
+          : [
+              [],
+              [t.report.csv.otherTitle],
+              [
+                t.report.csv.date,
+                t.report.csv.name,
+                t.report.csv.amount,
+                t.report.csv.note,
+                t.report.csv.paidBy,
+                t.report.csv.repaid,
+              ],
+              ...report.other.items.map((item) => [
+                item.date,
+                item.name,
+                csvAmount(item.amountCents),
+                item.note ?? '',
+                item.paidBy,
+                repaidCell(item),
+              ]),
+            ]),
       ]),
     )
   }
@@ -251,7 +302,39 @@ export function FinancialReport({
 
       <section className="report__section">
         <h3 className="report__section-title">{t.report.expenses.title}</h3>
-        {report.expenses.length === 0 ? (
+
+        {/* Only once there is something to count. It changes the arithmetic rather than what
+            is drawn, so it sits above the table it rewrites, and it is hidden from print —
+            a switch on paper is a control nobody can reach. */}
+        {hasOtherExpenses && (
+          <div className="report__switch report__hide-print">
+            <div className="report__switch-row">
+              <label className="report__switch-label">
+                <input
+                  type="checkbox"
+                  checked={includeOther}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    onIncludeOtherChange(event.target.checked)
+                  }
+                />
+                <span>{t.report.expenses.includeOther}</span>
+              </label>
+              <InfoToggle
+                label={t.report.expenses.includeOtherInfo}
+                open={hintOpen}
+                controls="report-include-other-hint"
+                onToggle={() => setHintOpen((open) => !open)}
+              />
+            </div>
+            {hintOpen && (
+              <p className="report__switch-hint" id="report-include-other-hint">
+                {t.report.expenses.includeOtherHint}
+              </p>
+            )}
+          </div>
+        )}
+
+        {report.expenses.length === 0 && report.other === null ? (
           <p className="report__empty">{t.report.expenses.empty}</p>
         ) : (
           <table className="report__table">
@@ -270,6 +353,27 @@ export function FinancialReport({
                   <td className="report__amount">{format.euros(line.spentCents)}</td>
                 </tr>
               ))}
+
+              {/* Its own group, one row per purchase: each is a separate claim on the
+                  organisation, and a single lump sum would say nothing about what was
+                  bought. No subtotal of its own — the rows run straight into the table's
+                  foot, which is where the money out is added up. Left off entirely when the
+                  switch above is off. */}
+              {report.other !== null && (
+                <>
+                  <tr className="report__group">
+                    <th scope="rowgroup" colSpan={2}>
+                      {t.report.expenses.other}
+                    </th>
+                  </tr>
+                  {report.other.items.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.name}</td>
+                      <td className="report__amount">{format.euros(item.amountCents)}</td>
+                    </tr>
+                  ))}
+                </>
+              )}
             </tbody>
             <tfoot>
               <tr>
@@ -311,6 +415,20 @@ export function FinancialReport({
               </tr>
             </tfoot>
           </table>
+        )}
+
+        {/* A negative rest is not a rest: more was spent than came in, so the sheet has to
+            say which way the money now goes. Printed too — the number alone would be read
+            as a leftover by whoever gets the paper. */}
+        {report.differenceCents < 0 && (
+          <p className="report__owed">
+            {camp.moneyHolder === undefined
+              ? t.report.difference.owedByOrgNoHolder(format.euros(-report.differenceCents))
+              : t.report.difference.owedByOrg(
+                  format.euros(-report.differenceCents),
+                  camp.moneyHolder,
+                )}
+          </p>
         )}
       </section>
 

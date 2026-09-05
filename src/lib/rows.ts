@@ -15,6 +15,7 @@ import { isCamp } from './camps'
 import { isExpense } from './expenses'
 import { isIncomeSource, isMovement, isPerDiemBlock, isPool } from './income'
 import { isMembership } from './members'
+import { isOtherExpense } from './otherExpenses'
 import { isPfandEntry } from './pfand'
 import { isPoolColor } from './poolColors'
 import type {
@@ -24,6 +25,7 @@ import type {
   IncomeSource,
   Membership,
   Movement,
+  OtherExpense,
   PerDiemBlock,
   PfandEntry,
   Pool,
@@ -56,8 +58,8 @@ export function mapRows<T>(
 export function toCamp(row: unknown): Camp | null {
   const value = withoutNulls(row)
   if (!isCamp(value)) return null
-  const { id, name, joinCode, moneyHolder, createdAt } = value
-  return { id, name, joinCode, moneyHolder, createdAt }
+  const { id, name, joinCode, moneyHolder, hiddenEntries, createdAt } = value
+  return { id, name, joinCode, moneyHolder, hiddenEntries, createdAt }
 }
 
 export function toAccount(row: unknown): Account | null {
@@ -147,6 +149,13 @@ export function toExpense(row: unknown): Expense | null {
     enteredBy,
     createdAt,
   }
+}
+
+export function toOtherExpense(row: unknown): OtherExpense | null {
+  const value = withoutNulls(row)
+  if (!isOtherExpense(value)) return null
+  const { id, campId, name, amountCents, date, note, paidBy, reimbursed, createdAt } = value
+  return { id, campId, name, amountCents, date, note, paidBy, reimbursed, createdAt }
 }
 
 export function toPfandEntry(row: unknown): PfandEntry | null {

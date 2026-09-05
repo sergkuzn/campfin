@@ -58,6 +58,11 @@ const _schema = i.schema({
       // payer, so "exactly one holder" cannot be broken by two phones promoting two people
       // while offline. Optional: nobody holds the money until somebody is named.
       moneyHolder: i.string().optional(),
+      // Which entry cards the dashboard leaves out, as a comma-separated list of slot keys
+      // ("fee,other"). One string rather than a boolean per card, so a card added later
+      // needs no new attribute. On the camp rather than on a phone: not collecting deposits
+      // is a fact about the camp, so both leaders should see the same group.
+      hiddenEntries: i.string().optional(),
       createdAt: i.number().indexed(),
       // No dates: a camp's window is the span of its per-diem blocks, derived on read.
     }),
@@ -133,6 +138,25 @@ const _schema = i.schema({
       // alone. Editor memory only — it changes nothing about what the row means.
       pfandInTotal: i.boolean().optional(),
       enteredBy: i.string().optional(),
+      createdAt: i.number(),
+    }),
+
+    // Money a leader paid out of their own pocket that no pool covers, waiting on the
+    // organisation to compensate it. A namespace of its own rather than a poolless
+    // `expenses` row: every pool sum is keyed by pool, and one row without one would have
+    // to be branched around in each of them.
+    otherExpenses: i.entity({
+      campId: i.string().indexed(),
+      name: i.string(),
+      amountCents: i.number(),
+      date: i.string().indexed(),
+      // Required here, unlike `expenses.paidBy`: this namespace is new, so no stored row
+      // predates the question. Free text, compared through `payerKey`, same as a receipt's.
+      paidBy: i.string(),
+      // Whether the money holder has taken the claim over from the person who fronted it.
+      // Says nothing about the organisation having paid — that is settled off-app.
+      reimbursed: i.boolean().optional(),
+      note: i.string().optional(),
       createdAt: i.number(),
     }),
 
@@ -219,6 +243,10 @@ const _schema = i.schema({
     expenseCamp: {
       forward: { on: 'expenses', has: 'one', label: 'camp', onDelete: 'cascade' },
       reverse: { on: 'camps', has: 'many', label: 'expenses' },
+    },
+    otherExpenseCamp: {
+      forward: { on: 'otherExpenses', has: 'one', label: 'camp', onDelete: 'cascade' },
+      reverse: { on: 'camps', has: 'many', label: 'otherExpenses' },
     },
     movementCamp: {
       forward: { on: 'movements', has: 'one', label: 'camp', onDelete: 'cascade' },

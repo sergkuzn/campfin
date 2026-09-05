@@ -42,25 +42,89 @@
 /* The blocks money is entered through — receipts, deposits, the fee — held together as one
    block, apart from the chart above and the report below, which only read the money back.
 
-   Two signals do the grouping, and neither adds a frame: the cards sit at half the screen's
-   gap, so proximity alone separates them from their neighbours, and a rail runs down the
-   left of all three. The rail is the title band's own accent, at the band's pressed strength
-   so 2px of it stays visible on a near-black page as well as a white one. */
+   The group is marked at its two edges rather than down its side: the caption sits on a
+   hairline that runs to the right margin, and a matching hairline closes under the last
+   card. Between them the cards sit at half the screen's gap, so proximity carries the
+   grouping while the rules only say where it starts and stops. Nothing is boxed — the
+   cards' own borders stay the only frames on the page. */
 .dashboard__group {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding-left: var(--space-3);
-  border-left: 2px solid var(--band-active);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
 }
 
 /* Sized like a card's title so the caption reads as a label over the group, not as a
-   heading competing with the camp name. */
+   heading competing with the camp name. The flex row is what lets the rule after it
+   take the width the text leaves. */
 .dashboard__group-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   margin: 0;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+/* The caption's own rule. A pseudo-element rather than an <hr>, since it is decoration:
+   `flex: 1` makes it eat whatever width is left, so the line always reaches the margin
+   however long the caption's translation turns out to be. */
+.dashboard__group-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: var(--border);
+}
+
+/* The out-of-pocket card's one figure: label left, amount right, on the card's own line.
+   No strip component behind it — unlike the deposits there is nothing to reconcile here,
+   only a total the organisation owes back. */
+.dashboard__other-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.dashboard__other-total strong {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The group's one configure control, at the far end of the caption's rule. `order` pushes
+   it past the pseudo-element above, which is drawn after it in the DOM — so the line still
+   runs from the caption to the button rather than stopping short of it.
+
+   Text rather than an icon: the mode it opens has no glyph anyone would recognise, and the
+   word is the whole affordance. */
+.dashboard__customise {
+  order: 1;
+  flex-shrink: 0;
+  /* Padding to a thumb's width rather than the label's, which is ~4 characters. */
+  padding: var(--space-2) var(--space-3);
+  margin: calc(var(--space-2) * -1) calc(var(--space-3) * -1) calc(var(--space-2) * -1) 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+/* One line of explanation while the group is being configured: it grows cards the camp had
+   hidden and its cards stop leading anywhere, both of which need saying once. */
+.dashboard__customise-hint {
+  margin: 0;
+  font-size: 0.8125rem;
   color: var(--muted);
 }

@@ -27,18 +27,15 @@
   gap: var(--space-2);
 }
 
-.filters__label {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
+/* A <fieldset> for the grouping semantics only — its default border, margin and padding
+   are cleared so it lays out like the plain column it replaced. */
 .filters__pools {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 /* Wrapping rather than scrolling sideways: a camp has a handful of pools, and a chip that

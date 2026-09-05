@@ -16,6 +16,7 @@ import { ActualBlocksForm } from './ActualBlocksForm'
 import { ConfirmDialog } from './ConfirmDialog'
 import { IncomeSourceBody, IncomeSourceCard } from './IncomeSourceCard'
 import { IncomeSourceForm } from './IncomeSourceForm'
+import { InfoToggle } from './InfoToggle'
 import { PoolColorDialog } from './PoolColorDialog'
 import { PoolForm } from './PoolForm'
 import { PoolTag } from './PoolTag'
@@ -226,20 +227,17 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   return (
     <Screen name="income" back={{ label: t.income.back, onClick: onBack }}>
       <header className="income__header">
-        <h2 className="screen__title income__title">{t.income.title}</h2>
+        <h2 className="screen__title">{t.income.title}</h2>
         {/* On demand rather than always on screen: "what is a pool" is a question you have
             once, and a permanent paragraph would cost every later visit a scroll. */}
+        <InfoToggle
+          label={t.pools.aboutLabel}
+          open={showPoolHint}
+          controls="income-pools-hint"
+          onToggle={() => setShowPoolHint((shown) => !shown)}
+        />
         <button
-          className="info-button"
-          type="button"
-          aria-expanded={showPoolHint}
-          aria-label={t.pools.aboutLabel}
-          onClick={() => setShowPoolHint((shown) => !shown)}
-        >
-          ⓘ
-        </button>
-        <button
-          className="btn btn--primary"
+          className="btn btn--primary income__add"
           type="button"
           disabled={locked}
           onClick={() => setEditing({ mode: 'pool' })}
@@ -249,7 +247,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
       </header>
 
       {showPoolHint && (
-        <ul className="income__hint">
+        <ul className="income__hint" id="income-pools-hint">
           {t.pools.about.map((line) => (
             <li key={line}>{line}</li>
           ))}
@@ -420,6 +418,9 @@ function PoolSection({
   // The everyday pool outlives every source in it, so it offers no Delete at all.
   const deletable = pool.role !== 'everyday'
   const isDeposit = pool.role === 'deposit'
+  const isEveryday = pool.role === 'everyday'
+  // The "how Group money works" explainer, revealed on demand on the everyday pool only.
+  const [showAbout, setShowAbout] = useState(false)
 
   // A pool holding exactly one income is one thing, not a box inside a box: the header
   // speaks for both, so the income's Edit and Delete join the pool's own menu.
@@ -446,6 +447,18 @@ function PoolSection({
         <h3 className="pool__name">
           <PoolTag pool={pool} variant="dot" />
           {pool.name}
+          {/* Sits inside the heading, right after the name, so it reads as part of the
+              label rather than a control floating in the header. */}
+          {isEveryday && (
+            <InfoToggle
+              label={t.pools.everydayAboutLabel}
+              open={showAbout}
+              // Scoped to the pool: several cards render at once, and a duplicated id would
+              // point every ⓘ at the first card's paragraph.
+              controls={`pool-about-${pool.id}`}
+              onToggle={() => setShowAbout((shown) => !shown)}
+            />
+          )}
           {/* Money that is only passing through: it is in the camp's hands but never the
               camp's to spend, which is worth saying on the pot itself. */}
           {isDeposit && <span className="pool__badge">{t.pools.roles.deposit.label}</span>}
@@ -464,6 +477,14 @@ function PoolSection({
         )}
         <RowMenu label={pool.name} disabled={locked} items={menu} />
       </header>
+
+      {isEveryday && showAbout && (
+        <ul className="pool__hint" id={`pool-about-${pool.id}`}>
+          {t.pools.everydayAbout.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      )}
 
       {isDeposit && sources.length > 0 && <p className="pool__note">{t.pools.depositNote}</p>}
 

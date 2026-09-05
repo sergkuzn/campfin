@@ -114,6 +114,7 @@ const settle = (over: Partial<SettlementInput> & { pools?: Pool[] } = {}) => {
     blocks,
     expenses,
     movements: over.movements ?? [],
+    otherExpenses: over.otherExpenses ?? [],
     pfandEntries: over.pfandEntries ?? [],
     moneyHolder: over.moneyHolder,
   })
@@ -249,6 +250,49 @@ describe('computeSettlement', () => {
     expect(withDebt.spentTotalCents).toBe(withoutDebt.spentTotalCents)
   })
 
+  it("adds out-of-pocket spending to the same person's debt rather than naming them twice", () => {
+    const s = settle({
+      expenses: [exp({ amountCents: 1500, paidBy: 'Ben' })],
+      otherExpenses: [
+        {
+          id: 'o1',
+          campId: 'c',
+          name: 'Tent pole',
+          amountCents: 2490,
+          date: '2026-07-03',
+          paidBy: 'Ben',
+          createdAt: 20,
+        },
+      ],
+      moneyHolder: 'Anna',
+    })
+
+    expect(s.warnings.filter((w) => w.kind === 'owed_to_payer')).toEqual([
+      { kind: 'owed_to_payer', payerName: 'Ben', amountCents: 3990 },
+    ])
+  })
+
+  it('leaves what goes back untouched when the debt is out-of-pocket money', () => {
+    // It never came out of a pool, so it cannot change what the pools return.
+    const withOther = settle({
+      otherExpenses: [
+        {
+          id: 'o1',
+          campId: 'c',
+          name: 'Tent pole',
+          amountCents: 2490,
+          date: '2026-07-03',
+          paidBy: 'Ben',
+          createdAt: 20,
+        },
+      ],
+      moneyHolder: 'Anna',
+    })
+
+    expect(withOther.toReturnCents).toBe(settle({ moneyHolder: 'Anna' }).toReturnCents)
+    expect(withOther.spentTotalCents).toBe(0)
+  })
+
   it('names no debt while the camp has no money holder', () => {
     const s = settle({ expenses: [exp({ amountCents: 800, paidBy: 'Ben' })] })
 
@@ -261,6 +305,7 @@ describe('computeSettlement', () => {
       blocks: [],
       expenses: [],
       movements: [],
+      otherExpenses: [],
       pfandEntries: [],
     })
 

@@ -224,8 +224,8 @@ body {
 /* An explanation you can ask for and put away again — used where a control needs a
    sentence of context that would be noise on every later visit. No border or fill: the
    ⓘ glyph already reads as a control, and a ring around it only added visual weight.
-   Shared by two screens, so it lives with the shell rather than in either one's
-   stylesheet. */
+   Worn by every `InfoToggle`, so it lives with the shell rather than in any one screen's
+   stylesheet — that is what keeps the ⓘ one size wherever it turns up. */
 .info-button {
   flex: 0 0 auto;
   width: 1.5rem;

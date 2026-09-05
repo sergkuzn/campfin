@@ -102,3 +102,64 @@ button.slot-card:active .slot-card__head {
 h3.slot-card__title {
   margin: 0;
 }
+
+/* The Hide/Show control in a card's band while the group is being customised. Outlined on
+   a card the camp uses: hiding is the reversible, unremarkable choice, and a filled button
+   on every card would turn the whole group into a row of calls to action. */
+.slot-card__toggle {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.slot-card__toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Filled, on a hidden card. This is the loudest thing in the group on purpose: with the
+   card greyed out around it, the one solid button is what says "this one is off, and this
+   is the way back". `--on-accent` is the palette's text-on-accent colour, held to the text
+   contrast bar in both themes. */
+.slot-card__toggle--show {
+  border-color: var(--accent);
+  background-color: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Mixed towards the theme's own ink rather than to a second stored colour, so the press
+   darkens in the day palette and lightens in the night one without a token for each. */
+.slot-card__toggle--show:hover {
+  background-color: color-mix(in srgb, var(--accent) 85%, var(--fg));
+  color: var(--on-accent);
+}
+
+/* A card the dashboard leaves out, shown only while customising.
+
+   Three signals at once, because one was too easy to miss in a group of four: the card's
+   surface drops away to the page colour, so it no longer reads as sitting on the screen;
+   its border goes dashed, the shape this app already uses for an empty slot; and its
+   contents fade. The band and its button are left out of the fade — what names the card and
+   what brings it back both stay at the contrast the palette promises. */
+.slot-card--dimmed {
+  --slot-bg: var(--bg);
+  border-style: dashed;
+  border-color: var(--border);
+}
+
+.slot-card--dimmed > *:not(.slot-card__head) {
+  opacity: 0.5;
+}
+
+/* The band drops with the card. Without this it keeps the raised `--band` tint and the
+   hidden card still reads as one of the live ones. */
+.slot-card--dimmed .slot-card__head {
+  background-color: transparent;
+  border-bottom-style: dashed;
+}

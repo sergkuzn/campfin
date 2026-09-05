@@ -1,0 +1,70 @@
+/* Title, the ⓘ that unfolds what this screen is for, then Add pushed to the far edge —
+   the same three-part header the income screen wears, so the ⓘ sits in the same place
+   relative to the title on both. */
+.other-expenses__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The ⓘ sits directly after the heading; the add button is pushed to the row end. `auto`
+   rather than space-between, which with three children would spread the ⓘ away from the
+   title it belongs to. */
+.other-expenses__add {
+  margin-inline-start: auto;
+}
+
+.other-expenses__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Same row shape as a receipt and a movement: name and note grow, the amount and the ⋮ keep
+   their width. The leading edge is tinted rather than left plain — none of this money came
+   out of a pool, and that one difference is what the stripe says. */
+.other-expense {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--warn-fill);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+
+.other-expense__main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0; /* lets a long name wrap instead of pushing the amount off the row */
+}
+
+.other-expense__name {
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.other-expense__meta,
+.other-expense__note {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.other-expense__amount {
+  flex: 0 0 auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* What the organisation owes and what a co-leader is still out are different kinds of
+   number, so the owed line is tinted — gently, matching the button on the rows above it. */
+.other-expenses__owed {
+  color: color-mix(in srgb, var(--warn) 80%, var(--fg));
+}
