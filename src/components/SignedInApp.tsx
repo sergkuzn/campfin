@@ -84,6 +84,7 @@ export function SignedInApp({ session }: Props) {
     createCamp,
     renameCamp,
     setMoneyHolder,
+    setHiddenEntries,
     deleteCamp,
     clearError,
   } = useCamps(session.userId, access.isAdmin && showAllCamps)
@@ -386,6 +387,7 @@ export function SignedInApp({ session }: Props) {
       onOpenOtherExpenses={() => navigate({ screen: 'other', campId: openCamp.id })}
       onOpenReport={() => navigate({ screen: 'report', campId: openCamp.id })}
       onOpenSettings={() => navigate({ screen: 'settings', campId: openCamp.id })}
+      onSetHiddenEntries={(hiddenEntries) => setHiddenEntries(openCamp.id, hiddenEntries)}
     />
   )
 }

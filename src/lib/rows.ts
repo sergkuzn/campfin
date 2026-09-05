@@ -58,8 +58,8 @@ export function mapRows<T>(
 export function toCamp(row: unknown): Camp | null {
   const value = withoutNulls(row)
   if (!isCamp(value)) return null
-  const { id, name, joinCode, moneyHolder, createdAt } = value
-  return { id, name, joinCode, moneyHolder, createdAt }
+  const { id, name, joinCode, moneyHolder, hiddenEntries, createdAt } = value
+  return { id, name, joinCode, moneyHolder, hiddenEntries, createdAt }
 }
 
 export function toAccount(row: unknown): Account | null {

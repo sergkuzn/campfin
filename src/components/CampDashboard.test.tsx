@@ -66,6 +66,7 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
   const onOpenMovements = vi.fn()
   const onOpenReport = vi.fn()
   const onChangeHolder = vi.fn()
+  const onSetHiddenEntries = vi.fn()
   const user = userEvent.setup()
   render(
     <I18nProvider>
@@ -87,6 +88,7 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
         onOpenOtherExpenses={vi.fn()}
         onOpenReport={onOpenReport}
         onOpenSettings={onOpenSettings}
+        onSetHiddenEntries={onSetHiddenEntries}
         {...props}
       />
     </I18nProvider>,
@@ -98,6 +100,7 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
     onOpenMovements,
     onOpenReport,
     onChangeHolder,
+    onSetHiddenEntries,
     user,
   }
 }
@@ -266,6 +269,96 @@ describe('CampDashboard', () => {
     expect(
       screen.queryByRole('button', { name: new RegExp(en.burn.title) }),
     ).not.toBeInTheDocument()
+  })
+
+  it('leaves a hidden card out of the group', () => {
+    renderDashboard({
+      camp: { ...heldCamp, hiddenEntries: 'fee,other' },
+      summaries: [fundedPool],
+    })
+
+    expect(screen.getByText(en.dashboard.receipts)).toBeInTheDocument()
+    expect(screen.getByText(en.custody.deposits.title)).toBeInTheDocument()
+    expect(screen.queryByText(en.custody.fee.title)).not.toBeInTheDocument()
+    expect(screen.queryByText(en.otherExpenses.title)).not.toBeInTheDocument()
+  })
+
+  it('brings every card back while customising, so a hidden screen is still reachable', async () => {
+    const { user } = renderDashboard({
+      camp: { ...heldCamp, hiddenEntries: 'fee' },
+      summaries: [fundedPool],
+    })
+    await user.click(screen.getByRole('button', { name: en.dashboard.customiseEntries }))
+
+    expect(screen.getByText(en.custody.fee.title)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: en.dashboard.doneCustomising })).toBeInTheDocument()
+  })
+
+  it('hides a card from its own toggle, writing the whole set', async () => {
+    const { user, onSetHiddenEntries } = renderDashboard({
+      camp: { ...heldCamp, hiddenEntries: 'other' },
+      summaries: [fundedPool],
+    })
+    await user.click(screen.getByRole('button', { name: en.dashboard.customiseEntries }))
+    await user.click(
+      screen.getByRole('button', { name: en.dashboard.hideEntry(en.custody.fee.title) }),
+    )
+
+    // The whole set, in slot order — a partial write would let two phones customising at
+    // once settle on a half-hidden group.
+    expect(onSetHiddenEntries).toHaveBeenCalledExactlyOnceWith('fee,other')
+  })
+
+  it('shows a hidden card again, clearing the field when it was the last one', async () => {
+    const { user, onSetHiddenEntries } = renderDashboard({
+      camp: { ...heldCamp, hiddenEntries: 'fee' },
+      summaries: [fundedPool],
+    })
+    await user.click(screen.getByRole('button', { name: en.dashboard.customiseEntries }))
+    await user.click(
+      screen.getByRole('button', { name: en.dashboard.showEntry(en.custody.fee.title) }),
+    )
+
+    expect(onSetHiddenEntries).toHaveBeenCalledExactlyOnceWith('')
+  })
+
+  it('draws the bare verb but still announces which card it acts on', async () => {
+    const { user } = renderDashboard({
+      camp: { ...heldCamp, hiddenEntries: 'fee' },
+      summaries: [fundedPool],
+    })
+    await user.click(screen.getByRole('button', { name: en.dashboard.customiseEntries }))
+
+    // The card's title sits beside the button, so the eye needs no more than "Show" — but a
+    // screen reader reaches the button alone, and the label is what names the card for it.
+    const show = screen.getByRole('button', {
+      name: en.dashboard.showEntry(en.custody.fee.title),
+    })
+    expect(show).toHaveTextContent(en.dashboard.show)
+    expect(show).not.toHaveTextContent(en.custody.fee.title)
+  })
+
+  it('offers no toggle for receipts — every camp writes them', async () => {
+    const { user } = renderDashboard({ summaries: [fundedPool] })
+    await user.click(screen.getByRole('button', { name: en.dashboard.customiseEntries }))
+
+    expect(
+      screen.queryByRole('button', { name: en.dashboard.hideEntry(en.dashboard.receipts) }),
+    ).not.toBeInTheDocument()
+    // It also keeps leading somewhere, unlike the cards being configured around it.
+    expect(slotHeader(en.dashboard.openReceipts)).toBeInTheDocument()
+  })
+
+  it('stops a card being configured from leading anywhere', async () => {
+    // A button inside a button is invalid HTML, so a card wearing a toggle is a plain
+    // section: the toggle is the only thing on it to press.
+    const { user, onOpenMovements } = renderDashboard({ summaries: [fundedPool] })
+    await user.click(screen.getByRole('button', { name: en.dashboard.customiseEntries }))
+
+    expect(
+      screen.queryByRole('button', { name: new RegExp(en.custody.deposits.open) }),
+    ).not.toBeInTheDocument()
+    expect(onOpenMovements).not.toHaveBeenCalled()
   })
 
   it('says the camp is running when today falls inside the block window', () => {

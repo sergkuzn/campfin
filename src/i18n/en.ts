@@ -196,6 +196,21 @@ export const en = {
     /** Names the group of blocks where money is written down — receipts, deposits, the
      *  fee — as against the chart above and the report below, which only read it back. */
     entriesGroup: 'Entries',
+    /** Opens the group's configure mode, where every card — including the ones this camp
+     *  has hidden — is shown with a Hide/Show button of its own. */
+    customiseEntries: 'Customise',
+    doneCustomising: 'Done',
+    /** Sits under the caption while customising, since a group that suddenly grows two
+     *  cards and stops leading anywhere needs one line saying why. */
+    customiseHint: 'Choose the cards this camp uses. Receipts always shows.',
+    /** Drawn on the per-card buttons. The card's own title is right beside them, so the
+     *  bare verb is all the eye needs. */
+    hide: 'Hide',
+    show: 'Show',
+    /** The same buttons' accessible names. A screen reader reaches the button without the
+     *  title beside it, where "Hide" alone would not say which card it acts on. */
+    hideEntry: (title: string) => `Hide ${title}`,
+    showEntry: (title: string) => `Show ${title}`,
     openSettings: 'Camp settings',
   },
 

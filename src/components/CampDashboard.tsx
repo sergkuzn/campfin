@@ -1,7 +1,15 @@
 import './CampDashboard.css'
+import { type ReactNode, useMemo, useState } from 'react'
+import { useBackDismiss } from '../hooks/useBackDismiss'
 import { useFormat, useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus, isCampSetUp } from '../lib/camps'
+import {
+  type EntrySlot,
+  parseHiddenSlots,
+  serialiseHiddenSlots,
+  toggleHiddenSlot,
+} from '../lib/entrySlots'
 import type { CustodyFocus, CustodyReading } from '../lib/movements'
 import type { PoolSummary } from '../lib/pools'
 import type { Camp } from '../lib/types'
@@ -49,6 +57,8 @@ type Props = {
   onOpenOtherExpenses: () => void
   onOpenReport: () => void
   onOpenSettings: () => void
+  /** Store which entry cards this camp leaves out, as the whole serialised set. */
+  onSetHiddenEntries: (hiddenEntries: string) => void
 }
 
 /**
@@ -72,9 +82,16 @@ export function CampDashboard({
   onOpenOtherExpenses,
   onOpenReport,
   onOpenSettings,
+  onSetHiddenEntries,
 }: Props) {
   const t = useT()
   const format = useFormat()
+  // Configuring the group is a mode, not a stored setting: it lasts as long as the visit.
+  const [customising, setCustomising] = useState(false)
+  // The back gesture should leave the mode rather than the camp — the same courtesy a row
+  // menu gets, since both are a layer of choices over the screen underneath.
+  useBackDismiss(customising, () => setCustomising(false))
+  const hidden = useMemo(() => parseHiddenSlots(camp.hiddenEntries), [camp.hiddenEntries])
 
   // Every camp has an everyday pool, so "nothing here yet" means no *income*, not no pools.
   const funded = summaries.some((summary) => summary.sources.length > 0)
@@ -135,6 +152,58 @@ export function CampDashboard({
     )
   }
 
+  // The hideable cards as data, so "which of these does this camp show?" is one filter
+  // rather than three copies of the same condition around three blocks of JSX.
+  const entrySlots: {
+    slot: EntrySlot
+    title: string
+    /** Never drawn: what a screen reader reads in place of the chevron. */
+    action: string
+    onOpen: () => void
+    filled: boolean
+    body: ReactNode
+  }[] = [
+    {
+      slot: 'deposits',
+      title: t.custody.deposits.title,
+      action: t.custody.deposits.open,
+      onOpen: () => onOpenMovements('deposits'),
+      filled: custody.statuses.length > 0,
+      body: <DepositsStrip statuses={custody.statuses} />,
+    },
+    {
+      slot: 'fee',
+      title: t.custody.fee.title,
+      action: t.custody.fee.open,
+      onOpen: () => onOpenMovements('fee'),
+      filled: custody.feeHeldCents > 0,
+      body:
+        custody.feeHeldCents > 0 ? (
+          <FeeStrip heldCents={custody.feeHeldCents} count={custody.feeCount} />
+        ) : (
+          <p className="slot-card__hint">{t.custody.fee.empty}</p>
+        ),
+    },
+    // Last of the four: it is the rarest of them, and the only one whose money never
+    // belonged to the camp.
+    {
+      slot: 'other',
+      title: t.otherExpenses.title,
+      action: t.otherExpenses.open,
+      onOpen: onOpenOtherExpenses,
+      filled: otherExpensesTotalCents > 0,
+      body:
+        otherExpensesTotalCents > 0 ? (
+          <p className="dashboard__other-total">
+            <span>{t.otherExpenses.total}</span>
+            <strong>{format.euros(otherExpensesTotalCents)}</strong>
+          </p>
+        ) : (
+          <p className="slot-card__hint">{t.otherExpenses.empty}</p>
+        ),
+    },
+  ]
+
   return (
     <Screen name="dashboard" back={{ label: t.dashboard.back, onClick: onBack }}>
       {header}
@@ -153,15 +222,28 @@ export function CampDashboard({
         )}
       </section>
 
-      {/* The four blocks money is entered through, grouped away from the chart above
-          and the report below, which only read it back. `aria-labelledby` makes the
-          caption the group's accessible name, so the grouping is announced and not
-          merely drawn. */}
+      {/* The blocks money is entered through, grouped away from the chart above and the
+          report below, which only read it back. `aria-labelledby` makes the caption the
+          group's accessible name, so the grouping is announced and not merely drawn. */}
       <section className="dashboard__group" aria-labelledby="dashboard-entries">
-        <h3 className="dashboard__group-title" id="dashboard-entries">
-          {t.dashboard.entriesGroup}
+        <h3 className="dashboard__group-title">
+          {/* The id sits on the caption's own text rather than the whole heading, so the
+              group is announced as "Entries" and not "Entries Customise". */}
+          <span id="dashboard-entries">{t.dashboard.entriesGroup}</span>
+          <button
+            className="dashboard__customise"
+            type="button"
+            aria-expanded={customising}
+            onClick={() => setCustomising(!customising)}
+          >
+            {customising ? t.dashboard.doneCustomising : t.dashboard.customiseEntries}
+          </button>
         </h3>
 
+        {customising && <p className="dashboard__customise-hint">{t.dashboard.customiseHint}</p>}
+
+        {/* No toggle: every camp writes receipts, and leaving this one fixed is what stops
+            the group collapsing to a caption with nothing under it. */}
         <SlotCard
           title={t.dashboard.receipts}
           action={t.dashboard.openReceipts}
@@ -178,45 +260,39 @@ export function CampDashboard({
           )}
         </SlotCard>
 
-        <SlotCard
-          title={t.custody.deposits.title}
-          action={t.custody.deposits.open}
-          onOpen={() => onOpenMovements('deposits')}
-          filled={custody.statuses.length > 0}
-        >
-          <DepositsStrip statuses={custody.statuses} />
-        </SlotCard>
-
-        <SlotCard
-          title={t.custody.fee.title}
-          action={t.custody.fee.open}
-          onOpen={() => onOpenMovements('fee')}
-          filled={custody.feeHeldCents > 0}
-        >
-          {custody.feeHeldCents > 0 ? (
-            <FeeStrip heldCents={custody.feeHeldCents} count={custody.feeCount} />
-          ) : (
-            <p className="slot-card__hint">{t.custody.fee.empty}</p>
-          )}
-        </SlotCard>
-
-        {/* Last of the four: it is the rarest of them, and the only one whose money never
-            belonged to the camp. */}
-        <SlotCard
-          title={t.otherExpenses.title}
-          action={t.otherExpenses.open}
-          onOpen={onOpenOtherExpenses}
-          filled={otherExpensesTotalCents > 0}
-        >
-          {otherExpensesTotalCents > 0 ? (
-            <p className="dashboard__other-total">
-              <span>{t.otherExpenses.total}</span>
-              <strong>{format.euros(otherExpensesTotalCents)}</strong>
-            </p>
-          ) : (
-            <p className="slot-card__hint">{t.otherExpenses.empty}</p>
-          )}
-        </SlotCard>
+        {/* A hidden card is drawn only while customising — which is also the only way back
+            to a screen whose card is hidden, so nothing is ever locked away. */}
+        {entrySlots
+          .filter((entry) => customising || !hidden.includes(entry.slot))
+          .map((entry) => {
+            const isHidden = hidden.includes(entry.slot)
+            return (
+              <SlotCard
+                key={entry.slot}
+                title={entry.title}
+                action={entry.action}
+                onOpen={entry.onOpen}
+                filled={entry.filled}
+                toggle={
+                  customising
+                    ? {
+                        hidden: isHidden,
+                        label: isHidden ? t.dashboard.show : t.dashboard.hide,
+                        name: isHidden
+                          ? t.dashboard.showEntry(entry.title)
+                          : t.dashboard.hideEntry(entry.title),
+                        onToggle: () =>
+                          onSetHiddenEntries(
+                            serialiseHiddenSlots(toggleHiddenSlot(hidden, entry.slot)),
+                          ),
+                      }
+                    : undefined
+                }
+              >
+                {entry.body}
+              </SlotCard>
+            )
+          })}
       </section>
 
       <SlotCard

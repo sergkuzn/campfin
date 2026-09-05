@@ -83,6 +83,18 @@ export function setMoneyHolder(campId: string, name: string): Promise<unknown> {
  * pools, income, blocks, receipts, movements and memberships — server-side, in one step,
  * rather than the client walking six namespaces and hoping it finishes.
  */
+/**
+ * Store which entry cards the dashboard leaves out. The whole set is written at once, so
+ * two phones customising the group at the same time settle on one list rather than merging
+ * into a half-hidden one.
+ *
+ * An empty string is a real value here: it is what clears the field when the last hidden
+ * card is shown again.
+ */
+export function setHiddenEntries(campId: string, hiddenEntries: string): Promise<unknown> {
+  return db.transact(chunk(db.tx.camps[campId]).update({ hiddenEntries }))
+}
+
 export function deleteCamp(campId: string): Promise<unknown> {
   return db.transact(chunk(db.tx.camps[campId]).delete())
 }

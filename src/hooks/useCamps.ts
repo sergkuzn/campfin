@@ -34,6 +34,8 @@ export type UseCamps = {
   /** Name the leader holding the camp's cash. Only ever a hand-over: a camp past setup
    *  always has a holder, because every debt in it is measured against one. */
   setMoneyHolder: (campId: string, name: string) => void
+  /** Store the camp's hidden entry cards. Takes the whole set, already serialised. */
+  setHiddenEntries: (campId: string, hiddenEntries: string) => void
   deleteCamp: (campId: string) => void
   /** Dismiss the current error — call it when navigating away from the input that raised it. */
   clearError: () => void
@@ -139,6 +141,12 @@ export function useCamps(userId: string, allCamps = false): UseCamps {
     [run],
   )
 
+  const setHiddenEntries = useCallback(
+    (campId: string, hiddenEntries: string): void =>
+      run(campsDb.setHiddenEntries(campId, hiddenEntries)),
+    [run],
+  )
+
   const deleteCamp = useCallback((campId: string): void => run(campsDb.deleteCamp(campId)), [run])
 
   return {
@@ -150,6 +158,7 @@ export function useCamps(userId: string, allCamps = false): UseCamps {
     createCamp,
     renameCamp,
     setMoneyHolder,
+    setHiddenEntries,
     deleteCamp,
     clearError,
   }

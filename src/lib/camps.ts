@@ -32,7 +32,10 @@ export function isCamp(value: unknown): value is Camp {
   ) {
     return false
   }
-  return c.moneyHolder === undefined || typeof c.moneyHolder === 'string'
+  if (c.moneyHolder !== undefined && typeof c.moneyHolder !== 'string') {
+    return false
+  }
+  return c.hiddenEntries === undefined || typeof c.hiddenEntries === 'string'
 }
 
 /**

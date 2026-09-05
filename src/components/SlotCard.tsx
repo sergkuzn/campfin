@@ -10,6 +10,11 @@ import './SlotCard.css'
  *   Nothing inside may be interactive — that is what keeps one focusable element per card.
  * - `SlotPanel` is a plain <section> in the same clothes, for a card that holds its own
  *   controls (a text field, a Save button) and therefore cannot be one big button.
+ *
+ * A `SlotCard` handed a `toggle` becomes the second shape for as long as it has one: a
+ * <section> whose only control is that toggle. A button nested inside a button is invalid
+ * HTML — the browser drops the inner one — so the card stops leading anywhere while it is
+ * being configured, rather than trying to do both at once.
  */
 
 /** Solid border and surface once the card holds real content rather than a placeholder. */
@@ -19,6 +24,18 @@ function cardClass(filled: boolean, extra?: string): string {
     .join(' ')
 }
 
+/** Turns a card from a destination into something to show or hide. */
+export type SlotToggle = {
+  /** Whether the card is currently left out of the dashboard. Marks the card when true. */
+  hidden: boolean
+  /** The word on the button: "Hide" or "Show". The card's title sits right beside it. */
+  label: string
+  /** The button's accessible name — "Hide deposits". A screen reader reaches the button on
+   *  its own, where the verb alone would not say which card it acts on. */
+  name: string
+  onToggle: () => void
+}
+
 export function SlotCard({
   title,
   /** Never drawn: it is what a screen reader reads after the title, since the chevron
@@ -26,14 +43,38 @@ export function SlotCard({
   action,
   onOpen,
   filled,
+  toggle,
   children,
 }: {
   title: string
   action: string
   onOpen: () => void
   filled: boolean
+  /** Present only while the group is being customised; the card is inert then. */
+  toggle?: SlotToggle
   children: ReactNode
 }) {
+  if (toggle !== undefined) {
+    return (
+      <section className={cardClass(filled, toggle.hidden ? 'slot-card--dimmed' : undefined)}>
+        <div className="slot-card__head">
+          <span className="slot-card__title">{title}</span>
+          <button
+            className={
+              toggle.hidden ? 'slot-card__toggle slot-card__toggle--show' : 'slot-card__toggle'
+            }
+            type="button"
+            aria-label={toggle.name}
+            onClick={toggle.onToggle}
+          >
+            {toggle.label}
+          </button>
+        </div>
+        {children}
+      </section>
+    )
+  }
+
   return (
     <button className={cardClass(filled)} type="button" onClick={onOpen}>
       <div className="slot-card__head">

@@ -20,6 +20,15 @@ export type Camp = {
    * Absent until someone is named, and then no receipt owes anybody anything.
    */
   moneyHolder?: string
+  /**
+   * The entry cards this camp does not use, as a comma-separated list of `EntrySlot` keys.
+   * Read through `parseHiddenSlots`, which is where the string becomes a typed set.
+   *
+   * Stored on the camp so both leaders' dashboards agree, and as one field rather than a
+   * flag per card so the list can grow without a schema change each time. Absent on a camp
+   * that has never hidden anything, which is every camp until someone taps Customise.
+   */
+  hiddenEntries?: string
   createdAt: number
   // No dates of its own: the camp's window is the span of its per-diem blocks, which is
   // the only place camp days are ever entered. One source, so the two cannot disagree.

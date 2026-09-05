@@ -58,6 +58,11 @@ const _schema = i.schema({
       // payer, so "exactly one holder" cannot be broken by two phones promoting two people
       // while offline. Optional: nobody holds the money until somebody is named.
       moneyHolder: i.string().optional(),
+      // Which entry cards the dashboard leaves out, as a comma-separated list of slot keys
+      // ("fee,other"). One string rather than a boolean per card, so a card added later
+      // needs no new attribute. On the camp rather than on a phone: not collecting deposits
+      // is a fact about the camp, so both leaders should see the same group.
+      hiddenEntries: i.string().optional(),
       createdAt: i.number().indexed(),
       // No dates: a camp's window is the span of its per-diem blocks, derived on read.
     }),
