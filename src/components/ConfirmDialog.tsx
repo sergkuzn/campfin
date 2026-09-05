@@ -82,7 +82,7 @@ export function ConfirmDialog({
         />
       )}
       <div className="dialog__actions">
-        <button className="btn btn--ghost" type="button" onClick={onCancel}>
+        <button className="btn btn--ghost btn--back" type="button" onClick={onCancel}>
           {t.confirm.cancel}
         </button>
         <button

@@ -127,7 +127,7 @@ export function PfandEntryForm({
       <FormIssues issues={issues} labels={t.pfand.issues} />
 
       <div className="card__actions">
-        <button className="btn btn--ghost" type="button" onClick={onCancel}>
+        <button className="btn btn--ghost btn--back" type="button" onClick={onCancel}>
           {t.pfand.cancel}
         </button>
         <button className="btn btn--primary" type="submit" disabled={issues.length > 0}>

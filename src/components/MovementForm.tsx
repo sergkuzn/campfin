@@ -223,7 +223,7 @@ export function MovementForm({
       <FormIssues issues={issues} labels={t.movements.issues} />
 
       <div className="card__actions">
-        <button className="btn btn--ghost" type="button" onClick={onCancel}>
+        <button className="btn btn--ghost btn--back" type="button" onClick={onCancel}>
           {t.movements.cancel}
         </button>
         <button className="btn btn--primary" type="submit" disabled={issues.length > 0}>

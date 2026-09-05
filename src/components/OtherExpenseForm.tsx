@@ -140,7 +140,7 @@ export function OtherExpenseForm({
       <FormIssues issues={issues} labels={t.otherExpenses.issues} />
 
       <div className="card__actions">
-        <button className="btn btn--ghost" type="button" onClick={onCancel}>
+        <button className="btn btn--ghost btn--back" type="button" onClick={onCancel}>
           {t.otherExpenses.cancel}
         </button>
         <button className="btn btn--primary" type="submit" disabled={issues.length > 0}>

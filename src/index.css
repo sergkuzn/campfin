@@ -203,12 +203,13 @@ body {
 
    `min-height` rather than font size alone: the label is one small line, but the target
    has to be a thumb. The padding that makes up that height is inside the button, so the
-   tappable area grows around the text without pushing it off the content's right edge.
+   tappable area grows around the text without pushing it off the content's left edge.
 
-   Right-aligned rather than left: on a phone held one-handed, the right edge is where a
-   thumb rests, and this is the control reached for on every screen. */
+   Left-aligned: back sits where the arrow points and where every other app puts it, on
+   the same edge as the screen's title below it, so leaving is never confused with a
+   forward action — those keep the right edge to themselves. */
 .screen-back {
-  align-self: flex-end;
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   min-height: var(--tap);

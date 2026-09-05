@@ -89,7 +89,7 @@ export function ActualBlocksForm({
       <FormIssues issues={issues} labels={t.income.issues} />
 
       <div className="card__actions">
-        <button className="btn btn--ghost" type="button" onClick={onCancel}>
+        <button className="btn btn--ghost btn--back" type="button" onClick={onCancel}>
           {t.attendance.cancel}
         </button>
         <button className="btn btn--primary" type="submit" disabled={issues.length > 0}>

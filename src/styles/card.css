@@ -86,6 +86,8 @@
   font-size: 0.75rem;
 }
 
+/* A form's footer: the action that saves sits at the right edge under the thumb, and the
+   one that backs out carries `.btn--back` to the left edge, away from it. */
 .card__actions {
   display: flex;
   justify-content: flex-end;
