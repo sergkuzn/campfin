@@ -304,3 +304,40 @@ export type PfandEntry = {
   note?: string
   createdAt: number
 }
+
+/**
+ * Money spent on the camp that no income pool pays for: a leader buys something out of
+ * their own pocket, and the organisation compensates it afterwards.
+ *
+ * A namespace of its own rather than an `Expense` with no pool. Every sum in `budget.ts`,
+ * `burn.ts` and `pools.ts` is a plain sum over receipts keyed by pool, and a poolless
+ * receipt would have to be branched around in each of them — while the report, which is
+ * the only place this money is counted, adds it once. It is not a `Movement` either: a
+ * movement is camp cash changing hands, this is a leader's own cash leaving for good.
+ *
+ * There is no pfand here and no receipt number: what is being recorded is a claim on the
+ * organisation, not a slip in the camp's folder.
+ */
+export type OtherExpense = {
+  id: string
+  campId: string
+  name: string
+  amountCents: number
+  date: string // ISO
+  note?: string
+  /**
+   * Whose own money it was, as typed — the same free-text payer as `Expense.paidBy`,
+   * compared through `payerKey`. Required rather than optional: this namespace is new, so
+   * unlike a receipt there is no row from an older build with the answer missing.
+   */
+  paidBy: string
+  /**
+   * Whether the money holder has taken this claim over from the person who fronted it.
+   * Absent/false = that person is still the one out of pocket.
+   *
+   * It says nothing about the organisation having paid: what they still owe is the
+   * report's total, and it is a claim against them until the camp is settled off-app.
+   */
+  reimbursed?: boolean
+  createdAt: number
+}

@@ -79,3 +79,21 @@
   height: 1px;
   background-color: var(--border);
 }
+
+/* The out-of-pocket card's one figure: label left, amount right, on the card's own line.
+   No strip component behind it — unlike the deposits there is nothing to reconcile here,
+   only a total the organisation owes back. */
+.dashboard__other-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.dashboard__other-total strong {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}

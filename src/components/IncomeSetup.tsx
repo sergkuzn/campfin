@@ -16,6 +16,7 @@ import { ActualBlocksForm } from './ActualBlocksForm'
 import { ConfirmDialog } from './ConfirmDialog'
 import { IncomeSourceBody, IncomeSourceCard } from './IncomeSourceCard'
 import { IncomeSourceForm } from './IncomeSourceForm'
+import { InfoToggle } from './InfoToggle'
 import { PoolColorDialog } from './PoolColorDialog'
 import { PoolForm } from './PoolForm'
 import { PoolTag } from './PoolTag'
@@ -229,15 +230,12 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
         <h2 className="screen__title">{t.income.title}</h2>
         {/* On demand rather than always on screen: "what is a pool" is a question you have
             once, and a permanent paragraph would cost every later visit a scroll. */}
-        <button
-          className="info-button"
-          type="button"
-          aria-expanded={showPoolHint}
-          aria-label={t.pools.aboutLabel}
-          onClick={() => setShowPoolHint((shown) => !shown)}
-        >
-          ⓘ
-        </button>
+        <InfoToggle
+          label={t.pools.aboutLabel}
+          open={showPoolHint}
+          controls="income-pools-hint"
+          onToggle={() => setShowPoolHint((shown) => !shown)}
+        />
         <button
           className="btn btn--primary income__add"
           type="button"
@@ -249,7 +247,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
       </header>
 
       {showPoolHint && (
-        <ul className="income__hint">
+        <ul className="income__hint" id="income-pools-hint">
           {t.pools.about.map((line) => (
             <li key={line}>{line}</li>
           ))}
@@ -452,15 +450,14 @@ function PoolSection({
           {/* Sits inside the heading, right after the name, so it reads as part of the
               label rather than a control floating in the header. */}
           {isEveryday && (
-            <button
-              className="info-button"
-              type="button"
-              aria-expanded={showAbout}
-              aria-label={t.pools.everydayAboutLabel}
-              onClick={() => setShowAbout((shown) => !shown)}
-            >
-              ⓘ
-            </button>
+            <InfoToggle
+              label={t.pools.everydayAboutLabel}
+              open={showAbout}
+              // Scoped to the pool: several cards render at once, and a duplicated id would
+              // point every ⓘ at the first card's paragraph.
+              controls={`pool-about-${pool.id}`}
+              onToggle={() => setShowAbout((shown) => !shown)}
+            />
           )}
           {/* Money that is only passing through: it is in the camp's hands but never the
               camp's to spend, which is worth saying on the pot itself. */}
@@ -482,7 +479,7 @@ function PoolSection({
       </header>
 
       {isEveryday && showAbout && (
-        <ul className="pool__hint">
+        <ul className="pool__hint" id={`pool-about-${pool.id}`}>
           {t.pools.everydayAbout.map((line) => (
             <li key={line}>{line}</li>
           ))}

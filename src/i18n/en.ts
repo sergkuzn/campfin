@@ -735,6 +735,49 @@ export const en = {
    * A deposit travels to a counterparty and comes back; the participation fees only go
    * onward to the organisation.
    */
+  /**
+   * Out-of-pocket spending: what the camp's income does not cover and the organisation is
+   * expected to compensate. Deliberately not called a receipt anywhere — the word means the
+   * numbered slip in the camp's folder, and this is a claim rather than one of those.
+   */
+  otherExpenses: {
+    title: 'Other expenses',
+    back: '← Back to camp',
+    add: '＋ Add an expense',
+    /** Both empty states — the dashboard card and the list — say the same thing, because
+     *  they are the same fact seen from two screens. */
+    empty: 'No other expenses added yet.',
+    /** What the screen is for. Folded away behind the ⓘ beside the title: it answers a
+     *  question you have once, and it would cost a line on every visit after that. */
+    hint: 'Spending no income pool covers.',
+    /** Accessible name for that ⓘ, which is a glyph a screen reader cannot read. */
+    infoLabel: 'What counts as an other expense?',
+    /** Screen-reader-only, like every block's `open` — see `dashboard.openReceipts`. */
+    open: 'Open other expenses',
+    dateLabel: 'Date',
+    nameLabel: 'What was bought',
+    namePlaceholder: 'e.g. Replacement tent pole',
+    amountLabel: 'Amount (€)',
+    amountPlaceholder: 'e.g. 24,90',
+    noteLabel: 'Note',
+    notePlaceholder: 'e.g. invoice sent to the office',
+    save: 'Save',
+    cancel: 'Cancel',
+    /** What the organisation owes back, all rows together. */
+    total: 'To be compensated',
+    count: (n: number) => `${n} ${n === 1 ? 'expense' : 'expenses'}`,
+    /** Blocking the save. One sentence each, in the order the form asks them. */
+    issues: {
+      name: 'Say what was bought.',
+      amount: 'Enter an amount greater than zero.',
+      date: 'Pick a date.',
+      paidBy: 'Say whose money it was.',
+    },
+    deleteTitle: (name: string) => `Delete "${name}"?`,
+    deleteLine: (amount: string) => `${amount} will no longer be claimed back.`,
+    confirmDelete: 'Delete',
+  },
+
   custody: {
     deposits: {
       title: 'Deposits',
@@ -794,8 +837,20 @@ export const en = {
       title: 'Expenses',
       /** A receipt whose pool was deleted: still money out, so still on the report. */
       unknownPool: 'Deleted pool',
+      /** The group heading over the out-of-pocket rows, listed one at a time. They carry no
+       *  subtotal — the table's own foot is what adds the money out up. */
+      other: 'Other expenses',
       total: 'Total expenses',
       empty: 'No receipts yet.',
+      /** The switch above the table. It changes the arithmetic, not just what is drawn, so
+       *  it says which way is on rather than naming an action. */
+      includeOther: 'Count "other expenses"',
+      /** Accessible name for the ⓘ beside that switch — a glyph a screen reader cannot read. */
+      includeOtherInfo: 'What counting other expenses does',
+      /** What the switch actually changes, folded away behind that ⓘ: it is read once, and
+       *  a paragraph above the table on every visit would push the numbers off the screen. */
+      includeOtherHint:
+        'Spending no pool covers — paid from own pocket. Expected to be refunded by the organization.',
     },
     difference: {
       title: 'Cash rest',
@@ -807,7 +862,15 @@ export const en = {
         depositReturn: (pool: string) => `${pool}: deposit`,
         fee: 'Participation fee',
         orphanSpent: 'Spent from a deleted pool',
+        otherExpenses: 'Other expenses, paid out of pocket',
       },
+      /** Shown under the table when the rest has gone negative: the sheet no longer says
+       *  what goes back, it says what is owed, and to whom. */
+      owedByOrg: (amount: string, holder: string) =>
+        `More was spent than came in: the organisation owes ${holder} ${amount}.`,
+      /** The same, with nobody named as the money holder yet. */
+      owedByOrgNoHolder: (amount: string) =>
+        `More was spent than came in: the organisation owes ${amount}.`,
     },
     /** The report is arithmetic over what was typed in, which is not the same as what
      *  happened — so it says so, on screen and in print. */
@@ -832,6 +895,9 @@ export const en = {
       repaid: 'Repaid',
       repaidYes: 'yes',
       repaidNo: 'no',
+      /** The itemised out-of-pocket table at the foot of the file, written only when the
+       *  switch above the expenses table is on. */
+      otherTitle: 'Other expenses',
     },
   },
 

@@ -132,57 +132,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Who fronted the money, and the button that settles it. The name is plain muted text —
-   a row you only want to read should not look like a row that wants tapping — and only the
-   button carries any weight. Drawn only when somebody other than the money holder paid, so
-   the ordinary receipt still costs no extra line. */
-.receipt__payer {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: 2px;
-}
-
-.receipt__payer-name {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-
-/* An outline, not a fill: at one of these per row a solid amber or green block turned the
-   list into a traffic light. The tap target stays thumb-sized either way. */
-.receipt__return {
-  flex: 0 0 auto;
-  min-height: 1.75rem;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background-color: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-/* Still owed: the only tint on the row, and a quiet one — enough to find while scanning,
-   not enough to shout. */
-.receipt__return--owed {
-  border-color: color-mix(in srgb, var(--warn-fill) 65%, var(--border));
-  color: color-mix(in srgb, var(--warn) 80%, var(--fg));
-}
-
-/* Settled. Reads as done rather than as a control, but stays a button so a mis-tap can be
-   undone. */
-.receipt__return--done {
-  color: var(--muted);
-  text-decoration: line-through;
-  text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent);
-}
-
-.receipt__return:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
 /* What is spent and what is still owed to a co-leader are different kinds of number, so
    the owed line is tinted — gently, matching the button above it. */
 .receipts__owed {

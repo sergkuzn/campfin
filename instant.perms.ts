@@ -224,6 +224,15 @@ const rules = {
     },
   },
 
+  otherExpenses: {
+    bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')" },
+    allow: {
+      view: 'isAdmin || isCampMember',
+      create: 'isAdmin || isCampMember',
+      update: 'isAdmin || isCampMember',
+      delete: 'isAdmin || isCampMember',
+    },
+  },
   pfandEntries: {
     bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')" },
     allow: {

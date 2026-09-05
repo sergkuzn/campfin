@@ -210,3 +210,43 @@
     color: #000;
   }
 }
+
+/* The switch that decides whether out-of-pocket spending is counted. Above the table it
+   rewrites, and hidden from print — a checkbox on paper is a control nobody can reach. */
+.report__switch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+/* The checkbox and the ⓘ that explains it, on one line. The ⓘ sits directly after the label
+   rather than at the far edge — the same place it takes beside a heading elsewhere — so the
+   two read as one control and its footnote. */
+.report__switch-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.report__switch-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+}
+
+.report__switch-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* More spent than came in, so the rest is not a rest. Tinted like every other "this is not
+   settled yet" line, and printed with the rest of the sheet. */
+.report__owed {
+  margin: var(--space-2) 0 0;
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--warn) 80%, var(--fg));
+}

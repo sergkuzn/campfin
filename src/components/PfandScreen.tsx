@@ -7,6 +7,7 @@ import { todayIso } from '../lib/dates'
 import { isSamePayer } from '../lib/payers'
 import { isReceiptTxn, type PfandBalance, type PfandTxn, type SavePfandInput } from '../lib/pfand'
 import { ConfirmDialog } from './ConfirmDialog'
+import { InfoToggle } from './InfoToggle'
 import { PfandEntryForm } from './PfandEntryForm'
 import { PfandIcon } from './PfandIcon'
 import { RowMenu } from './RowMenu'
@@ -121,18 +122,19 @@ export function PfandScreen({
           {t.pfand.title}
           <PfandIcon className="pfand-icon--title" />
         </h2>
-        <button
-          className="info-button"
-          type="button"
-          aria-expanded={showIntro}
-          aria-label={t.pfand.introLabel}
-          onClick={() => setShowIntro((shown) => !shown)}
-        >
-          ⓘ
-        </button>
+        <InfoToggle
+          label={t.pfand.introLabel}
+          open={showIntro}
+          controls="pfand-intro"
+          onToggle={() => setShowIntro((shown) => !shown)}
+        />
       </header>
 
-      {showIntro && <p className="slot-card__hint">{t.pfand.intro}</p>}
+      {showIntro && (
+        <p className="slot-card__hint" id="pfand-intro">
+          {t.pfand.intro}
+        </p>
+      )}
 
       {/* A write that only failed to *sync* says nothing — Instant queues it. This is for a
           write the server actually rejected. */}

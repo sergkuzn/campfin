@@ -1,5 +1,5 @@
 import './CampDashboard.css'
-import { useT } from '../i18n'
+import { useFormat, useT } from '../i18n'
 import type { Burn } from '../lib/burn'
 import { campStatus, isCampSetUp } from '../lib/camps'
 import type { CustodyFocus, CustodyReading } from '../lib/movements'
@@ -30,6 +30,9 @@ type Props = {
   /** Whether any receipt exists yet — the bars alone cannot say so, since an
    *  untouched pool and a camp with no receipts look the same. */
   hasExpenses: boolean
+  /** Out-of-pocket spending no pool covers, as one figure for the card. Zero when there is
+   *  none — which is also the common case, so the card shows its hint instead. */
+  otherExpensesTotalCents: number
   /** Cash held rather than spent: the deposits and the participation fees. */
   custody: CustodyReading
   onBack: () => void
@@ -42,6 +45,8 @@ type Props = {
   onOpenReceipts: (poolId: string | null) => void
   /** Opens the movements screen on one half of the custody money. */
   onOpenMovements: (focus: CustodyFocus) => void
+  /** Opens the out-of-pocket expenses. */
+  onOpenOtherExpenses: () => void
   onOpenReport: () => void
   onOpenSettings: () => void
 }
@@ -57,16 +62,19 @@ export function CampDashboard({
   isLoading,
   error,
   hasExpenses,
+  otherExpensesTotalCents,
   custody,
   onBack,
   onOpenIncome,
   onChangeHolder,
   onOpenReceipts,
   onOpenMovements,
+  onOpenOtherExpenses,
   onOpenReport,
   onOpenSettings,
 }: Props) {
   const t = useT()
+  const format = useFormat()
 
   // Every camp has an everyday pool, so "nothing here yet" means no *income*, not no pools.
   const funded = summaries.some((summary) => summary.sources.length > 0)
@@ -145,7 +153,7 @@ export function CampDashboard({
         )}
       </section>
 
-      {/* The three blocks money is entered through, grouped away from the chart above
+      {/* The four blocks money is entered through, grouped away from the chart above
           and the report below, which only read it back. `aria-labelledby` makes the
           caption the group's accessible name, so the grouping is announced and not
           merely drawn. */}
@@ -189,6 +197,24 @@ export function CampDashboard({
             <FeeStrip heldCents={custody.feeHeldCents} count={custody.feeCount} />
           ) : (
             <p className="slot-card__hint">{t.custody.fee.empty}</p>
+          )}
+        </SlotCard>
+
+        {/* Last of the four: it is the rarest of them, and the only one whose money never
+            belonged to the camp. */}
+        <SlotCard
+          title={t.otherExpenses.title}
+          action={t.otherExpenses.open}
+          onOpen={onOpenOtherExpenses}
+          filled={otherExpensesTotalCents > 0}
+        >
+          {otherExpensesTotalCents > 0 ? (
+            <p className="dashboard__other-total">
+              <span>{t.otherExpenses.total}</span>
+              <strong>{format.euros(otherExpensesTotalCents)}</strong>
+            </p>
+          ) : (
+            <p className="slot-card__hint">{t.otherExpenses.empty}</p>
           )}
         </SlotCard>
       </section>

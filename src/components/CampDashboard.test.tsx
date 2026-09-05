@@ -77,12 +77,14 @@ function renderDashboard(props: Partial<React.ComponentProps<typeof CampDashboar
         isLoading={false}
         error={null}
         hasExpenses={false}
+        otherExpensesTotalCents={0}
         custody={{ statuses: [], feeHeldCents: 0, feeCount: 0 }}
         onBack={vi.fn()}
         onOpenIncome={onOpenIncome}
         onChangeHolder={onChangeHolder}
         onOpenReceipts={onOpenReceipts}
         onOpenMovements={onOpenMovements}
+        onOpenOtherExpenses={vi.fn()}
         onOpenReport={onOpenReport}
         onOpenSettings={onOpenSettings}
         {...props}

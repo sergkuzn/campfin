@@ -12,8 +12,17 @@
  */
 
 import { spentTotalCents } from './budget'
+import { otherExpensesTotalCents, sortOtherExpensesOldestFirst } from './otherExpenses'
 import { type PoolSummary, sourceAmountCents } from './pools'
-import type { Expense, FeeMovement, IncomeSource, Movement, PerDiemBlock, Pool } from './types'
+import type {
+  Expense,
+  FeeMovement,
+  IncomeSource,
+  Movement,
+  OtherExpense,
+  PerDiemBlock,
+  Pool,
+} from './types'
 
 /** One income, under the cash-advance heading it was granted through. */
 export type AdvanceLine = {
@@ -37,6 +46,17 @@ export type ExpenseLine = {
 }
 
 /**
+ * Money no pool paid for, listed one row at a time rather than as a single total: each one
+ * is a separate claim on the organisation, and a lump sum would say nothing about what was
+ * bought.
+ */
+export type OtherExpenseSection = {
+  /** Oldest first, so the section reads as the ledger it is. */
+  items: OtherExpense[]
+  totalCents: number
+}
+
+/**
  * Why the difference is what it is. Codes, not sentences — `src/lib/` never decides how the
  * UI reads. `pool_unspent` and `deposit_return` may be negative: a pool spent past its
  * funding took the difference down with it, and saying so is the point of the table.
@@ -47,6 +67,7 @@ export type DifferenceKind =
   | 'deposit_return'
   | 'fee'
   | 'orphan_spent'
+  | 'other_expenses'
 
 export type DifferenceLine = {
   kind: DifferenceKind
@@ -62,9 +83,16 @@ export type FinancialReport = {
   fee: FeeSection | null
   incomeTotalCents: number
   expenses: ExpenseLine[]
+  /** Null when there are none, or when the reader has switched them off. */
+  other: OtherExpenseSection | null
+  /** The pool spending plus `other`, so the table's foot is the figure the difference uses. */
   expenseTotalCents: number
   difference: DifferenceLine[]
-  /** income − expenses, exactly. Σ `difference` adds up to this. */
+  /**
+   * income − expenses, exactly. Σ `difference` adds up to this. **Negative when out-of-pocket
+   * spending outruns the income** — then it is not a rest at all but what the organisation
+   * owes the money holder, which is the whole reason other expenses are on the report.
+   */
   differenceCents: number
 }
 
@@ -76,10 +104,18 @@ export type ReportInput = {
   blocks: PerDiemBlock[]
   expenses: Expense[]
   movements: Movement[]
+  /** The out-of-pocket rows. Always passed; `includeOther` decides whether they count. */
+  otherExpenses: OtherExpense[]
+  /**
+   * Whether out-of-pocket spending is part of the arithmetic. A reader's switch, not a
+   * property of the data: the same camp is read both ways — once as the camp's own books,
+   * once with what the organisation still owes folded in.
+   */
+  includeOther: boolean
 }
 
 export function buildReport(input: ReportInput): FinancialReport {
-  const { summaries, blocks, expenses, movements } = input
+  const { summaries, blocks, expenses, movements, otherExpenses, includeOther } = input
   const ordered = reportOrder(summaries)
 
   const advance = ordered.flatMap((summary) =>
@@ -110,10 +146,21 @@ export function buildReport(input: ReportInput): FinancialReport {
     ...(orphanSpentCents > 0 ? [{ pool: null, spentCents: orphanSpentCents }] : []),
   ]
 
+  // Switched off, or none typed, and the section is left off entirely — an empty heading on
+  // a report reads as a number somebody forgot to fill in.
+  const other =
+    !includeOther || otherExpenses.length === 0
+      ? null
+      : {
+          items: sortOtherExpensesOldestFirst(otherExpenses),
+          totalCents: otherExpensesTotalCents(otherExpenses),
+        }
+
   const incomeTotalCents = advanceTotalCents + (fee?.totalCents ?? 0)
   // From the receipts rather than the pool sums, so this total always matches the one on the
-  // receipts screen — including receipts whose pool has since been deleted.
-  const expenseTotalCents = spentTotalCents(expenses)
+  // receipts screen — including receipts whose pool has since been deleted. Out-of-pocket
+  // money is added on top: it bought something for the camp, whoever's wallet it came from.
+  const expenseTotalCents = spentTotalCents(expenses) + (other?.totalCents ?? 0)
 
   return {
     advance,
@@ -121,8 +168,14 @@ export function buildReport(input: ReportInput): FinancialReport {
     fee,
     incomeTotalCents,
     expenses: expenseLines,
+    other,
     expenseTotalCents,
-    difference: differenceLines(ordered, fee?.totalCents ?? 0, orphanSpentCents),
+    difference: differenceLines(
+      ordered,
+      fee?.totalCents ?? 0,
+      orphanSpentCents,
+      other?.totalCents ?? 0,
+    ),
     differenceCents: incomeTotalCents - expenseTotalCents,
   }
 }
@@ -136,6 +189,7 @@ function differenceLines(
   ordered: PoolSummary[],
   feeTotalCents: number,
   orphanSpentCents: number,
+  otherTotalCents: number,
 ): DifferenceLine[] {
   const lines: DifferenceLine[] = []
   const add = (kind: DifferenceKind, pool: Pool | null, amountCents: number) => {
@@ -161,6 +215,9 @@ function differenceLines(
   add('fee', null, feeTotalCents)
   // Money out with no pool left to book it against — negative, like every other outflow.
   add('orphan_spent', null, -orphanSpentCents)
+  // The one line that can take the total below zero: nobody's pool funded this, so it comes
+  // straight off the rest, and past zero it is what the organisation owes back.
+  add('other_expenses', null, -otherTotalCents)
 
   return lines
 }
