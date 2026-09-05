@@ -42,25 +42,40 @@
 /* The blocks money is entered through — receipts, deposits, the fee — held together as one
    block, apart from the chart above and the report below, which only read the money back.
 
-   Two signals do the grouping, and neither adds a frame: the cards sit at half the screen's
-   gap, so proximity alone separates them from their neighbours, and a rail runs down the
-   left of all three. The rail is the title band's own accent, at the band's pressed strength
-   so 2px of it stays visible on a near-black page as well as a white one. */
+   The group is marked at its two edges rather than down its side: the caption sits on a
+   hairline that runs to the right margin, and a matching hairline closes under the last
+   card. Between them the cards sit at half the screen's gap, so proximity carries the
+   grouping while the rules only say where it starts and stops. Nothing is boxed — the
+   cards' own borders stay the only frames on the page. */
 .dashboard__group {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding-left: var(--space-3);
-  border-left: 2px solid var(--band-active);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
 }
 
 /* Sized like a card's title so the caption reads as a label over the group, not as a
-   heading competing with the camp name. */
+   heading competing with the camp name. The flex row is what lets the rule after it
+   take the width the text leaves. */
 .dashboard__group-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   margin: 0;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted);
+}
+
+/* The caption's own rule. A pseudo-element rather than an <hr>, since it is decoration:
+   `flex: 1` makes it eat whatever width is left, so the line always reaches the margin
+   however long the caption's translation turns out to be. */
+.dashboard__group-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: var(--border);
 }
