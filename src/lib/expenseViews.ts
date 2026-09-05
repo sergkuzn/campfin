@@ -12,7 +12,7 @@ import type { Expense } from './types'
  */
 export type ExpenseSort = 'date_desc' | 'date_asc' | 'number_asc' | 'number_desc'
 
-/** One day of receipts, newest first inside it, with the day's total. */
+/** One day of receipts, in receipt-number order inside it, with the day's total. */
 export type ExpenseDay = {
   date: string
   expenses: Expense[]
@@ -29,10 +29,26 @@ export type ExpenseView =
   | { mode: 'flat'; expenses: Expense[] }
 
 /**
- * The list as the screen wants it: by default newest day first and newest row first inside
- * a day, with each day's total. ISO dates sort correctly as plain strings, so no Date
- * object is needed. The id breaks a `createdAt` tie, so two rows written in the same
- * millisecond on two phones land in the same order on both.
+ * Two receipts in numeric order, or 0 when neither outranks the other. A receipt with no
+ * number is the one that has not been filed yet, so it ranks where the next number would
+ * go: above every real one, staying beside the big numbers whichever way the sequence is
+ * turned round rather than sinking among the small ones.
+ */
+function compareByNumber(a: Expense, b: Expense): number {
+  const aRank = a.number ?? Number.POSITIVE_INFINITY
+  const bRank = b.number ?? Number.POSITIVE_INFINITY
+  // Equal ranks are answered before the subtraction because Infinity - Infinity is NaN,
+  // and a NaN comparator leaves the order undefined.
+  return aRank === bRank ? 0 : aRank - bRank
+}
+
+/**
+ * The list as the screen wants it: by default newest day first and the highest receipt
+ * number first inside a day, with each day's total. Ordering a day by its numbers rather
+ * than by entry time matches the paper folder, where a bigger number means later in the
+ * day. ISO dates sort correctly as plain strings, so no Date object is needed. `createdAt`
+ * separates two receipts sharing a rank, and the id breaks even that tie, so two rows
+ * written in the same millisecond on two phones land in the same order on both.
  */
 export function groupExpensesByDay(
   expenses: Expense[],
@@ -48,6 +64,7 @@ export function groupExpensesByDay(
   const sorted = expenses.toSorted(
     (a, b) =>
       sign * b.date.localeCompare(a.date) ||
+      sign * compareByNumber(b, a) ||
       sign * (b.createdAt - a.createdAt) ||
       a.id.localeCompare(b.id),
   )
@@ -79,26 +96,20 @@ export function filterExpensesByPools(
 }
 
 /**
- * Numbered receipts in numeric order, with the unnumbered ones stacked past the highest
- * number. A receipt with no number is the one that has not been filed yet, so it belongs
- * where the next number would go — which puts it at the end going up and at the top going
- * down, always beside the big numbers rather than among the small ones. Rows sharing a
- * position keep the newest-first order the date view uses.
+ * Numbered receipts in one flat numeric run, with the unnumbered ones stacked past the
+ * highest number — at the end going up and at the top going down. Rows sharing a position
+ * keep the newest-first order the date view uses.
  */
 function sortExpensesByNumber(expenses: Expense[], direction: 'asc' | 'desc'): Expense[] {
   const sign = direction === 'asc' ? 1 : -1
-  // Infinity, not a separate "is it numbered" branch: an unfiled receipt sorts as a number
-  // above every real one, so reversing the direction carries it along with the sequence.
-  const rank = (expense: Expense): number => expense.number ?? Number.POSITIVE_INFINITY
 
-  return expenses.toSorted((a, b) => {
-    const aRank = rank(a)
-    const bRank = rank(b)
-    // Equal ranks are compared first because Infinity - Infinity is NaN, and a NaN
-    // comparator leaves the order undefined.
-    if (aRank !== bRank) return sign * (aRank - bRank)
-    return b.date.localeCompare(a.date) || b.createdAt - a.createdAt || a.id.localeCompare(b.id)
-  })
+  return expenses.toSorted(
+    (a, b) =>
+      sign * compareByNumber(a, b) ||
+      b.date.localeCompare(a.date) ||
+      b.createdAt - a.createdAt ||
+      a.id.localeCompare(b.id),
+  )
 }
 
 /** The rows arranged for one sort setting — grouped by day, or flat by number. */
