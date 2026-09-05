@@ -94,6 +94,12 @@ export function BurnChart({ burn, todayIso }: Props) {
             <YAxis
               domain={[0, scale.topCents]}
               ticks={ticks}
+              // `axisTicks` already caps the list at seven labels, which fit with room to
+              // spare — so draw exactly those. Without it Recharts thins them again by
+              // label height, and the grid does that arithmetic at the document's default
+              // font size rather than the 11px drawn here, dropping the gridline under the
+              // top one while its label stayed.
+              interval={0}
               tickFormatter={format.eurosRounded}
               tickLine={false}
               axisLine={false}
