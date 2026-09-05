@@ -780,7 +780,7 @@ export const en = {
   otherExpenses: {
     title: 'Other expenses',
     back: '← Back to camp',
-    add: '＋ Add an expense',
+    add: '＋ Add expense',
     /** Both empty states — the dashboard card and the list — say the same thing, because
      *  they are the same fact seen from two screens. */
     empty: 'No other expenses added yet.',
