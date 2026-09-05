@@ -23,7 +23,8 @@
 }
 
 /* The buttons, right-aligned in the reading direction so the confirming one lands under
-   the thumb rather than across the dialog from it. */
+   the thumb rather than across the dialog from it. The way out — `.btn--back` — pulls
+   itself to the opposite edge, so a mis-tap on the confirm cannot land on cancel. */
 .dialog__actions {
   display: flex;
   justify-content: flex-end;

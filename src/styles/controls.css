@@ -68,6 +68,13 @@
   color: var(--on-accent);
 }
 
+/* The way out of a form or dialog — Cancel — pushed to the row's left edge by an auto
+   margin, leaving the confirming action alone on the right. Backing out and going ahead
+   then never land under the same thumb position twice. */
+.btn--back {
+  margin-inline-end: auto;
+}
+
 /* Compact: a button that sits inside a dense list row, where the standard padding would
    set the height of the whole row. */
 .btn--sm {
