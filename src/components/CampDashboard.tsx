@@ -15,6 +15,7 @@ import type { PoolSummary } from '../lib/pools'
 import type { Camp } from '../lib/types'
 import { AllowedToday } from './AllowedToday'
 import { BurnChart } from './BurnChart'
+import { BurnInfo } from './BurnInfo'
 import { CampSetup } from './CampSetup'
 import { DepositsStrip } from './DepositsStrip'
 import { FeeStrip } from './FeeStrip'
@@ -209,7 +210,7 @@ export function CampDashboard({
       {header}
 
       <section className={burn.hasCurve ? 'slot-card slot-card--filled' : 'slot-card'}>
-        <p className="slot-card__title">{t.burn.title}</p>
+        <BurnInfo showToggle={burn.hasCurve} />
         {burn.hasCurve ? (
           <>
             <AllowedToday burn={burn} remainingCents={everydayRemainingCents} />

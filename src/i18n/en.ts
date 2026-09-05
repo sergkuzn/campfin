@@ -472,12 +472,34 @@ export const en = {
     medianDay: 'Median day',
     daysLeft: 'Days left',
     moneyLeft: 'Total left',
-    theoretical: 'Allowed',
+    /** The plan line's name in the chart legend. "Theoretical" rather than "Allowed":
+     *  the curve is what an even spread would have cost by each day, not a limit anybody
+     *  enforces — and the headline beside it already owns the word "left". */
+    theoretical: 'Theoretical',
     actual: 'Spent',
     today: 'Today',
     /** Screen-reader replacement for the chart: the curve is decorative for anyone who
      *  cannot see it, and the numbers above already say where the camp stands. */
     chartAlt: (days: number) => `Cumulative allowance and spending over ${days} camp days.`,
+    /** The ⓘ beside the title. Both headline figures are derived numbers whose names
+     *  do not give their meaning away, so the folded text explains them rather than the
+     *  chart, which the legend already labels. */
+    aboutLabel: 'What do Left today and Median day mean?',
+    /** Nested on purpose: the two facts about "Left today" belong to that term, and a flat
+     *  list would read as four unrelated sentences. */
+    about: [
+      {
+        text: '"Left today"',
+        sub: [
+          'How much you can still spend today and stay in line with the theoretical plan.',
+          'When it reads "over", spending has already passed what the plan allowed by today.',
+        ],
+      },
+      {
+        text: '"Median day" — what the plan gives a typical camp day to spend.',
+        sub: [],
+      },
+    ],
   },
 
   receipts: {
