@@ -10,6 +10,7 @@ import {
   isEmailish,
   MAX_CAMP_QUOTA,
   normalizeEmail,
+  pendingLinks,
   type RosterUser,
   waitingForActivation,
 } from './accounts'
@@ -147,6 +148,11 @@ describe('buildRoster', () => {
     expect(roster[0]?.userId).toBe('u1')
   })
 
+  it('pairs a grant written by address with the person who then signed in', () => {
+    const roster = buildRoster([{ id: 'u9', email: 'zoe@example.com', accountId: null }], [pending])
+    expect(roster).toEqual([{ userId: 'u9', email: 'zoe@example.com', account: pending }])
+  })
+
   it('drops a dangling account link rather than the user', () => {
     const roster = buildRoster([{ id: 'u9', email: 'gone@example.com', accountId: 'a404' }], [])
     expect(roster).toEqual([{ userId: 'u9', email: 'gone@example.com', account: null }])
@@ -184,6 +190,37 @@ describe('waitingForActivation', () => {
       ),
     ).toEqual([])
     expect(waitingForActivation([])).toEqual([])
+  })
+})
+
+describe('pendingLinks', () => {
+  const granted = account({ id: 'a1', email: 'anna@example.com' })
+
+  it('pairs a grant written before its person signed in with that person', () => {
+    expect(
+      pendingLinks([{ id: 'u1', email: 'ANNA@Example.com ', accountId: null }], [granted]),
+    ).toEqual([{ accountId: 'a1', userId: 'u1' }])
+  })
+
+  it('ignores a grant that is already linked, whoever it is linked to', () => {
+    const users: RosterUser[] = [
+      { id: 'u1', email: 'anna@example.com', accountId: 'a1' },
+      // Same address, second sign-in identity: the grant is spoken for, so this one is not
+      // a pending link but a collision to leave alone.
+      { id: 'u2', email: 'anna@example.com', accountId: null },
+    ]
+    expect(pendingLinks(users, [granted])).toEqual([])
+  })
+
+  it('ignores a user with no grant and a grant with no user', () => {
+    expect(
+      pendingLinks(
+        [{ id: 'u2', email: 'ben@example.com', accountId: null }],
+        [account({ id: 'a2', email: 'zoe@example.com' })],
+      ),
+    ).toEqual([])
+    expect(pendingLinks([], [granted])).toEqual([])
+    expect(pendingLinks([], [])).toEqual([])
   })
 })
 

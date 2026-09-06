@@ -108,29 +108,67 @@ export type RosterUser = {
  *
  * The two overlap but neither contains the other — a stranger signs in with no grant, and
  * a grant can be written to an address that never signs in — so this is an outer join
- * rather than a lookup, keyed on the account link and falling back to the address.
+ * rather than a lookup: on the account link first, and on the normalised address for a
+ * grant written before its person existed, which carries no link until one of the claim
+ * paths in `pendingLinks` runs.
  */
 export function buildRoster(
   users: readonly RosterUser[],
   accounts: readonly Account[],
 ): RosterEntry[] {
   const byId = new Map(accounts.map((account) => [account.id, account]))
+  const byEmail = new Map(
+    accounts.map((account) => [normalizeEmail(account.email), account] as const),
+  )
   const claimed = new Set<string>()
 
   const signedIn: RosterEntry[] = users.map((user) => {
-    const account = user.accountId === null ? null : (byId.get(user.accountId) ?? null)
+    const linked = user.accountId === null ? null : (byId.get(user.accountId) ?? null)
+    const account = linked ?? byEmail.get(normalizeEmail(user.email)) ?? null
     if (account !== null) claimed.add(account.id)
     return { userId: user.id, email: user.email, account }
   })
 
-  // A grant nobody has signed in against yet. Matching on the *link* rather than on the
-  // address is what keeps a granted-then-signed-in person off this list even if the two
-  // addresses differ in case.
+  // A grant nobody has signed in against yet — the ones no user above matched by either
+  // route, so a granted-then-signed-in person stays off this list whether or not the link
+  // has been written and however the two addresses were capitalised.
   const pending: RosterEntry[] = accounts
     .filter((account) => !claimed.has(account.id))
     .map((account) => ({ userId: null, email: account.email, account }))
 
   return [...signedIn, ...pending].sort((a, b) => a.email.localeCompare(b.email))
+}
+
+/** A grant and the user it belongs to, waiting to be joined by the `user` link. */
+export type PendingLink = {
+  accountId: string
+  userId: string
+}
+
+/**
+ * Grants whose address has since signed in but which carry no link to that user yet.
+ *
+ * A grant can be written before its person exists — that is the point of granting by
+ * address — and nothing but the link makes it count: the permission rules read
+ * `auth.ref('$user.account.id')`, never the stored email. So an unlinked grant is inert
+ * until somebody with admin rights writes the link, which is what this list feeds.
+ */
+export function pendingLinks(
+  users: readonly RosterUser[],
+  accounts: readonly Account[],
+): PendingLink[] {
+  const linked = new Set(users.map((user) => user.accountId).filter((id) => id !== null))
+  const byEmail = new Map(
+    accounts
+      .filter((account) => !linked.has(account.id))
+      .map((account) => [normalizeEmail(account.email), account.id] as const),
+  )
+
+  return users.flatMap((user) => {
+    if (user.accountId !== null) return []
+    const accountId = byEmail.get(normalizeEmail(user.email))
+    return accountId === undefined ? [] : [{ accountId, userId: user.id }]
+  })
 }
 
 /**

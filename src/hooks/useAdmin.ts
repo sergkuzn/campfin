@@ -8,7 +8,7 @@
  * to save a round trip, not a guard.
  */
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import * as accountsDb from '../db/accountsDb'
 import { db } from '../db/instant'
 import { useT } from '../i18n'
@@ -20,6 +20,7 @@ import {
   DEFAULT_CAMP_QUOTA,
   isEmailish,
   normalizeEmail,
+  pendingLinks,
   type RosterEntry,
   type RosterUser,
   waitingForActivation,
@@ -91,6 +92,19 @@ export function useAdmin(enabled: boolean): UseAdmin {
     [camps, memberships, users],
   )
 
+  // Finish the grants that were written to an address before that person existed. Only an
+  // admin may write the `user` link, so this screen is one of the two places it can happen
+  // — the other is `api/request-access.ts`, which claims a grant at first sign-in and needs
+  // a host running functions. Here it costs one write per person, once, and the effect is
+  // what makes it a synchronisation with the database rather than something the admin has
+  // to notice and press.
+  const claims = useMemo(() => pendingLinks(users, accounts), [users, accounts])
+  useEffect(() => {
+    for (const { accountId, userId } of claims) {
+      run(accountsDb.linkAccountUser(accountId, userId))
+    }
+  }, [claims, run])
+
   const grant = useCallback(
     (email: string): boolean => {
       const address = normalizeEmail(email)
@@ -105,6 +119,10 @@ export function useAdmin(enabled: boolean): UseAdmin {
       run(
         accountsDb.grantAccount({
           email: address,
+          // The roster is the whole instance's user list, so it is also the answer to
+          // "has this address ever signed in?" — and a `$users` row is the only thing the
+          // grant can be linked to at write time.
+          userId: users.find((user) => normalizeEmail(user.email) === address)?.id ?? null,
           role: 'leader',
           campQuota: DEFAULT_CAMP_QUOTA,
           now: Date.now(),
@@ -112,7 +130,7 @@ export function useAdmin(enabled: boolean): UseAdmin {
       )
       return true
     },
-    [accounts, fail, run, t],
+    [accounts, fail, run, t, users],
   )
 
   const setQuota = useCallback(

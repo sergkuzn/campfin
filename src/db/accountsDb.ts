@@ -7,13 +7,15 @@
  * object keeps its inferred type.
  */
 
-import { id, lookup } from '@instantdb/react'
+import { id } from '@instantdb/react'
 import { normalizeEmail } from '../lib/accounts'
 import type { AccountRole } from '../lib/types'
 import { chunk, db } from './instant'
 
 type GrantArgs = {
   email: string
+  /** Their `$users` row, or `null` for an address that has never signed in. */
+  userId: string | null
   role: AccountRole
   campQuota: number
   now: number
@@ -23,18 +25,33 @@ type GrantArgs = {
  * Activate an address. Writable before that person has ever signed in, which is the point:
  * you can hand out access from a message thread rather than waiting for them to appear.
  *
- * `lookup('email', …)` links by the unique email instead of by id, so the grant attaches to
- * whichever `$users` row carries that address — the one Instant creates at first sign-in
- * included. The email is normalised first because the link is only as good as the match.
+ * The link is written only when there is a row to link to. `lookup('email', …)` cannot
+ * stand in for one: it resolves an existing row and fails the whole transaction when none
+ * exists, and no client may create a `$users` row — signing in is what does that. So a
+ * grant to a stranger is stored unlinked, carrying the normalised address as its only clue
+ * to whose it is, and `linkAccountUser` joins the two once that person appears.
  */
 export function grantAccount(args: GrantArgs): Promise<unknown> {
-  const { email, role, campQuota, now } = args
-  const address = normalizeEmail(email)
-  return db.transact(
-    chunk(db.tx.accounts[id()])
-      .update({ email: address, role, campQuota, grantedAt: now })
-      .link({ user: lookup('email', address) }),
-  )
+  const { email, userId, role, campQuota, now } = args
+  const row = chunk(db.tx.accounts[id()]).update({
+    email: normalizeEmail(email),
+    role,
+    campQuota,
+    grantedAt: now,
+  })
+  return db.transact(userId === null ? row : row.link({ user: userId }))
+}
+
+/**
+ * Join a grant to the person it was written for, once they have signed in.
+ *
+ * Nothing but this link activates anybody: the permission rules ask
+ * `auth.ref('$user.account.id')`, so a grant that merely stores the right address is inert.
+ * Only an admin may write it — `accounts.update` says so — which is why the claim happens
+ * on the admin's screen and in `api/request-access.ts`, never in the account's own session.
+ */
+export function linkAccountUser(accountId: string, userId: string): Promise<unknown> {
+  return db.transact(chunk(db.tx.accounts[accountId]).link({ user: userId }))
 }
 
 /** Raise or lower how many camps someone may start. Never touches the camps they have. */
