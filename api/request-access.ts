@@ -42,6 +42,16 @@ function appLabel(appEnv: string): string {
   return appEnv === 'prod' ? 'campfin' : 'campfin DEV'
 }
 
+/**
+ * `db.tx.accounts[someId]` is an index access, and `noUncheckedIndexedAccess` types it as
+ * possibly undefined — while the proxy behind `db.tx` mints a chunk for any id it is given.
+ * The same statement `src/db/instant.ts` makes for the browser, repeated because nothing
+ * under `src/` may be imported here.
+ */
+function chunk<T>(value: T | undefined): T {
+  return value as T
+}
+
 /** The session token, pulled out of an untrusted body. */
 function readToken(body: unknown): string {
   if (typeof body !== 'object' || body === null || !('token' in body)) return ''
@@ -97,17 +107,35 @@ export default async function handler(request: Request): Promise<Response> {
     // Ask the database, not the caller, whether this person still needs activating. It
     // makes the endpoint idempotent for anyone already granted: a reinstalled app or a
     // second phone re-asks, and nothing is sent.
+    //
+    // The match is on the stored address, because a grant written before its person ever
+    // signed in has nothing else to match on: `$users` rows come into being at first
+    // sign-in, so there was no row to link at the time. The address is normalised on the
+    // way in, and Instant reports the verified one the same way.
     const { accounts } = await db.query({
-      accounts: { $: { where: { email: user.email }, fields: ['id'] } },
+      accounts: { $: { where: { email: user.email } }, user: { $: { fields: ['id'] } } },
     })
-    if (accounts.length > 0) return new Response(null, { status: 204 })
+    const granted = accounts[0]
+    if (granted === undefined) {
+      await sendTelegram(
+        readEnv('TELEGRAM_BOT_TOKEN'),
+        readEnv('TELEGRAM_CHAT_ID'),
+        `${label}: ${user.email} signed in and has no account yet.\nOpen the app → Admin to activate them.`,
+      )
+      return new Response(null, { status: 202 })
+    }
 
-    await sendTelegram(
-      readEnv('TELEGRAM_BOT_TOKEN'),
-      readEnv('TELEGRAM_CHAT_ID'),
-      `${label}: ${user.email} signed in and has no account yet.\nOpen the app → Admin to activate them.`,
-    )
-    return new Response(null, { status: 202 })
+    // The grant exists but names nobody yet — this request is the first proof that its
+    // address belongs to a real user, so claim it. Nothing else activates the person: the
+    // permission rules read the link, never the stored email, and only an admin may write
+    // it, which is exactly what this handler's token is. Sending no message is right either
+    // way; the admin already did their part.
+    // Truthiness rather than a comparison against `undefined`: an absent link is one of
+    // the two empty values depending on how it is read back, and either means unclaimed.
+    if (!granted.user) {
+      await db.transact(chunk(db.tx.accounts[granted.id]).link({ user: user.id }))
+    }
+    return new Response(null, { status: 204 })
   } catch (error) {
     // The message goes to the host's log, never to the caller: it can name an environment
     // variable or quote Telegram, and neither is the browser's business.
