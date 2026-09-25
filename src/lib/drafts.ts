@@ -310,3 +310,20 @@ export function draftToInput(
     blocks,
   }
 }
+
+/**
+ * What an income will be worth once this payload is saved — `sourceAmountCents` for a row
+ * that is not written yet. Granted blocks only, for the same reason as there: they are the
+ * money that arrived. Lets the screen quote the amount back before anything is stored.
+ */
+export function inputAmountCents(input: SaveSourceInput): number {
+  if (input.kind !== 'per_diem') return input.amountCents ?? 0
+  return input.blocks
+    .filter((block) => block.variant === 'granted')
+    .reduce(
+      (sum, block) =>
+        sum +
+        blockCents(block.numPersons, block.ratePerPersonDayCents, block.startDate, block.endDate),
+      0,
+    )
+}

@@ -15,6 +15,7 @@ import {
   draftPersonDays,
   draftsFromBlocks,
   draftToInput,
+  inputAmountCents,
   kindNeedsName,
   type PoolDraft,
   poolDraftIssues,
@@ -370,6 +371,25 @@ describe('draftToInput', () => {
   it('sends no blocks for a non-per-diem source, even if the draft carries some', () => {
     const input = draftToInput(goodDraft({ blocks: [goodBlock()] }), 'C', 'pool-e', null)
     expect(input?.blocks).toEqual([])
+  })
+})
+
+describe('inputAmountCents', () => {
+  it('is the typed amount for a fixed grant', () => {
+    const input = draftToInput(goodDraft({ amount: '300,50' }), 'C', 'pool-e', null)
+    expect(input && inputAmountCents(input)).toBe(30_050)
+  })
+
+  it('sums every granted block of a per-diem grant', () => {
+    const draft = goodDraft({ kind: 'per_diem', blocks: [goodBlock(), goodBlock({ key: 'k2' })] })
+    const input = draftToInput(draft, 'C', 'pool-e', null)
+    expect(input && inputAmountCents(input)).toBe(24_000) // 2 × (4 × 3 days × 1000)
+  })
+
+  it('counts no actual-attendance blocks: they describe spending, not money that arrived', () => {
+    const draft = goodDraft({ kind: 'per_diem', blocks: [goodBlock()] })
+    const input = draftToInput(draft, 'C', 'pool-e', null, 'actual')
+    expect(input && inputAmountCents(input)).toBe(0)
   })
 })
 

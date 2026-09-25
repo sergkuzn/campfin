@@ -10,6 +10,12 @@ type Props = {
    *  always says what the button will actually cost. */
   lines: string[]
   confirmLabel: string
+  /** Defaults to a plain "Cancel". A question that is not about deleting anything reads
+   *  better when both answers say what they do — "No, change it" rather than "Cancel". */
+  cancelLabel?: string
+  /** `danger` (the default) for a destructive action; `primary` when confirming is the
+   *  ordinary way forward and a red button would suggest something is being lost. */
+  tone?: 'danger' | 'primary'
   /** When set, the confirm button stays disabled until the typed text matches `value`
    *  exactly (case-sensitive) — a GitHub-style guard against a reflexive tap on a
    *  destructive action too costly to undo. */
@@ -32,6 +38,8 @@ export function ConfirmDialog({
   title,
   lines,
   confirmLabel,
+  cancelLabel,
+  tone = 'danger',
   requireText,
   onConfirm,
   onCancel,
@@ -83,10 +91,10 @@ export function ConfirmDialog({
       )}
       <div className="dialog__actions">
         <button className="btn btn--ghost btn--back" type="button" onClick={onCancel}>
-          {t.confirm.cancel}
+          {cancelLabel ?? t.confirm.cancel}
         </button>
         <button
-          className="btn btn--danger-fill"
+          className={tone === 'danger' ? 'btn btn--danger-fill' : 'btn btn--primary'}
           type="button"
           disabled={confirmDisabled}
           onClick={onConfirm}

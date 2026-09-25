@@ -430,6 +430,17 @@ export const en = {
     sourceDeleteTitleFallback: 'Delete this income?',
     sourceDeleteLine: (amount: string, pool: string) =>
       `This removes ${amount} from the ${pool} pool. The pool itself stays.`,
+    /** Asked before an everyday-pool income is saved. The grant must be the money that
+     *  arrived; the usual slip is typing who actually came into it instead. */
+    receivedTitle: (amount: string, pool: string) => `Is ${amount} the ${pool} you received?`,
+    receivedWithOthers: (income: string, rest: string) =>
+      `That is this income's ${income} plus ${rest} already in the pool.`,
+    receivedMatch:
+      'It should be exactly what was paid to the camp. If it differs, change it so it matches.',
+    receivedActual:
+      'If fewer people came or someone left early, you should record this change in the next step by using "Edit actual" option in the ⋮ menu.',
+    receivedConfirm: 'Yes, save',
+    receivedChange: 'No, change it',
   },
 
   blocks: {
