@@ -194,20 +194,37 @@ export function CampSettingsScreen({
       <SlotPanel title={t.campSettings.holderSection}>
         <p className="camp-settings__hint">{t.campSettings.holderHint}</p>
 
-        <p className="camp-settings__holder">
-          {camp.moneyHolder === undefined ? (
-            t.campSettings.holderNone
-          ) : (
-            <>
-              {/* The name stands out from the sentence around it — it is the one word on
-                  this card that differs from camp to camp. */}
-              <strong className="camp-settings__holder-name">{camp.moneyHolder}</strong>{' '}
-              {t.campSettings.holderHolds}
-            </>
-          )}
-        </p>
+        <div className="camp-settings__holder-row">
+          <p className="camp-settings__holder">
+            {camp.moneyHolder === undefined ? (
+              t.campSettings.holderNone
+            ) : (
+              <>
+                {/* The name stands out from the sentence around it — it is the one word on
+                    this card that differs from camp to camp. */}
+                <strong className="camp-settings__holder-name">{camp.moneyHolder}</strong>{' '}
+                {t.campSettings.holderHolds}
+              </>
+            )}
+          </p>
 
-        {changingHolder ? (
+          {/* Only ever a hand-over: the wallet cannot be put down, so there is no
+              counterpart to this button. Hidden while the form below is open so there's
+              only one way to trigger the change at a time. */}
+          {!changingHolder && (
+            <button
+              className="btn btn--ghost"
+              type="button"
+              onClick={() => setChangingHolder(true)}
+            >
+              {camp.moneyHolder === undefined
+                ? t.campSettings.holderSet
+                : t.campSettings.holderChange}
+            </button>
+          )}
+        </div>
+
+        {changingHolder && (
           <form
             className="camp-settings__row"
             onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
@@ -241,20 +258,6 @@ export function CampSettingsScreen({
               {t.campSettings.holderCancel}
             </button>
           </form>
-        ) : (
-          <div className="camp-settings__holder-actions">
-            {/* Only ever a hand-over: the wallet cannot be put down, so there is no
-                counterpart to this button. */}
-            <button
-              className="btn btn--ghost"
-              type="button"
-              onClick={() => setChangingHolder(true)}
-            >
-              {camp.moneyHolder === undefined
-                ? t.campSettings.holderSet
-                : t.campSettings.holderChange}
-            </button>
-          </div>
         )}
       </SlotPanel>
 

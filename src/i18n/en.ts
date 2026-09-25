@@ -108,7 +108,7 @@ export const en = {
   viewLink: {
     section: 'Participant link',
     infoLabel: 'What is the participant link?',
-    info: "A read-only link for camp participants. It opens the burn chart, the receipts and the pfand submenu in read-only mode.",
+    info: 'A read-only link for camp participants. It opens the burn chart, the receipts and the pfand submenu in read-only mode.',
     /** No per-diem income dates the camp yet, so there is no last day to end the link on. */
     needsDates: 'Add a per-person-per-day income first — the link ends with the camp.',
     create: 'Create participant link',
@@ -270,8 +270,7 @@ export const en = {
     save: 'Save',
     shareSection: 'Join code',
     shareInfoLabel: 'What is the join code?',
-    shareInfo:
-      'Join code for the other camp leader.',
+    shareInfo: 'Join code for the other camp leader.',
     /** The camp's own dates. Read-only: they are the span of the per-person-per-day
      *  income's days, so the note says where they come from and where to change them. */
     datesSection: 'Camp dates',
