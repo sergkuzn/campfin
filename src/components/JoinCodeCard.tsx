@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import './JoinCodeCard.css'
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard'
 import { useT } from '../i18n'
 
 type Props = {
@@ -8,9 +8,6 @@ type Props = {
   memberCount: number
 }
 
-/** Idle, or the outcome of the last copy attempt. */
-type CopyState = 'idle' | 'copied' | 'failed'
-
 /**
  * The join code as one big button. The code is the large element because it also gets
  * read out over the phone; the line under it says the tap copies, so the button is not
@@ -18,33 +15,11 @@ type CopyState = 'idle' | 'copied' | 'failed'
  */
 export function JoinCodeCard({ joinCode, memberCount }: Props) {
   const t = useT()
-  const [state, setState] = useState<CopyState>('idle')
-
-  // A timer is an external system, and it must be cleared if the component unmounts (or
-  // the code is copied again) before it fires. Only the success message expires — a
-  // failure should stay on screen until the next attempt.
-  useEffect(() => {
-    if (state !== 'copied') return
-    const timer = window.setTimeout(() => setState('idle'), 2000)
-    return () => window.clearTimeout(timer)
-  }, [state])
-
-  const handleCopy = async () => {
-    try {
-      // `navigator.clipboard` is undefined outside a secure context, so reading it is
-      // itself part of what can throw.
-      await navigator.clipboard.writeText(joinCode)
-      setState('copied')
-    } catch {
-      setState('failed')
-    }
-  }
+  const [state, copy] = useCopyToClipboard()
 
   return (
     <section className="join-code">
-      {/* `void` marks the floating promise as deliberate: the handler is fire-and-forget,
-          the outcome lands in state. */}
-      <button className="join-code__button" type="button" onClick={() => void handleCopy()}>
+      <button className="join-code__button" type="button" onClick={() => copy(joinCode)}>
         <span className="join-code__code">{joinCode}</span>
         {/* aria-live so the swap to "Copied" is announced, not just seen. */}
         <span className="join-code__action" aria-live="polite">

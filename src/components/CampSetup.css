@@ -74,6 +74,12 @@
   font-weight: 600;
 }
 
+.camp-setup__step-info {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
 /* A done step recedes: its title stays, its detail is a quiet line rather than a prompt. */
 .camp-setup__readout {
   margin: 0;

@@ -11,9 +11,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* A square big enough for a thumb, pulled back into the card's padding so claiming the
-     target costs the row no extra height or width. */
-  width: 2.25rem;
+  /* Tall enough for a thumb but only as wide as it has to be: the ⋮ is a narrow glyph, and
+     every pixel of width here is empty space between the row's amount and the dots. 24px
+     still meets the WCAG minimum target size. Pulled back into the card's padding so
+     claiming the target costs the row no extra height or width. */
+  width: 1.5rem;
   height: 2.25rem;
   margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) 0 0;
   padding: 0;

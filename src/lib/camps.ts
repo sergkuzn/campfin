@@ -35,6 +35,12 @@ export function isCamp(value: unknown): value is Camp {
   if (c.moneyHolder !== undefined && typeof c.moneyHolder !== 'string') {
     return false
   }
+  if (c.viewCode !== undefined && typeof c.viewCode !== 'string') {
+    return false
+  }
+  if (c.viewUntil !== undefined && typeof c.viewUntil !== 'number') {
+    return false
+  }
   return c.hiddenEntries === undefined || typeof c.hiddenEntries === 'string'
 }
 

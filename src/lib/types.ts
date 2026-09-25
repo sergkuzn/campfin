@@ -29,6 +29,16 @@ export type Camp = {
    * that has never hidden anything, which is every camp until someone taps Customise.
    */
   hiddenEntries?: string
+  /**
+   * The secret in the participants' read-only link. Absent while the camp has none; a new
+   * one replaces it, which is how a leaked link is shut. Read through `viewAccess`.
+   */
+  viewCode?: string
+  /**
+   * When the link stops working, as epoch milliseconds. Written together with `viewCode`,
+   * and an instant rather than a date because the server compares it with its own clock.
+   */
+  viewUntil?: number
   createdAt: number
   // No dates of its own: the camp's window is the span of its per-diem blocks, which is
   // the only place camp days are ever entered. One source, so the two cannot disagree.

@@ -37,3 +37,14 @@ export const db = init({ appId, schema })
 export function chunk<T>(value: T | undefined): T {
   return value as T
 }
+
+/**
+ * Query options for the participant view: the link's code rides along as a rule param,
+ * which is what the permission rules check a viewer's query against. `undefined` for a
+ * leader, whose membership is the permission and who passes nothing.
+ */
+export function viewOptions(
+  viewCode: string | undefined,
+): { ruleParams: { viewCode: string } } | undefined {
+  return viewCode === undefined ? undefined : { ruleParams: { viewCode } }
+}

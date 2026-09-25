@@ -3,7 +3,12 @@ import './IncomeSetup.css'
 import type { UseIncome } from '../hooks/useIncome'
 import { type Dict, useFormat, useT } from '../i18n'
 import { blocksOf, perDiemTotals } from '../lib/budget'
-import type { SaveBlocksInput, SavePoolInput, SaveSourceInput } from '../lib/drafts'
+import {
+  inputAmountCents,
+  type SaveBlocksInput,
+  type SavePoolInput,
+  type SaveSourceInput,
+} from '../lib/drafts'
 import { addableKinds, sourceLabel } from '../lib/income'
 import {
   type PoolSummary,
@@ -65,6 +70,9 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
    *  while its per-diem grant doesn't exist yet. */
   const [pickingPoolId, setPickingPoolId] = useState<string | null>(null)
   const [pending, setPending] = useState<Pending | null>(null)
+  /** A group-money income waiting on "is that what arrived?". Held here, unsaved, while the
+   *  form stays open behind the question — so "No" drops straight back into the draft. */
+  const [checking, setChecking] = useState<SaveSourceInput | null>(null)
   // The pool whose colour is being picked, by id — looked up fresh on every render, so a
   // pool renamed or deleted by the other leader mid-sync retitles or closes the dialog.
   const [coloringPoolId, setColoringPoolId] = useState<string | null>(null)
@@ -74,9 +82,29 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   // flag replaces every "you have unsaved changes" dialog.
   const locked = editing !== null
 
-  const handleSave = (input: SaveSourceInput) => {
+  const commitSave = (input: SaveSourceInput) => {
     income.saveSource(input)
     setEditing(null)
+  }
+
+  /**
+   * Group money is the one income the whole budget runs on, and a per-diem grant is easy to
+   * fill with who actually came instead of who it was paid for. So saving one first asks
+   * whether that is the amount that arrived — unless an edit left the amount as it was,
+   * which has nothing new to confirm.
+   */
+  const handleSave = (input: SaveSourceInput) => {
+    const pool = pools.find((candidate) => candidate.id === input.poolId)
+    const unchanged =
+      input.existing !== null &&
+      inputAmountCents(input) === sourceAmountCents(input.existing, blocks)
+    if (pool?.role === 'everyday' && !unchanged) setChecking(input)
+    else commitSave(input)
+  }
+
+  const handleConfirmReceived = () => {
+    if (checking !== null) commitSave(checking)
+    setChecking(null)
   }
 
   const handleSaveBlocks = (input: SaveBlocksInput) => {
@@ -131,6 +159,7 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
   }
 
   const confirmContent = describePending(pending, summaries, blocks, t, format.euros)
+  const receivedContent = describeReceivedCheck(checking, summaries, blocks, t, format.euros)
 
   /**
    * One saved income: either the source form in its place, or the income itself. Written
@@ -329,6 +358,17 @@ export function IncomeSetup({ campId, income, onBack }: Props) {
         onConfirm={handleConfirm}
         onCancel={() => setPending(null)}
       />
+
+      <ConfirmDialog
+        open={checking !== null}
+        title={receivedContent.title}
+        lines={receivedContent.lines}
+        confirmLabel={t.pools.receivedConfirm}
+        cancelLabel={t.pools.receivedChange}
+        tone="primary"
+        onConfirm={handleConfirmReceived}
+        onCancel={() => setChecking(null)}
+      />
     </Screen>
   )
 }
@@ -369,6 +409,40 @@ function describePending(
   return {
     title: t.pools.sourceDeleteTitle(sourceLabel(source, summary.pool)),
     lines: [t.pools.sourceDeleteLine(euros(sourceAmountCents(source, blocks)), summary.pool.name)],
+  }
+}
+
+/**
+ * The "is that what arrived?" question. It quotes the pool's total as it will be after the
+ * save, since that is the sum the camp was actually handed — and, when other incomes share the
+ * pool, how that total splits, so a leader comparing against one transfer is not misled.
+ */
+function describeReceivedCheck(
+  input: SaveSourceInput | null,
+  summaries: PoolSummary[],
+  blocks: PerDiemBlock[],
+  t: Dict,
+  euros: (cents: number) => string,
+): { title: string; lines: string[] } {
+  if (input === null) return { title: '', lines: [] }
+
+  const summary = summaries.find((s) => s.pool.id === input.poolId)
+  const incomeCents = inputAmountCents(input)
+  // Every other income in the pool, as stored — the one being edited is replaced by the draft.
+  const restCents = (summary?.sources ?? [])
+    .filter((source) => source.id !== input.existing?.id)
+    .reduce((sum, source) => sum + sourceAmountCents(source, blocks), 0)
+
+  return {
+    title: t.pools.receivedTitle(
+      euros(incomeCents + restCents),
+      summary?.pool.name ?? t.pools.everydayDefault,
+    ),
+    lines: [
+      ...(restCents > 0 ? [t.pools.receivedWithOthers(euros(incomeCents), euros(restCents))] : []),
+      t.pools.receivedMatch,
+      ...(input.kind === 'per_diem' ? [t.pools.receivedActual] : []),
+    ],
   }
 }
 
@@ -422,6 +496,13 @@ function PoolSection({
   // The "how Group money works" explainer, revealed on demand on the everyday pool only.
   const [showAbout, setShowAbout] = useState(false)
 
+  // The last word of the name and the ⓘ travel as one unbreakable unit, so a header squeezed
+  // by a long amount wraps the name between words instead of dropping the ⓘ onto a line of
+  // its own. Everything before that last word still wraps normally.
+  const lastSpace = pool.name.lastIndexOf(' ')
+  const nameHead = pool.name.slice(0, lastSpace + 1)
+  const nameTail = pool.name.slice(lastSpace + 1)
+
   // A pool holding exactly one income is one thing, not a box inside a box: the header
   // speaks for both, so the income's Edit and Delete join the pool's own menu.
   const merged = sources.length === 1 ? sources[0] : undefined
@@ -446,19 +527,24 @@ function PoolSection({
       <header className="pool__header">
         <h3 className="pool__name">
           <PoolTag pool={pool} variant="dot" />
-          {pool.name}
-          {/* Sits inside the heading, right after the name, so it reads as part of the
-              label rather than a control floating in the header. */}
-          {isEveryday && (
-            <InfoToggle
-              label={t.pools.everydayAboutLabel}
-              open={showAbout}
-              // Scoped to the pool: several cards render at once, and a duplicated id would
-              // point every ⓘ at the first card's paragraph.
-              controls={`pool-about-${pool.id}`}
-              onToggle={() => setShowAbout((shown) => !shown)}
-            />
-          )}
+          <span className="pool__label">
+            {nameHead}
+            <span className="pool__label-end">
+              {nameTail}
+              {/* Sits inside the heading, right after the name, so it reads as part of the
+                  label rather than a control floating in the header. */}
+              {isEveryday && (
+                <InfoToggle
+                  label={t.pools.everydayAboutLabel}
+                  open={showAbout}
+                  // Scoped to the pool: several cards render at once, and a duplicated id
+                  // would point every ⓘ at the first card's paragraph.
+                  controls={`pool-about-${pool.id}`}
+                  onToggle={() => setShowAbout((shown) => !shown)}
+                />
+              )}
+            </span>
+          </span>
           {/* Money that is only passing through: it is in the camp's hands but never the
               camp's to spend, which is worth saying on the pot itself. */}
           {isDeposit && <span className="pool__badge">{t.pools.roles.deposit.label}</span>}

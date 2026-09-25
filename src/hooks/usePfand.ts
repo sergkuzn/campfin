@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useMemo } from 'react'
-import { db } from '../db/instant'
+import { db, viewOptions } from '../db/instant'
 import * as pfandDb from '../db/pfandDb'
 import type { SavePfandInput } from '../lib/pfand'
 import { mapRows, toPfandEntry } from '../lib/rows'
@@ -21,8 +21,11 @@ export type UsePfand = {
   deleteEntry: (entryId: string) => void
 }
 
-/** Pass `''` while no camp is open: the query is skipped rather than run for nothing. */
-export function usePfand(campId: string): UsePfand {
+/**
+ * Pass `''` while no camp is open: the query is skipped rather than run for nothing.
+ * `viewCode` is set only by the participant view, which reads through its link's code.
+ */
+export function usePfand(campId: string, viewCode?: string): UsePfand {
   const {
     isLoading,
     error: queryError,
@@ -35,6 +38,7 @@ export function usePfand(campId: string): UsePfand {
           // downstream breaks the same-day ties identically on both phones.
           pfandEntries: { $: { where: { campId }, order: { date: 'desc' } } },
         },
+    viewOptions(viewCode),
   )
 
   const { error, run } = useWriteState(queryError)

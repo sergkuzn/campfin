@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import './SlotCard.css'
+import { InfoToggle } from './InfoToggle'
 
 /**
  * The app's one card shape: a bordered box with a tinted title band across its top.
@@ -89,21 +90,53 @@ export function SlotCard({
   )
 }
 
+/** An ⓘ beside a panel's title, and the sentence it unfolds under the title band. */
+export type SlotInfo = {
+  /** The button's accessible name, phrased as the question the text answers. */
+  label: string
+  text: string
+  /** Ties the button to the text it reveals; unique on the page. */
+  id: string
+}
+
 export function SlotPanel({
   title,
+  info,
   className,
   children,
 }: {
   title: string
+  info?: SlotInfo
   /** For a panel that needs its own frame on top of the shared one — the danger zone. */
   className?: string
   children: ReactNode
 }) {
+  // Folded by default, like every other ⓘ: the explanation is worth one read, not one per
+  // visit. The panel owns the state because nothing outside it cares whether it is open.
+  const [infoOpen, setInfoOpen] = useState(false)
+
   return (
     <section className={cardClass(true, className)}>
       <div className="slot-card__head">
-        <h3 className="slot-card__title">{title}</h3>
+        {/* The ⓘ sits right after the title rather than out at the band's edge, so the two
+            read as one label with a question attached. */}
+        <div className="slot-card__title-row">
+          <h3 className="slot-card__title">{title}</h3>
+          {info !== undefined && (
+            <InfoToggle
+              label={info.label}
+              open={infoOpen}
+              controls={info.id}
+              onToggle={() => setInfoOpen((shown) => !shown)}
+            />
+          )}
+        </div>
       </div>
+      {info !== undefined && infoOpen && (
+        <p className="slot-card__hint slot-card__info" id={info.id}>
+          {info.text}
+        </p>
+      )}
       {children}
     </section>
   )

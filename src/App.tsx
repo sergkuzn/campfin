@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import './App.css'
 import { AppVersion } from './components/AppVersion'
 import { ReloadPrompt } from './components/ReloadPrompt'
 import { SignedInApp } from './components/SignedInApp'
 import { SignIn } from './components/SignIn'
 import { ThemeToggle } from './components/ThemeToggle'
+import { ViewerApp } from './components/ViewerApp'
 import { useSession } from './hooks/useSession'
 import { useT } from './i18n'
+import { viewCodeFromSearch } from './lib/viewAccess'
 
 /**
  * The gate. Auth is the only thing this component knows about: while the session is
@@ -18,8 +21,13 @@ import { useT } from './i18n'
 export default function App() {
   const t = useT()
   const { session, isLoading, error, signOut } = useSession()
+  // A participant's view link: `?view=<code>`. Read once — screens switch by state, so the
+  // address never changes while the app is open — and checked before the session, because
+  // the link is its own permission and works whether or not anybody is signed in here.
+  const [viewCode] = useState(() => viewCodeFromSearch(window.location.search))
 
   const renderBody = () => {
+    if (viewCode !== null) return <ViewerApp viewCode={viewCode} />
     if (isLoading) return <p className="app__loading">{t.app.loading}</p>
     if (error !== null)
       return (
@@ -43,7 +51,7 @@ export default function App() {
             <p className="app__subtitle">{t.app.subtitle}</p>
           </div>
         </div>
-        {session !== null && (
+        {session !== null && viewCode === null && (
           <p className="app__session">
             <span className="app__email">{session.email}</span>
             <button className="app__sign-out" type="button" onClick={signOut}>

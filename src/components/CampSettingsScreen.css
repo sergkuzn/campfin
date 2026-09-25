@@ -21,6 +21,15 @@
   width: 100%;
 }
 
+/* Stacks a panel's own lines with a fixed gap instead of margins on each one, so the last
+   line never leaves a trailing margin on top of the card's own bottom padding — the gap
+   that made the dates and money-holder cards run taller than every other card here. */
+.camp-settings__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 /* Red border, not a red button in a plain box: the frame is what makes it read as a
    place you have arrived at rather than a control you might brush past. */
 .camp-settings__danger {
@@ -36,7 +45,7 @@
 /* The camp's span, stated as a fact. The dates carry the weight; the day count trails
    them, muted, because it is the same information counted differently. */
 .camp-settings__dates {
-  margin: 0 0 var(--space-1);
+  margin: 0;
   font-size: 0.9375rem;
 }
 
@@ -45,15 +54,22 @@
 }
 
 .camp-settings__hint {
-  margin: 0 0 var(--space-2);
+  margin: 0;
   color: var(--muted);
   font-size: 0.8125rem;
 }
 
-/* Who has the wallet, as a sentence rather than a form field — muted, so the name inside
-   it carries the line. */
+/* The wallet sentence and its one action share a line, the button pinned to the right
+   so it reads as acting on the name beside it rather than the card as a whole. */
+.camp-settings__holder-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
 .camp-settings__holder {
-  margin: 0 0 var(--space-3);
+  margin: 0;
   font-size: 0.9375rem;
   color: var(--muted);
 }
@@ -62,13 +78,4 @@
   font-size: 1.0625rem;
   font-weight: 700;
   color: var(--fg);
-}
-
-/* Right-justified: the single action for this card, kept under the thumb on a phone
-   held one-handed rather than pinned to the card's far side. */
-.camp-settings__holder-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-2);
 }

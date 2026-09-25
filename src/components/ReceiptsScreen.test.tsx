@@ -57,9 +57,16 @@ function renderScreen(
     pools?: Pool[]
     focusPoolId?: string | null
     moneyHolder?: string
+    readOnly?: boolean
   } = {},
 ) {
-  const { expenses = rows, pools = [food, tools], focusPoolId = null, moneyHolder } = options
+  const {
+    expenses = rows,
+    pools = [food, tools],
+    focusPoolId = null,
+    moneyHolder,
+    readOnly = false,
+  } = options
   const saveExpense = vi.fn()
   const setReimbursed = vi.fn()
   const deleteExpense = vi.fn()
@@ -81,6 +88,7 @@ function renderScreen(
         expenses={stub}
         summaries={pools.map(summary)}
         focusPoolId={focusPoolId}
+        readOnly={readOnly}
         onBack={vi.fn()}
         onOpenPfand={vi.fn()}
       />
@@ -535,5 +543,37 @@ describe('paying somebody back who also fronted pfand', () => {
 
     await user.click(screen.getByRole('button', { name: t.payer.confirmReturnLabel }))
     expect(setReimbursed).toHaveBeenCalledWith('a', true)
+  })
+})
+
+describe('ReceiptsScreen — read-only', () => {
+  it('lists the receipts but offers no way to add, edit or delete one', () => {
+    renderScreen({ readOnly: true })
+
+    expect(screen.getByText('Rope')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: t.add })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: en.rowMenu.open('Rope') })).not.toBeInTheDocument()
+  })
+
+  it('states who is owed instead of offering to settle it', () => {
+    renderScreen({
+      readOnly: true,
+      moneyHolder: 'Anna',
+      expenses: [expense({ id: 'a', paidBy: 'Ben' })],
+    })
+
+    expect(screen.getByText(t.payer.owedStatus)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: t.payer.returnButton })).not.toBeInTheDocument()
+  })
+
+  it('does not tell a viewer to tap a button they do not have', () => {
+    renderScreen({ readOnly: true, expenses: [] })
+    expect(screen.getByText(en.dashboard.noReceipts)).toBeInTheDocument()
+  })
+
+  it('still filters, which changes nothing stored', async () => {
+    const { user } = renderScreen({ readOnly: true })
+    await user.click(screen.getByRole('button', { name: /Tools/ }))
+    expect(renderedNames()).toEqual(['Rope'])
   })
 })

@@ -112,6 +112,23 @@
   font-size: 1rem;
 }
 
+/* One flex item holding the name as ordinary inline text, so it wraps between words like a
+   sentence would rather than as a single block that jumps to the next line whole. */
+.pool__label {
+  min-width: 0;
+}
+
+/* The name's last word and the ⓘ after it never part: when the header runs out of room
+   they move down together, so the ⓘ is never left alone on a line under the name. */
+.pool__label-end {
+  white-space: nowrap;
+}
+
+.pool__label-end .info-button {
+  margin-left: var(--space-1);
+  vertical-align: middle;
+}
+
 .pool__badge {
   padding: 0 var(--space-2);
   border: 1px solid var(--border);
@@ -124,18 +141,21 @@
 }
 
 .pool__total {
+  /* An amount split across two lines is unreadable; the name gives way instead. */
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-size: 0.9375rem;
 }
 
-/* The same 2.25rem thumb target as the ⋮ beside it, so the two read as one pair of
-   controls rather than a big button next to a small one. */
+/* The same size as the ⋮ beside it — thumb-tall, but only as wide as the glyph needs —
+   so the two read as one pair of controls, and a four-digit amount still leaves the pool
+   name room on a narrow phone. 24px wide still meets the WCAG minimum target size. */
 .pool__add {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
+  width: 1.5rem;
   height: 2.25rem;
   padding: 0;
   border: none;
@@ -146,6 +166,12 @@
   font-size: 1.125rem;
   line-height: 1;
   cursor: pointer;
+}
+
+/* The pair sits closer together than the header's other items: the glyphs' own side
+   bearings already put air between them. */
+.pool__add + .row-menu {
+  margin-left: calc(var(--space-1) - var(--space-2));
 }
 
 .pool__add:disabled {

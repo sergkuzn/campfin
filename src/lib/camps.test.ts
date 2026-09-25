@@ -50,6 +50,24 @@ describe('isCamp', () => {
     expect(
       isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: 1, moneyHolder: 2 }),
     ).toBe(false)
+    expect(isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: 1, viewCode: 2 })).toBe(
+      false,
+    )
+    expect(
+      isCamp({ id: 'A', name: 'B', joinCode: 'AAAA-1234', createdAt: 1, viewUntil: '2' }),
+    ).toBe(false)
+  })
+  it('accepts a camp carrying a participant link', () => {
+    expect(
+      isCamp({
+        id: 'A',
+        name: 'B',
+        joinCode: 'AAAA-1234',
+        createdAt: 1,
+        viewCode: 'ABCDEFGHJKLMNPQR',
+        viewUntil: 2,
+      }),
+    ).toBe(true)
   })
   it('accepts a camp carrying its hidden entry cards', () => {
     expect(

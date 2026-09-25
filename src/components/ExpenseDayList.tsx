@@ -22,6 +22,8 @@ type Props = {
   locked: boolean
   /** The leader holding the cash. Undefined until one is named, and then no row can owe. */
   moneyHolder: string | undefined
+  /** The participant view: rows show everything but offer no action at all. */
+  readOnly: boolean
   onEdit: (expenseId: string) => void
   onDelete: (expenseId: string) => void
   /** Tick a receipt off as paid back, or un-tick it — straight from the row. */
@@ -38,6 +40,7 @@ export function ExpenseDayList({
   editingId,
   locked,
   moneyHolder,
+  readOnly,
   onEdit,
   onDelete,
   onToggleRepaid,
@@ -61,6 +64,7 @@ export function ExpenseDayList({
         pool={poolsById.get(expense.poolId)}
         locked={locked}
         moneyHolder={moneyHolder}
+        readOnly={readOnly}
         onEdit={() => onEdit(expense.id)}
         onDelete={() => onDelete(expense.id)}
         onToggleRepaid={(repaid) => onToggleRepaid(expense.id, repaid)}
@@ -97,6 +101,7 @@ type RowProps = {
   pool: Pool | undefined
   locked: boolean
   moneyHolder: string | undefined
+  readOnly: boolean
   onEdit: () => void
   onDelete: () => void
   onToggleRepaid: (repaid: boolean) => void
@@ -125,6 +130,7 @@ function ReceiptRow({
   pool,
   locked,
   moneyHolder,
+  readOnly,
   onEdit,
   onDelete,
   onToggleRepaid,
@@ -162,7 +168,9 @@ function ReceiptRow({
           row={expense}
           moneyHolder={moneyHolder}
           locked={locked}
-          onToggleRepaid={onToggleRepaid}
+          // Read-only drops the callback, and the line then states the settlement instead
+          // of offering to change it.
+          onToggleRepaid={readOnly ? undefined : onToggleRepaid}
         />
 
         {expense.note !== undefined && <span className="receipt__note">{expense.note}</span>}
@@ -186,14 +194,16 @@ function ReceiptRow({
         )}
       </span>
 
-      <RowMenu
-        label={expense.name}
-        disabled={locked}
-        items={[
-          { label: t.rowMenu.edit, onSelect: onEdit },
-          { label: t.rowMenu.delete, danger: true, onSelect: onDelete },
-        ]}
-      />
+      {!readOnly && (
+        <RowMenu
+          label={expense.name}
+          disabled={locked}
+          items={[
+            { label: t.rowMenu.edit, onSelect: onEdit },
+            { label: t.rowMenu.delete, danger: true, onSelect: onDelete },
+          ]}
+        />
+      )}
     </li>
   )
 }

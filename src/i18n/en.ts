@@ -104,6 +104,38 @@ export const en = {
     copyFailed: 'Copying is not available here — read the code out instead.',
   },
 
+  /** The participants' read-only link, as the camp settings manage it. */
+  viewLink: {
+    section: 'Participant link',
+    infoLabel: 'What is the participant link?',
+    info: 'A read-only link for camp participants. It opens the burn chart, the receipts and the pfand submenu in read-only mode.',
+    /** No per-diem income dates the camp yet, so there is no last day to end the link on. */
+    needsDates: 'Add a per-person-per-day income first — the link ends with the camp.',
+    create: 'Create participant link',
+    copy: '⧉ Copy participant link',
+    copied: '✓ Copied',
+    copyFailed: 'Copying is not available here — long-press the link to copy it instead.',
+    openUntil: (day: string) => `Works until the end of ${day}.`,
+    closedSince: (day: string) => `Stopped working after ${day}.`,
+    lastDayLabel: 'Last day',
+    /** The camp was lengthened after the link was made, which leaves the link behind. */
+    behindCamp: (day: string) => `The camp now runs until ${day}.`,
+    extend: (day: string) => `Extend to ${day}`,
+    close: 'Turn off',
+    closeTitle: 'Turn off the participant link?',
+    closeLine: 'Participants lose access at once. A link made later will be a new one.',
+    closeConfirm: 'Stop sharing',
+  },
+
+  /** What a participant sees after opening a view link. */
+  viewer: {
+    readOnlyNote: 'Read-only view shared by the camp leaders.',
+    noChart: 'The chart appears once the leaders have set up the daily allowance.',
+    closedTitle: 'This link does not open a camp',
+    closedHint:
+      'It may have ended after the camp, or the leaders replaced it with a new one. Ask them for the current link.',
+  },
+
   /** Anything the database refuses. A write that only queues offline says nothing here. */
   sync: {
     loadFailed: (message: string) => `Could not load this camp: ${message}`,
@@ -219,7 +251,7 @@ export const en = {
   setup: {
     title: 'Set up this camp',
     hint: 'Two answers before the money can be tracked.',
-    holderStep: 'Money holder',
+    holderStep: 'Camp money holder',
     /** Read out after a step's title in place of the tick, which says nothing aloud. */
     done: 'done',
     incomeStep: 'Income',
@@ -237,6 +269,8 @@ export const en = {
     nameLabel: 'Camp name',
     save: 'Save',
     shareSection: 'Join code',
+    shareInfoLabel: 'What is the join code?',
+    shareInfo: 'Join code for the other camp leader.',
     /** The camp's own dates. Read-only: they are the span of the per-person-per-day
      *  income's days, so the note says where they come from and where to change them. */
     datesSection: 'Camp dates',
@@ -248,15 +282,16 @@ export const en = {
     incomeSection: 'Income',
     /** Who carries the cash. Camp-wide, and the thing every "owed" marker is measured
      *  against — so it lives with the camp's other once-per-camp settings. */
-    holderSection: 'Money holder',
-    holderHint: 'The leader carrying the camp cash.',
+    holderSection: 'Camp money holder',
+    holderInfoLabel: 'What is a camp money holder?',
+    holderInfo: 'The leader carrying the camp cash.',
     /** Who has the wallet, stated rather than picked from a list: it changes once a camp
      *  at most, so the screen offers only the two things you would ever do to it. The name
      *  is drawn separately, so this is only what follows it. */
     holderHolds: 'holds the money.',
     /** Only reachable from the gear on the setup screen — every camp past setup has one. */
     holderNone: 'Nobody holds the money yet.',
-    holderSet: 'Set money holder',
+    holderSet: 'Set camp money holder',
     holderChange: 'Change holder',
     holderCancel: 'Cancel',
     holderNewNameLabel: 'Name',
@@ -265,7 +300,7 @@ export const en = {
     /** Handing the wallet over rewrites no receipt, but it does flip who owes whom — so
      *  the question says how many rows change, in both directions. The wallet can only
      *  change hands, never be put down: every "owed" marker is measured against it. */
-    holderChangeTitle: (name: string) => `Make ${name} the money holder?`,
+    holderChangeTitle: (name: string) => `Make ${name} the camp money holder?`,
     holderReplaces: (current: string) => `${current} holds it now.`,
     holderStopOwing: (n: number) =>
       `${n} ${n === 1 ? 'receipt stops' : 'receipts stop'} showing as owed.`,
@@ -396,6 +431,17 @@ export const en = {
     sourceDeleteTitleFallback: 'Delete this income?',
     sourceDeleteLine: (amount: string, pool: string) =>
       `This removes ${amount} from the ${pool} pool. The pool itself stays.`,
+    /** Asked before an everyday-pool income is saved. The grant must be the money that
+     *  arrived; the usual slip is typing who actually came into it instead. */
+    receivedTitle: (amount: string, pool: string) => `Is ${amount} the ${pool} you received?`,
+    receivedWithOthers: (income: string, rest: string) =>
+      `That is this income's ${income} plus ${rest} already in the pool.`,
+    receivedMatch:
+      'It should be exactly what was paid to the camp. If it differs, change it so it matches.',
+    receivedActual:
+      'If fewer people came or someone left early, you should record this change in the next step by using "Edit actual" option in the ⋮ menu.',
+    receivedConfirm: 'Yes, save',
+    receivedChange: 'No, change it',
   },
 
   blocks: {
@@ -496,8 +542,8 @@ export const en = {
         ],
       },
       {
-        text: '"Median day" — what the plan gives a typical camp day to spend.',
-        sub: [],
+        text: '"Median day"',
+        sub: ['a typical daily amount to spend according to the plan'],
       },
     ],
   },
@@ -545,6 +591,9 @@ export const en = {
       paidByRow: (name: string) => `Paid by ${name}`,
       returnButton: 'Return',
       returnedButton: 'Returned',
+      /** The owed state as a label rather than a button — the participant view, where
+       *  "Return" would be an instruction nobody there can follow. */
+      owedStatus: 'Not returned yet',
       /** Both directions ask first: the button sits in a list you scroll past. */
       confirmReturnTitle: (name: string) => `Return the money to ${name}?`,
       confirmReturnLine: (amount: string) => `${amount} will be returned.`,
@@ -715,6 +764,9 @@ export const en = {
      *  comes from, because *Refund* on a balance is the only way to write one. */
     intro:
       'Pfand (deposit) money, automatically calculated from the receipts. Tap "Refund" to record return of the money from a shop. (When Pfand is a part of the receipt with other purchases, it should be managed in the "Receipts" section).',
+    /** The same note in the participant view, which has no Refund button to point at. */
+    introReadOnly:
+      'Pfand (deposit) money the leaders paid out of their own pockets, calculated from the receipts, and what has come back from the shops so far.',
     /** Label for the ⓘ toggle that reveals `intro`. */
     introLabel: 'What is this screen?',
     balancesTitle: 'Personal money spent',

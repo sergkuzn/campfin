@@ -6,12 +6,14 @@ import { dayCount } from '../lib/dates'
 import { holderChangeImpact, isSamePayer } from '../lib/payers'
 import type { PoolSummary } from '../lib/pools'
 import type { Camp, Expense } from '../lib/types'
+import { viewAccess } from '../lib/viewAccess'
 import { ConfirmDialog } from './ConfirmDialog'
 import { JoinCodeCard } from './JoinCodeCard'
 import { ReceivedTotals } from './ReceivedTotals'
 import { Screen } from './Screen'
 import { SlotCard, SlotPanel } from './SlotCard'
 import { Toast } from './Toast'
+import { ViewLinkCard } from './ViewLinkCard'
 
 type Props = {
   camp: Camp
@@ -35,6 +37,10 @@ type Props = {
   /** Hand the money to this person. There is no way to hand it to nobody: every "owed"
    *  marker and the settlement sheet are measured against the holder. */
   onChangeHolder: (name: string) => void
+  /** The participants' read-only link: issue (or replace) it, move its end, close it. */
+  onOpenViewLink: (lastDayIso: string) => void
+  onSetViewUntil: (lastDayIso: string) => void
+  onCloseViewLink: () => void
   onDelete: () => void
 }
 
@@ -59,6 +65,9 @@ export function CampSettingsScreen({
   onOpenIncome,
   onRename,
   onChangeHolder,
+  onOpenViewLink,
+  onSetViewUntil,
+  onCloseViewLink,
   onDelete,
 }: Props) {
   const t = useT()
@@ -140,7 +149,7 @@ export function CampSettingsScreen({
         {campWindow === null ? (
           <p className="camp-settings__hint">{t.campSettings.datesNone}</p>
         ) : (
-          <>
+          <div className="camp-settings__block">
             <p className="camp-settings__dates">
               <strong>{windowLabel(campWindow, format.day)}</strong>{' '}
               <span className="camp-settings__dates-days">
@@ -148,81 +157,115 @@ export function CampSettingsScreen({
               </span>
             </p>
             <p className="camp-settings__hint">{t.campSettings.datesFrom}</p>
-          </>
+          </div>
         )}
       </SlotPanel>
 
-      <SlotPanel title={t.campSettings.shareSection}>
+      <SlotPanel
+        title={t.campSettings.shareSection}
+        info={{
+          label: t.campSettings.shareInfoLabel,
+          text: t.campSettings.shareInfo,
+          id: 'join-code-info',
+        }}
+      >
         <JoinCodeCard joinCode={camp.joinCode} memberCount={memberCount} />
+      </SlotPanel>
+
+      {/* Next to the join code, and deliberately a different thing: that one makes a
+          leader, this one only lets somebody look. */}
+      <SlotPanel
+        title={t.viewLink.section}
+        info={{ label: t.viewLink.infoLabel, text: t.viewLink.info, id: 'view-link-info' }}
+      >
+        <ViewLinkCard
+          // The clock is read here, at the edge: whether the link is still open is the
+          // one fact on this screen that changes with time rather than with data.
+          access={viewAccess(camp, Date.now())}
+          campWindow={campWindow}
+          onOpen={onOpenViewLink}
+          onSetUntil={onSetViewUntil}
+          onClose={onCloseViewLink}
+        />
       </SlotPanel>
 
       {/* No list of everyone the receipts name: the wallet changes hands once a camp at
           most, so the screen states who has it and offers the one thing you might do. */}
-      <SlotPanel title={t.campSettings.holderSection}>
-        <p className="camp-settings__hint">{t.campSettings.holderHint}</p>
+      <SlotPanel
+        title={t.campSettings.holderSection}
+        info={{
+          label: t.campSettings.holderInfoLabel,
+          text: t.campSettings.holderInfo,
+          id: 'holder-info',
+        }}
+      >
+        <div className="camp-settings__block">
+          <div className="camp-settings__holder-row">
+            <p className="camp-settings__holder">
+              {camp.moneyHolder === undefined ? (
+                t.campSettings.holderNone
+              ) : (
+                <>
+                  {/* The name stands out from the sentence around it — it is the one word on
+                      this card that differs from camp to camp. */}
+                  <strong className="camp-settings__holder-name">{camp.moneyHolder}</strong>{' '}
+                  {t.campSettings.holderHolds}
+                </>
+              )}
+            </p>
 
-        <p className="camp-settings__holder">
-          {camp.moneyHolder === undefined ? (
-            t.campSettings.holderNone
-          ) : (
-            <>
-              {/* The name stands out from the sentence around it — it is the one word on
-                  this card that differs from camp to camp. */}
-              <strong className="camp-settings__holder-name">{camp.moneyHolder}</strong>{' '}
-              {t.campSettings.holderHolds}
-            </>
-          )}
-        </p>
+            {/* Only ever a hand-over: the wallet cannot be put down, so there is no
+                counterpart to this button. Hidden while the form below is open so there's
+                only one way to trigger the change at a time. */}
+            {!changingHolder && (
+              <button
+                className="btn btn--ghost"
+                type="button"
+                onClick={() => setChangingHolder(true)}
+              >
+                {camp.moneyHolder === undefined
+                  ? t.campSettings.holderSet
+                  : t.campSettings.holderChange}
+              </button>
+            )}
+          </div>
 
-        {changingHolder ? (
-          <form
-            className="camp-settings__row"
-            onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
-              event.preventDefault()
-              if (trimmedNewHolder !== '') askHolder(trimmedNewHolder)
-            }}
-          >
-            <input
-              className="camp-settings__input"
-              aria-label={t.campSettings.holderNewNameLabel}
-              type="text"
-              value={newHolder}
-              placeholder={t.campSettings.holderNewNamePlaceholder}
-              // biome-ignore lint/a11y/noAutofocus: the tap revealed this one field, so focusing it saves a second tap
-              autoFocus
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setNewHolder(event.target.value)
-              }
-            />
-            <button className="btn btn--primary" type="submit" disabled={trimmedNewHolder === ''}>
-              {t.campSettings.holderSave}
-            </button>
-            <button
-              className="btn btn--ghost"
-              type="button"
-              onClick={() => {
-                setChangingHolder(false)
-                setNewHolder('')
+          {changingHolder && (
+            <form
+              className="camp-settings__row"
+              onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
+                event.preventDefault()
+                if (trimmedNewHolder !== '') askHolder(trimmedNewHolder)
               }}
             >
-              {t.campSettings.holderCancel}
-            </button>
-          </form>
-        ) : (
-          <div className="camp-settings__holder-actions">
-            {/* Only ever a hand-over: the wallet cannot be put down, so there is no
-                counterpart to this button. */}
-            <button
-              className="btn btn--ghost"
-              type="button"
-              onClick={() => setChangingHolder(true)}
-            >
-              {camp.moneyHolder === undefined
-                ? t.campSettings.holderSet
-                : t.campSettings.holderChange}
-            </button>
-          </div>
-        )}
+              <input
+                className="camp-settings__input"
+                aria-label={t.campSettings.holderNewNameLabel}
+                type="text"
+                value={newHolder}
+                placeholder={t.campSettings.holderNewNamePlaceholder}
+                // biome-ignore lint/a11y/noAutofocus: the tap revealed this one field, so focusing it saves a second tap
+                autoFocus
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setNewHolder(event.target.value)
+                }
+              />
+              <button className="btn btn--primary" type="submit" disabled={trimmedNewHolder === ''}>
+                {t.campSettings.holderSave}
+              </button>
+              <button
+                className="btn btn--ghost"
+                type="button"
+                onClick={() => {
+                  setChangingHolder(false)
+                  setNewHolder('')
+                }}
+              >
+                {t.campSettings.holderCancel}
+              </button>
+            </form>
+          )}
+        </div>
       </SlotPanel>
 
       <SlotCard

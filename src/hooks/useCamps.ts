@@ -16,7 +16,18 @@ import { campNameExists } from '../lib/camps'
 import { generateJoinCode } from '../lib/joinCode'
 import { mapRows, toBlock, toCamp, toMembership } from '../lib/rows'
 import type { Camp, Membership, PerDiemBlock } from '../lib/types'
+import { generateViewCode, viewUntilFor } from '../lib/viewAccess'
 import { useWriteState } from './useWriteState'
+
+/**
+ * A float in [0, 1) from the browser's cryptographic generator — the same contract as
+ * `Math.random`, but unguessable, which a view code has to be: it opens a camp to anyone
+ * holding it. Dividing a 32-bit value by 2³² keeps the result strictly below 1.
+ */
+function cryptoRandom(): number {
+  // `?? 0` only satisfies `noUncheckedIndexedAccess`: a one-element array always has [0].
+  return (crypto.getRandomValues(new Uint32Array(1))[0] ?? 0) / 2 ** 32
+}
 
 export type UseCamps = {
   camps: Camp[]
@@ -36,6 +47,11 @@ export type UseCamps = {
   setMoneyHolder: (campId: string, name: string) => void
   /** Store the camp's hidden entry cards. Takes the whole set, already serialised. */
   setHiddenEntries: (campId: string, hiddenEntries: string) => void
+  /** Issue a fresh participant link, open through `lastDayIso`. Replaces any earlier one. */
+  openViewLink: (campId: string, lastDayIso: string) => void
+  /** Move the end of the current link, keeping its code. */
+  setViewUntil: (campId: string, lastDayIso: string) => void
+  closeViewLink: (campId: string) => void
   deleteCamp: (campId: string) => void
   /** Dismiss the current error — call it when navigating away from the input that raised it. */
   clearError: () => void
@@ -147,6 +163,23 @@ export function useCamps(userId: string, allCamps = false): UseCamps {
     [run],
   )
 
+  const openViewLink = useCallback(
+    (campId: string, lastDayIso: string): void =>
+      run(campsDb.openViewLink(campId, generateViewCode(cryptoRandom), viewUntilFor(lastDayIso))),
+    [run],
+  )
+
+  const setViewUntil = useCallback(
+    (campId: string, lastDayIso: string): void =>
+      run(campsDb.setViewUntil(campId, viewUntilFor(lastDayIso))),
+    [run],
+  )
+
+  const closeViewLink = useCallback(
+    (campId: string): void => run(campsDb.closeViewLink(campId)),
+    [run],
+  )
+
   const deleteCamp = useCallback((campId: string): void => run(campsDb.deleteCamp(campId)), [run])
 
   return {
@@ -159,6 +192,9 @@ export function useCamps(userId: string, allCamps = false): UseCamps {
     renameCamp,
     setMoneyHolder,
     setHiddenEntries,
+    openViewLink,
+    setViewUntil,
+    closeViewLink,
     deleteCamp,
     clearError,
   }
