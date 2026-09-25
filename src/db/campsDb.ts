@@ -95,6 +95,30 @@ export function setHiddenEntries(campId: string, hiddenEntries: string): Promise
   return db.transact(chunk(db.tx.camps[campId]).update({ hiddenEntries }))
 }
 
+/**
+ * Open the participants' link, or replace it: a new code shuts the old link on the spot,
+ * since the rules only ever accept the camp's current one. Code and end are written in one
+ * update so no reader ever sees a code without an end.
+ */
+export function openViewLink(
+  campId: string,
+  viewCode: string,
+  viewUntil: number,
+): Promise<unknown> {
+  return db.transact(chunk(db.tx.camps[campId]).update({ viewCode, viewUntil }))
+}
+
+/** Move the link's end. The code stays, so the link participants already have keeps working. */
+export function setViewUntil(campId: string, viewUntil: number): Promise<unknown> {
+  return db.transact(chunk(db.tx.camps[campId]).update({ viewUntil }))
+}
+
+/** Close the link for good. Null rather than a past date: "no link" and "a link that ran
+ *  out" read differently on the settings screen. */
+export function closeViewLink(campId: string): Promise<unknown> {
+  return db.transact(chunk(db.tx.camps[campId]).update({ viewCode: null, viewUntil: null }))
+}
+
 export function deleteCamp(campId: string): Promise<unknown> {
   return db.transact(chunk(db.tx.camps[campId]).delete())
 }

@@ -63,6 +63,15 @@ const _schema = i.schema({
       // needs no new attribute. On the camp rather than on a phone: not collecting deposits
       // is a fact about the camp, so both leaders should see the same group.
       hiddenEntries: i.string().optional(),
+      // The participants' read-only link. The code is the whole permission — the rules let
+      // a query that names it read this camp's chart, receipts and pfand, and nothing else.
+      // Indexed because the viewer looks the camp up by it. Not `unique`: closing a link
+      // nulls the field on every camp that had one, and at 2⁸⁰ codes a collision between
+      // two live links is not a case worth a constraint.
+      viewCode: i.string().indexed().optional(),
+      // When that link stops working, as epoch ms, so a rule can compare it with the
+      // server's clock. Always written and cleared together with `viewCode`.
+      viewUntil: i.number().optional(),
       createdAt: i.number().indexed(),
       // No dates: a camp's window is the span of its per-diem blocks, derived on read.
     }),

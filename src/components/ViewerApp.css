@@ -1,0 +1,14 @@
+/* The participant view's own overview. It borrows the card shapes every screen shares and
+   adds only the header, which has no settings button to push to the corner. */
+.viewer__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* One quiet line under the name, so nobody hunts for an Add button that is not there. */
+.viewer__note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}

@@ -50,3 +50,10 @@
   opacity: 0.5;
   cursor: default;
 }
+
+/* The read-only twin of the button: the same pill, but nothing to press. */
+.payer-line__status {
+  display: inline-flex;
+  align-items: center;
+  cursor: default;
+}

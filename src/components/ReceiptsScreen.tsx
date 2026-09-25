@@ -35,6 +35,10 @@ type Props = {
   /** The pool the screen opens filtered to, or null for the whole list. Read once, when the
    *  screen mounts — from then on the chips are the user's. */
   focusPoolId: string | null
+  /** The participant view: the list, its filters and its totals, with nothing to add, edit,
+   *  delete or tick off. The server refuses a viewer's writes anyway; this keeps the screen
+   *  from offering them. */
+  readOnly?: boolean
   onBack: () => void
   /** Opens the pfand ledger. Deposits are entered on receipts here, so the ledger that
    *  nets them lives one step away rather than on the dashboard. */
@@ -51,6 +55,7 @@ export function ReceiptsScreen({
   expenses,
   summaries,
   focusPoolId,
+  readOnly = false,
   onBack,
   onOpenPfand,
 }: Props) {
@@ -194,14 +199,16 @@ export function ReceiptsScreen({
           >
             <PfandIcon className="pfand-icon--tall" />
           </button>
-          <button
-            className="btn btn--primary"
-            type="button"
-            disabled={locked || spendable.length === 0}
-            onClick={() => setEditing({ mode: 'new' })}
-          >
-            {t.receipts.add}
-          </button>
+          {!readOnly && (
+            <button
+              className="btn btn--primary"
+              type="button"
+              disabled={locked || spendable.length === 0}
+              onClick={() => setEditing({ mode: 'new' })}
+            >
+              {t.receipts.add}
+            </button>
+          )}
         </div>
       </header>
 
@@ -243,7 +250,14 @@ export function ReceiptsScreen({
       {/* "Nothing here yet" would be a lie for the first second, so the loading line wins
           while the query is still out. */}
       {rows.length === 0 && !locked && (
-        <p className="income__empty">{expenses.isLoading ? t.app.loading : t.receipts.empty}</p>
+        <p className="income__empty">
+          {/* The usual line tells you to tap Add, which a viewer does not have. */}
+          {expenses.isLoading
+            ? t.app.loading
+            : readOnly
+              ? t.dashboard.noReceipts
+              : t.receipts.empty}
+        </p>
       )}
 
       {/* An empty *filtered* list is a different message: there are receipts, just none the
@@ -261,6 +275,7 @@ export function ReceiptsScreen({
         editingId={editingRow?.id ?? null}
         locked={locked}
         moneyHolder={moneyHolder}
+        readOnly={readOnly}
         onEdit={(expenseId) => setEditing({ mode: 'edit', expenseId })}
         onDelete={(expenseId) => setPendingId(expenseId)}
         // Asked in both directions: the button sits in a list you scroll past with a

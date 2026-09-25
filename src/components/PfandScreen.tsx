@@ -26,6 +26,8 @@ type Props = {
   /** The camp's span, for the date picker in the form. `null` until per-diem income dates
    *  the camp. */
   campWindow: CampWindow | null
+  /** The participant view: balances and the ledger, without Refund or a row menu. */
+  readOnly?: boolean
   onBack: () => void
 }
 
@@ -61,6 +63,7 @@ export function PfandScreen({
   balances,
   moneyHolder,
   campWindow,
+  readOnly = false,
   onBack,
 }: Props) {
   const t = useT()
@@ -132,7 +135,7 @@ export function PfandScreen({
 
       {showIntro && (
         <p className="slot-card__hint" id="pfand-intro">
-          {t.pfand.intro}
+          {readOnly ? t.pfand.introReadOnly : t.pfand.intro}
         </p>
       )}
 
@@ -155,6 +158,7 @@ export function PfandScreen({
                     balance={balance}
                     moneyHolder={moneyHolder}
                     locked={locked}
+                    readOnly={readOnly}
                     onRefund={() => startNew(balance.name, balance.outstandingCents)}
                   />
                 )}
@@ -183,6 +187,7 @@ export function PfandScreen({
                   key={txn.id}
                   txn={txn}
                   locked={locked}
+                  readOnly={readOnly}
                   onEdit={() => setEditing({ mode: 'edit', entryId: txn.rowId })}
                   onDelete={() => setPendingId(txn.rowId)}
                 />
@@ -215,6 +220,7 @@ type BalanceProps = {
   balance: PfandBalance
   moneyHolder: string | undefined
   locked: boolean
+  readOnly: boolean
   onRefund: () => void
 }
 
@@ -227,7 +233,7 @@ type BalanceProps = {
  * something another refund would fix — the row that is wrong is a receipt or a refund, and
  * it is corrected where it was written.
  */
-function BalanceRow({ balance, moneyHolder, locked, onRefund }: BalanceProps) {
+function BalanceRow({ balance, moneyHolder, locked, readOnly, onRefund }: BalanceProps) {
   const t = useT()
   const format = useFormat()
 
@@ -254,7 +260,7 @@ function BalanceRow({ balance, moneyHolder, locked, onRefund }: BalanceProps) {
       <span className="pfand-balance__amount">{format.euros(balance.outstandingCents)}</span>
 
       <span className="pfand-balance__actions">
-        {balance.outstandingCents > 0 && (
+        {balance.outstandingCents > 0 && !readOnly && (
           <button
             className="pfand-balance__action"
             type="button"
@@ -272,6 +278,7 @@ function BalanceRow({ balance, moneyHolder, locked, onRefund }: BalanceProps) {
 type TxnProps = {
   txn: PfandTxn
   locked: boolean
+  readOnly: boolean
   onEdit: () => void
   onDelete: () => void
 }
@@ -279,7 +286,7 @@ type TxnProps = {
 /** One line of the ledger. Receipt-derived lines say where they came from instead of
  *  offering a menu — they are edited on the receipt that carries them, and a refund is the
  *  only row this screen owns. */
-function TxnRow({ txn, locked, onEdit, onDelete }: TxnProps) {
+function TxnRow({ txn, locked, readOnly, onEdit, onDelete }: TxnProps) {
   const t = useT()
   const format = useFormat()
 
@@ -317,7 +324,7 @@ function TxnRow({ txn, locked, onEdit, onDelete }: TxnProps) {
         {format.euros(Math.abs(txn.deltaCents))}
       </span>
 
-      {fromReceipt ? (
+      {fromReceipt || readOnly ? (
         // Keeps the row's right-hand column the same width as the ones that do have a menu,
         // so the amounts stay in a column down the list.
         <span className="pfand-txn__no-menu" aria-hidden="true" />

@@ -11,8 +11,9 @@ type Props = {
   /** True while a form is open: the button goes inert with the rest of the list. */
   locked: boolean
   /** Tick the row off as settled, or un-tick it. The argument is the direction the tap
-   *  means, so the caller need not work out which way round the button was. */
-  onToggleRepaid: (repaid: boolean) => void
+   *  means, so the caller need not work out which way round the button was. Absent in the
+   *  read-only participant view, where the same words appear as a plain label. */
+  onToggleRepaid?: (repaid: boolean) => void
 }
 
 /**
@@ -42,15 +43,27 @@ export function PayerLine({ row, moneyHolder, locked, onToggleRepaid }: Props) {
 
   if (payerName === null) return null
 
+  const statusClass = owedTo === null ? 'payer-line__button--done' : 'payer-line__button--owed'
+
+  // Same look, no control: a viewer still sees who is owed, but a thing that looks tappable
+  // and does nothing would read as broken. "Return" is a command, so the owed state gets a
+  // word of its own here.
+  if (onToggleRepaid === undefined) {
+    return (
+      <span className="payer-line">
+        <span className="payer-line__name">{t.receipts.payer.paidByRow(payerName)}</span>
+        <span className={`payer-line__button payer-line__status ${statusClass}`}>
+          {owedTo === null ? t.receipts.payer.returnedButton : t.receipts.payer.owedStatus}
+        </span>
+      </span>
+    )
+  }
+
   return (
     <span className="payer-line">
       <span className="payer-line__name">{t.receipts.payer.paidByRow(payerName)}</span>
       <button
-        className={
-          owedTo === null
-            ? 'payer-line__button payer-line__button--done'
-            : 'payer-line__button payer-line__button--owed'
-        }
+        className={`payer-line__button ${statusClass}`}
         type="button"
         disabled={locked}
         onClick={() => onToggleRepaid(owedTo !== null)}

@@ -65,6 +65,40 @@ const hasGrant = "size(auth.ref('$user.account.id')) != 0"
  * granted an account, which is the boundary that matters.
  */
 
+/**
+ * The participants' read-only link. A viewer is not signed in and holds no membership, so
+ * the only thing they can present is the camp's view code, passed as a rule param — the
+ * same shape as the join code, except that it opens reading rather than joining.
+ *
+ * Two conditions, both checked on the server:
+ *
+ * - **the code is the camp's current one.** Issuing a new code shuts every old link.
+ * - **the link has not run out.** `viewUntil` is epoch ms, and `int(request.time)` is the
+ *   server's clock in epoch seconds (CEL's timestamp-to-int conversion), hence the × 1000.
+ *
+ * `ruleParams.viewCode != null` comes first so that every ordinary query — which passes no
+ * such param — fails this branch at once, and a camp with no link can never be matched by
+ * a missing code. It sits *last* in each `view` rule, so a leader's query is decided by the
+ * branches it always was and this one is only reached by someone who is not a member.
+ *
+ * Unproven until tried in Instant's permissions sandbox: a viewer has no `auth`, so the
+ * branches ahead of this one are evaluated against a signed-out caller, and whether
+ * `int(request.time)` evaluates is the same kind of question that sank the quota rule.
+ *
+ * Only `view` names these. No namespace grants a viewer a write, which is what makes the
+ * link read-only whatever the client does, and the namespaces the viewer screens do not
+ * draw — memberships, movements, other expenses — do not mention it at all.
+ */
+const viewsCamp =
+  'ruleParams.viewCode != null && data.viewCode == ruleParams.viewCode' +
+  ' && data.viewUntil != null && data.viewUntil > int(request.time) * 1000'
+
+/** The same two conditions, asked of a camp-scoped row through its `camp` link. A ref
+ *  returns a list, hence `in` and `exists` rather than `==` and `>`. */
+const viewsRowCamp =
+  "ruleParams.viewCode != null && ruleParams.viewCode in data.ref('camp.viewCode')" +
+  " && data.ref('camp.viewUntil').exists(until, until > int(request.time) * 1000)"
+
 const rules = {
   // Anything not named below is closed, for every action.
   $default: {
@@ -114,12 +148,13 @@ const rules = {
       // `ruleParams.joinCode` is null unless the caller passes it, and joinCode is a
       // required string, so this is false for every query that doesn't name a code.
       knowsCode: 'data.joinCode == ruleParams.joinCode',
+      viewsCamp,
     },
     allow: {
       // Order matters: `||` short-circuits, so a member never reaches the join-code branch
       // and their own camps stay readable whatever a caller passes (or fails to pass) as a
-      // rule param.
-      view: 'isAdmin || isMember || knowsCode',
+      // rule param. The view link comes last for the same reason — see `viewsCamp`.
+      view: 'isAdmin || isMember || knowsCode || viewsCamp',
       // Not `isMember`: a brand-new camp has no members until the membership created in
       // the same transaction lands, and making the two rules depend on each other is a
       // good way to make camp creation unexplainably fail. A camp created without a
@@ -159,7 +194,8 @@ const rules = {
   // The five camp-scoped namespaces answer the same question, so they carry the same
   // block: are you in this camp, or are you the admin. Written out rather than generated:
   // a permission file should be readable as data, and `instant-cli push` reads the object,
-  // not the code that built it.
+  // not the code that built it. The ones the participant view draws — pools, income,
+  // blocks, receipts and pfand refunds — also let a valid view link *read*; see `viewsCamp`.
   // Pools carry an extra `create` branch the other camp-scoped namespaces do not need. A
   // camp's everyday pool is written in the same transaction as the camp and the creator's
   // membership, so whether `isCampMember` can see that membership yet depends on how much
@@ -175,9 +211,10 @@ const rules = {
       isAdmin,
       isCampMember: "auth.id in data.ref('camp.members.user.id')",
       isCampCreator: "auth.id in data.ref('camp.creator.id')",
+      viewsRowCamp,
     },
     allow: {
-      view: 'isAdmin || isCampMember',
+      view: 'isAdmin || isCampMember || viewsRowCamp',
       create: 'isAdmin || isCampMember || isCampCreator',
       update: 'isAdmin || isCampMember',
       delete: 'isAdmin || isCampMember',
@@ -185,9 +222,9 @@ const rules = {
   },
 
   incomeSources: {
-    bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')" },
+    bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')", viewsRowCamp },
     allow: {
-      view: 'isAdmin || isCampMember',
+      view: 'isAdmin || isCampMember || viewsRowCamp',
       create: 'isAdmin || isCampMember',
       update: 'isAdmin || isCampMember',
       delete: 'isAdmin || isCampMember',
@@ -195,9 +232,9 @@ const rules = {
   },
 
   perDiemBlocks: {
-    bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')" },
+    bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')", viewsRowCamp },
     allow: {
-      view: 'isAdmin || isCampMember',
+      view: 'isAdmin || isCampMember || viewsRowCamp',
       create: 'isAdmin || isCampMember',
       update: 'isAdmin || isCampMember',
       delete: 'isAdmin || isCampMember',
@@ -205,9 +242,9 @@ const rules = {
   },
 
   expenses: {
-    bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')" },
+    bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')", viewsRowCamp },
     allow: {
-      view: 'isAdmin || isCampMember',
+      view: 'isAdmin || isCampMember || viewsRowCamp',
       create: 'isAdmin || isCampMember',
       update: 'isAdmin || isCampMember',
       delete: 'isAdmin || isCampMember',
@@ -234,9 +271,9 @@ const rules = {
     },
   },
   pfandEntries: {
-    bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')" },
+    bind: { isAdmin, isCampMember: "auth.id in data.ref('camp.members.user.id')", viewsRowCamp },
     allow: {
-      view: 'isAdmin || isCampMember',
+      view: 'isAdmin || isCampMember || viewsRowCamp',
       create: 'isAdmin || isCampMember',
       update: 'isAdmin || isCampMember',
       delete: 'isAdmin || isCampMember',

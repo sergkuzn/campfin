@@ -1,0 +1,92 @@
+.view-link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.view-link__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+/* The same shape as the join-code button: the whole thing copies. The address itself is
+   long and meaningless to read, so it is small and allowed to break anywhere rather than
+   pushing the card wider than the phone. */
+.view-link__button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.view-link__button:hover {
+  border-color: var(--accent);
+}
+
+.view-link__url {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.view-link__action {
+  font-size: 0.8125rem;
+  color: var(--accent);
+}
+
+.view-link__error {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--danger);
+}
+
+.view-link__status {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* A link that has run out is not an error — it is what was meant to happen — so it is
+   muted rather than red. */
+.view-link__status--closed {
+  color: var(--muted);
+}
+
+/* The camp outgrew the link: amber, the app's colour for "something is missing". */
+.view-link__behind {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--warn-fill);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background-color: color-mix(in srgb, var(--warn-fill) 10%, transparent);
+  font-size: 0.875rem;
+}
+
+.view-link__until {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.view-link__label {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* Pushed to the far end of the last-day row, away from the date it sits beside. */
+.view-link__close {
+  margin-left: auto;
+}

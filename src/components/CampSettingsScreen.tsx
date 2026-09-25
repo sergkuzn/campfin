@@ -6,12 +6,14 @@ import { dayCount } from '../lib/dates'
 import { holderChangeImpact, isSamePayer } from '../lib/payers'
 import type { PoolSummary } from '../lib/pools'
 import type { Camp, Expense } from '../lib/types'
+import { viewAccess } from '../lib/viewAccess'
 import { ConfirmDialog } from './ConfirmDialog'
 import { JoinCodeCard } from './JoinCodeCard'
 import { ReceivedTotals } from './ReceivedTotals'
 import { Screen } from './Screen'
 import { SlotCard, SlotPanel } from './SlotCard'
 import { Toast } from './Toast'
+import { ViewLinkCard } from './ViewLinkCard'
 
 type Props = {
   camp: Camp
@@ -35,6 +37,10 @@ type Props = {
   /** Hand the money to this person. There is no way to hand it to nobody: every "owed"
    *  marker and the settlement sheet are measured against the holder. */
   onChangeHolder: (name: string) => void
+  /** The participants' read-only link: issue (or replace) it, move its end, close it. */
+  onOpenViewLink: (lastDayIso: string) => void
+  onSetViewUntil: (lastDayIso: string) => void
+  onCloseViewLink: () => void
   onDelete: () => void
 }
 
@@ -59,6 +65,9 @@ export function CampSettingsScreen({
   onOpenIncome,
   onRename,
   onChangeHolder,
+  onOpenViewLink,
+  onSetViewUntil,
+  onCloseViewLink,
   onDelete,
 }: Props) {
   const t = useT()
@@ -152,8 +161,32 @@ export function CampSettingsScreen({
         )}
       </SlotPanel>
 
-      <SlotPanel title={t.campSettings.shareSection}>
+      <SlotPanel
+        title={t.campSettings.shareSection}
+        info={{
+          label: t.campSettings.shareInfoLabel,
+          text: t.campSettings.shareInfo,
+          id: 'join-code-info',
+        }}
+      >
         <JoinCodeCard joinCode={camp.joinCode} memberCount={memberCount} />
+      </SlotPanel>
+
+      {/* Next to the join code, and deliberately a different thing: that one makes a
+          leader, this one only lets somebody look. */}
+      <SlotPanel
+        title={t.viewLink.section}
+        info={{ label: t.viewLink.infoLabel, text: t.viewLink.info, id: 'view-link-info' }}
+      >
+        <ViewLinkCard
+          // The clock is read here, at the edge: whether the link is still open is the
+          // one fact on this screen that changes with time rather than with data.
+          access={viewAccess(camp, Date.now())}
+          campWindow={campWindow}
+          onOpen={onOpenViewLink}
+          onSetUntil={onSetViewUntil}
+          onClose={onCloseViewLink}
+        />
       </SlotPanel>
 
       {/* No list of everyone the receipts name: the wallet changes hands once a camp at

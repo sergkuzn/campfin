@@ -9,7 +9,7 @@
 
 import { useCallback, useMemo } from 'react'
 import * as incomeDb from '../db/incomeDb'
-import { db } from '../db/instant'
+import { db, viewOptions } from '../db/instant'
 import type { SaveBlocksInput, SavePoolInput, SaveSourceInput } from '../lib/drafts'
 import type { IncomeState } from '../lib/income'
 import { mapRows, toBlock, toPool, toSource } from '../lib/rows'
@@ -43,8 +43,11 @@ function byStartDate(blocks: PerDiemBlock[]): PerDiemBlock[] {
   )
 }
 
-/** Pass `''` while no camp is open: the query is skipped rather than run for nothing. */
-export function useIncome(campId: string): UseIncome {
+/**
+ * Pass `''` while no camp is open: the query is skipped rather than run for nothing.
+ * `viewCode` is set only by the participant view, which reads through its link's code.
+ */
+export function useIncome(campId: string, viewCode?: string): UseIncome {
   const {
     isLoading,
     error: queryError,
@@ -57,6 +60,7 @@ export function useIncome(campId: string): UseIncome {
           incomeSources: { $: { where: { campId } } },
           perDiemBlocks: { $: { where: { campId } } },
         },
+    viewOptions(viewCode),
   )
 
   const { error, run } = useWriteState(queryError)

@@ -25,9 +25,14 @@ function expense(fields: Partial<Expense> = {}): Expense {
 }
 
 function renderScreen(
-  options: { expenses?: Expense[]; entries?: PfandEntry[]; moneyHolder?: string } = {},
+  options: {
+    expenses?: Expense[]
+    entries?: PfandEntry[]
+    moneyHolder?: string
+    readOnly?: boolean
+  } = {},
 ) {
-  const { expenses = [], entries = [], moneyHolder = 'Anna' } = options
+  const { expenses = [], entries = [], moneyHolder = 'Anna', readOnly = false } = options
   const saveEntry = vi.fn()
   const deleteEntry = vi.fn()
   const pfand: UsePfand = {
@@ -50,6 +55,7 @@ function renderScreen(
         balances={pfandBalances(txns)}
         moneyHolder={moneyHolder}
         campWindow={null}
+        readOnly={readOnly}
         onBack={vi.fn()}
       />
     </I18nProvider>,
@@ -229,5 +235,30 @@ describe('the pfand form', () => {
     // One kind, one person, so there is nothing left to choose and nothing to explain.
     expect(screen.queryByRole('radio')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /mean/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('PfandScreen — read-only', () => {
+  const refund: PfandEntry = {
+    id: 'p1',
+    campId: 'c1',
+    kind: 'refund',
+    payer: 'Ben',
+    amountCents: 50,
+    date: '2026-07-15',
+    createdAt: 2000,
+  }
+
+  it('shows the balances and the ledger without Refund or a row menu', () => {
+    renderScreen({
+      readOnly: true,
+      expenses: [expense({ pfandPaidCents: 100 })],
+      entries: [refund],
+    })
+
+    expect(within(balanceRow('Ben')).getByText(/^0,50/)).toBeInTheDocument()
+    expect(screen.getByText(t.txnKinds.refund)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: t.refundAction })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: en.rowMenu.open('Ben') })).not.toBeInTheDocument()
   })
 })

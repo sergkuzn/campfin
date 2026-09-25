@@ -5,6 +5,7 @@ import { en } from '../i18n/en'
 import { I18nProvider } from '../i18n/I18nProvider'
 import type { PoolSummary } from '../lib/pools'
 import type { Camp, Expense } from '../lib/types'
+import { viewUntilFor } from '../lib/viewAccess'
 import { CampSettingsScreen } from './CampSettingsScreen'
 
 const t = en.campSettings
@@ -60,6 +61,9 @@ function renderScreen(props: Partial<React.ComponentProps<typeof CampSettingsScr
   const onOpenIncome = vi.fn()
   const onBack = vi.fn()
   const onChangeHolder = vi.fn()
+  const onOpenViewLink = vi.fn()
+  const onSetViewUntil = vi.fn()
+  const onCloseViewLink = vi.fn()
   const user = userEvent.setup()
   render(
     <I18nProvider>
@@ -76,12 +80,25 @@ function renderScreen(props: Partial<React.ComponentProps<typeof CampSettingsScr
         onOpenIncome={onOpenIncome}
         onRename={onRename}
         onChangeHolder={onChangeHolder}
+        onOpenViewLink={onOpenViewLink}
+        onSetViewUntil={onSetViewUntil}
+        onCloseViewLink={onCloseViewLink}
         onDelete={onDelete}
         {...props}
       />
     </I18nProvider>,
   )
-  return { onRename, onDelete, onOpenIncome, onBack, onChangeHolder, user }
+  return {
+    onRename,
+    onDelete,
+    onOpenIncome,
+    onBack,
+    onChangeHolder,
+    onOpenViewLink,
+    onSetViewUntil,
+    onCloseViewLink,
+    user,
+  }
 }
 
 describe('CampSettingsScreen', () => {
@@ -229,6 +246,81 @@ describe('CampSettingsScreen', () => {
 
       // That list belongs to the settlement sheet; settings only says who holds the cash.
       expect(screen.queryByText('Ben', { exact: false })).not.toBeInTheDocument()
+    })
+  })
+
+  it('explains the join code behind an ⓘ', async () => {
+    const { user } = renderScreen()
+
+    await user.click(screen.getByRole('button', { name: t.shareInfoLabel }))
+    expect(screen.getByText(t.shareInfo)).toBeInTheDocument()
+  })
+
+  describe('participant link', () => {
+    const v = en.viewLink
+    const span = { startIso: '2027-07-01', endIso: '2027-07-10' }
+    // Far enough ahead that the link is open whenever the suite runs.
+    const openCamp = {
+      ...camp,
+      viewCode: 'ABCDEFGHJKLMNPQR',
+      viewUntil: viewUntilFor('2999-07-10'),
+    }
+
+    it("creates a link that ends on the camp's last day", async () => {
+      const { user, onOpenViewLink } = renderScreen({ campWindow: span })
+
+      await user.click(screen.getByRole('button', { name: v.create }))
+      expect(onOpenViewLink).toHaveBeenCalledExactlyOnceWith('2027-07-10')
+    })
+
+    it('explains itself behind an ⓘ, folded until asked', async () => {
+      const { user } = renderScreen()
+
+      expect(screen.queryByText(v.info)).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: v.infoLabel }))
+      expect(screen.getByText(v.info)).toBeInTheDocument()
+    })
+
+    it('cannot create one before anything dates the camp', () => {
+      renderScreen({ campWindow: null })
+
+      expect(screen.getByRole('button', { name: v.create })).toBeDisabled()
+      expect(screen.getByText(v.needsDates)).toBeInTheDocument()
+    })
+
+    it('shows an open link with its code and its end', () => {
+      renderScreen({ camp: openCamp, campWindow: span })
+
+      expect(screen.getByText(/\?view=ABCDEFGHJKLMNPQR$/)).toBeInTheDocument()
+      expect(screen.getByText(/^Works until/)).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: v.create })).not.toBeInTheDocument()
+    })
+
+    it('says so once the link has run out', () => {
+      renderScreen({
+        camp: { ...camp, viewCode: 'ABCDEFGHJKLMNPQR', viewUntil: viewUntilFor('2020-01-01') },
+      })
+
+      expect(screen.getByText(/^Stopped working after/)).toBeInTheDocument()
+    })
+
+    it('offers to catch up with a camp that grew past the link', async () => {
+      const { user, onSetViewUntil } = renderScreen({
+        camp: { ...camp, viewCode: 'ABCDEFGHJKLMNPQR', viewUntil: viewUntilFor('2027-07-08') },
+        campWindow: span,
+      })
+
+      await user.click(screen.getByRole('button', { name: /^Extend to/ }))
+      expect(onSetViewUntil).toHaveBeenCalledExactlyOnceWith('2027-07-10')
+    })
+
+    it('turns the link off only after asking', async () => {
+      const { user, onCloseViewLink } = renderScreen({ camp: openCamp, campWindow: span })
+
+      await user.click(screen.getByRole('button', { name: v.close }))
+      expect(onCloseViewLink).not.toHaveBeenCalled()
+      await user.click(screen.getByRole('button', { name: v.closeConfirm }))
+      expect(onCloseViewLink).toHaveBeenCalledOnce()
     })
   })
 })

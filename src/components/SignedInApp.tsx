@@ -85,6 +85,9 @@ export function SignedInApp({ session }: Props) {
     renameCamp,
     setMoneyHolder,
     setHiddenEntries,
+    openViewLink,
+    setViewUntil,
+    closeViewLink,
     deleteCamp,
     clearError,
   } = useCamps(session.userId, access.isAdmin && showAllCamps)
@@ -357,6 +360,9 @@ export function SignedInApp({ session }: Props) {
         expenses={expenses.expenses}
         onRename={(name) => renameCamp(openCamp.id, name)}
         onChangeHolder={(name: string) => setMoneyHolder(openCamp.id, name)}
+        onOpenViewLink={(lastDayIso) => openViewLink(openCamp.id, lastDayIso)}
+        onSetViewUntil={(lastDayIso) => setViewUntil(openCamp.id, lastDayIso)}
+        onCloseViewLink={() => closeViewLink(openCamp.id)}
         onDelete={() => handleDelete(openCamp.id)}
       />
     )

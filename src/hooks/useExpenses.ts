@@ -8,7 +8,7 @@
 
 import { useCallback, useMemo } from 'react'
 import * as expensesDb from '../db/expensesDb'
-import { db } from '../db/instant'
+import { db, viewOptions } from '../db/instant'
 import type { SaveExpenseInput } from '../lib/expenses'
 import { mapRows, toExpense } from '../lib/rows'
 import type { Expense } from '../lib/types'
@@ -29,8 +29,11 @@ export type UseExpenses = {
   deleteExpense: (expenseId: string) => void
 }
 
-/** Pass `''` while no camp is open: the query is skipped rather than run for nothing. */
-export function useExpenses(campId: string): UseExpenses {
+/**
+ * Pass `''` while no camp is open: the query is skipped rather than run for nothing.
+ * `viewCode` is set only by the participant view, which reads through its link's code.
+ */
+export function useExpenses(campId: string, viewCode?: string): UseExpenses {
   const {
     isLoading,
     error: queryError,
@@ -43,6 +46,7 @@ export function useExpenses(campId: string): UseExpenses {
           // break same-day ties, which the pure grouping in `lib/expenses.ts` handles.
           expenses: { $: { where: { campId }, order: { date: 'desc' } } },
         },
+    viewOptions(viewCode),
   )
 
   const { error, run } = useWriteState(queryError)
