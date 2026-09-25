@@ -59,33 +59,39 @@ export function CampSetup({ holder, funded, summaries, onSaveHolder, onOpenIncom
       <ol className="camp-setup__steps">
         <Step index={1} title={t.setup.holderStep} done={holderDone}>
           {editing ? (
-            <form className="camp-setup__row" onSubmit={submitHolder}>
-              <input
-                className="camp-setup__input"
-                aria-label={t.campSettings.holderNewNameLabel}
-                type="text"
-                value={name}
-                placeholder={t.campSettings.holderNewNamePlaceholder}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setName(event.target.value)
-                }
-              />
-              <button className="btn btn--primary" type="submit" disabled={trimmed === ''}>
-                {t.campSettings.holderSave}
-              </button>
-              {holderDone && (
-                <button
-                  className="btn btn--ghost"
-                  type="button"
-                  onClick={() => {
-                    setChanging(false)
-                    setName('')
-                  }}
-                >
-                  {t.campSettings.holderCancel}
+            <>
+              {/* Same sentence the ⓘ shows in camp settings, but always on here — this is
+                  the field's first appearance, so the explanation earns its place without
+                  needing a tap. */}
+              <p className="camp-setup__step-info">{t.campSettings.holderInfo}</p>
+              <form className="camp-setup__row" onSubmit={submitHolder}>
+                <input
+                  className="camp-setup__input"
+                  aria-label={t.campSettings.holderNewNameLabel}
+                  type="text"
+                  value={name}
+                  placeholder={t.campSettings.holderNewNamePlaceholder}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setName(event.target.value)
+                  }
+                />
+                <button className="btn btn--primary" type="submit" disabled={trimmed === ''}>
+                  {t.campSettings.holderSave}
                 </button>
-              )}
-            </form>
+                {holderDone && (
+                  <button
+                    className="btn btn--ghost"
+                    type="button"
+                    onClick={() => {
+                      setChanging(false)
+                      setName('')
+                    }}
+                  >
+                    {t.campSettings.holderCancel}
+                  </button>
+                )}
+              </form>
+            </>
           ) : (
             <>
               <p className="camp-setup__readout">
