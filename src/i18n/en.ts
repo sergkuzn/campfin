@@ -251,7 +251,7 @@ export const en = {
   setup: {
     title: 'Set up this camp',
     hint: 'Two answers before the money can be tracked.',
-    holderStep: 'Money holder',
+    holderStep: 'Camp money holder',
     /** Read out after a step's title in place of the tick, which says nothing aloud. */
     done: 'done',
     incomeStep: 'Income',
@@ -282,15 +282,16 @@ export const en = {
     incomeSection: 'Income',
     /** Who carries the cash. Camp-wide, and the thing every "owed" marker is measured
      *  against — so it lives with the camp's other once-per-camp settings. */
-    holderSection: 'Money holder',
-    holderHint: 'The leader carrying the camp cash.',
+    holderSection: 'Camp money holder',
+    holderInfoLabel: 'What is a camp money holder?',
+    holderInfo: 'The leader carrying the camp cash.',
     /** Who has the wallet, stated rather than picked from a list: it changes once a camp
      *  at most, so the screen offers only the two things you would ever do to it. The name
      *  is drawn separately, so this is only what follows it. */
     holderHolds: 'holds the money.',
     /** Only reachable from the gear on the setup screen — every camp past setup has one. */
     holderNone: 'Nobody holds the money yet.',
-    holderSet: 'Set money holder',
+    holderSet: 'Set camp money holder',
     holderChange: 'Change holder',
     holderCancel: 'Cancel',
     holderNewNameLabel: 'Name',
@@ -299,7 +300,7 @@ export const en = {
     /** Handing the wallet over rewrites no receipt, but it does flip who owes whom — so
      *  the question says how many rows change, in both directions. The wallet can only
      *  change hands, never be put down: every "owed" marker is measured against it. */
-    holderChangeTitle: (name: string) => `Make ${name} the money holder?`,
+    holderChangeTitle: (name: string) => `Make ${name} the camp money holder?`,
     holderReplaces: (current: string) => `${current} holds it now.`,
     holderStopOwing: (n: number) =>
       `${n} ${n === 1 ? 'receipt stops' : 'receipts stop'} showing as owed.`,
