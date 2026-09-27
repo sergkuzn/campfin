@@ -59,11 +59,12 @@ export type Burn = {
   allowedTodayCents: number
   spentTodayCents: number
   /**
-   * The typical day's allowance. The *median* rather than the mean, because the edges of a
-   * camp are thin: two leaders arriving a day early make one day worth a twentieth of the
-   * others, which drags a mean well below any day the camp actually has.
+   * Today's own step of the plan curve: the per-diem of everyone present today plus
+   * today's share of the flat everyday money. Unlike `allowedTodayCents` it ignores what
+   * earlier days left over or overspent. `null` when today is not a camp day, so a real
+   * €0 day stays distinguishable from "no day".
    */
-  medianDayCents: number
+  todayAllowanceCents: number | null
   /** Camp days from today to the end, today included. The whole camp before it starts,
    *  zero once it is over — what "left" is measured against. */
   remainingDays: number
@@ -77,7 +78,7 @@ export const emptyBurn: Burn = {
   points: [],
   allowedTodayCents: 0,
   spentTodayCents: 0,
-  medianDayCents: 0,
+  todayAllowanceCents: null,
   remainingDays: 0,
 }
 
@@ -150,23 +151,6 @@ function spentUpTo(day: string, expenses: Expense[]): number {
   return expenses.reduce((sum, e) => (e.date <= day ? sum + e.amountCents : sum), 0)
 }
 
-/**
- * The middle value of a list, averaging the middle pair when the count is even. Empty
- * list → 0: a camp with no days has no typical day.
- *
- * `toSorted` copies rather than sorting in place, so the caller's array keeps its
- * chronological order — the points are drawn from it.
- */
-function median(values: number[]): number {
-  if (values.length === 0) return 0
-
-  const sorted = values.toSorted((a, b) => a - b)
-  const middle = Math.floor(sorted.length / 2)
-  if (sorted.length % 2 === 1) return sorted[middle] ?? 0
-
-  return Math.round(((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2)
-}
-
 /** Camp days from today to the end, today included: the whole camp before it starts, 0
  *  once it is over or while nothing dates the camp. */
 function daysLeft(window: CampWindow | null, todayIso: string): number {
@@ -228,7 +212,7 @@ export function computeBurn(input: BurnInput): Burn {
       (sum, e) => (e.date === input.todayIso ? sum + e.amountCents : sum),
       0,
     ),
-    medianDayCents: median(points.map((p) => p.allowanceCents)),
+    todayAllowanceCents: points.find((p) => p.date === input.todayIso)?.allowanceCents ?? null,
     remainingDays: daysLeft(window, input.todayIso),
   }
 }

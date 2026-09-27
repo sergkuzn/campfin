@@ -25,9 +25,9 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 /**
  * The headline: how much of the camp's money today may still consume, beside the four
- * numbers that put it in context — what today has cost so far, what a typical day costs,
- * and how many days and euros are left to spread over each other. Purely presentational;
- * every figure is computed elsewhere.
+ * numbers that put it in context — what today has cost so far, what the plan gives today
+ * on its own, and how many days and euros are left to spread over each other. Purely
+ * presentational; every figure is computed elsewhere.
  */
 export function AllowedToday({ burn, remainingCents }: Props) {
   const t = useT()
@@ -54,7 +54,12 @@ export function AllowedToday({ burn, remainingCents }: Props) {
       <div className="allowed__stats">
         <Stat label={t.burn.spentToday} value={format.euros(burn.spentTodayCents)} />
         <Stat label={t.burn.daysLeft} value={String(burn.remainingDays)} />
-        <Stat label={t.burn.medianDay} value={format.euros(burn.medianDayCents)} />
+        {/* A dash rather than €0 outside the camp: no plan covers that day, which is not the
+            same as a day the plan gives nothing. */}
+        <Stat
+          label={t.burn.theoreticalToday}
+          value={burn.todayAllowanceCents === null ? '-' : format.euros(burn.todayAllowanceCents)}
+        />
         {/* Floored: an overspent pool has nothing left, and "−€8 left" is a riddle. The
             overspend itself is already shouted by the headline beside it. */}
         <Stat label={t.burn.moneyLeft} value={format.euros(Math.max(remainingCents, 0))} />

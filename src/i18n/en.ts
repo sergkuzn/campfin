@@ -515,7 +515,7 @@ export const en = {
      *  a leader reads this table at a till, and a label next to a number is quicker than
      *  prose around it. Kept short so two of them fit across a phone. */
     spentToday: 'Spent today',
-    medianDay: 'Median day',
+    theoreticalToday: 'Theor. today',
     daysLeft: 'Days left',
     moneyLeft: 'Total left',
     /** The plan line's name in the chart legend. "Theoretical" rather than "Allowed":
@@ -530,7 +530,7 @@ export const en = {
     /** The ⓘ beside the title. Both headline figures are derived numbers whose names
      *  do not give their meaning away, so the folded text explains them rather than the
      *  chart, which the legend already labels. */
-    aboutLabel: 'What do Left today and Median day mean?',
+    aboutLabel: 'What do Left today and Theor. today mean?',
     /** Nested on purpose: the two facts about "Left today" belong to that term, and a flat
      *  list would read as four unrelated sentences. */
     about: [
@@ -542,8 +542,8 @@ export const en = {
         ],
       },
       {
-        text: '"Median day"',
-        sub: ['a typical daily amount to spend according to the plan'],
+        text: '"Theor. today"',
+        sub: ["Today's spending acording to the theoretical plan"],
       },
     ],
   },

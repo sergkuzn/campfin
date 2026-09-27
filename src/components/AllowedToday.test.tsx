@@ -37,13 +37,18 @@ function statValue(label: string): string {
 describe('AllowedToday', () => {
   it('shows the four figures behind the headline', () => {
     renderHeadline(
-      { allowedTodayCents: 4250, spentTodayCents: 1800, medianDayCents: 6000, remainingDays: 4 },
+      {
+        allowedTodayCents: 4250,
+        spentTodayCents: 1800,
+        todayAllowanceCents: 6000,
+        remainingDays: 4,
+      },
       18_000,
     )
 
     expect(screen.getByText(euros(4250))).toBeInTheDocument()
     expect(statValue(en.burn.spentToday)).toBe(euros(1800))
-    expect(statValue(en.burn.medianDay)).toBe(euros(6000))
+    expect(statValue(en.burn.theoreticalToday)).toBe(euros(6000))
     expect(statValue(en.burn.daysLeft)).toBe('4')
     expect(statValue(en.burn.moneyLeft)).toBe(euros(18_000))
   })
@@ -56,5 +61,11 @@ describe('AllowedToday', () => {
     expect(screen.getByText(en.burn.over)).toBeInTheDocument()
     // An overspent pool has nothing left rather than a negative amount left.
     expect(statValue(en.burn.moneyLeft)).toBe(euros(0))
+  })
+
+  it('shows a dash for the plan figure on a day outside the camp', () => {
+    renderHeadline({ todayAllowanceCents: null }, 0)
+
+    expect(statValue(en.burn.theoreticalToday)).toBe('-')
   })
 })
