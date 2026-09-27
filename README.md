@@ -79,7 +79,7 @@ by `VITE_INSTANT_APP_ID`; `VITE_APP_ENV` only labels it.
 | Where | Branch / command | Database | Footer reads |
 |---|---|---|---|
 | Vercel Production (`campfin-web.vercel.app`) | `main` | production app | `v0.3.0 · 1a2b3c4 · …` |
-| Vercel Preview (`campfin-web-dev.vercel.app`) | `develop` (and any branch) | dev app | `dev · v0.3.0 · …` in amber |
+| Vercel Preview (`campfin-web-dev.vercel.app`) | `dev-preview` | dev app | `dev · v0.3.0 · …` in amber |
 | Local | `pnpm vite:dev` → `.env.dev.local` | dev app | `dev · …` |
 | Local | `pnpm vite:prod` → `.env.prod.local` | production app | `v0.3.0 · …` |
 
@@ -103,10 +103,23 @@ home-screen icons cannot be confused.
 
 Vercel scopes environment variables per environment: add `VITE_INSTANT_APP_ID` and
 `VITE_APP_ENV` twice, once scoped to **Production** (production app id, `prod`) and once to
-**Preview** + **Development** (dev app id, `dev`). Set the Production Branch to `main`;
-`develop` then publishes to a stable preview URL (aliased here to `campfin-web-dev`). If Deployment
+**Preview** + **Development** (dev app id, `dev`). Set the Production Branch to `main`, and
+assign the `campfin-web-dev` domain to the `dev-preview` branch, so that branch publishes to a
+stable preview URL. `vercel.json` turns deployments off for every other branch — `develop` and
+feature branches build nothing, and the dev site moves only when `dev-preview` is pushed. If Deployment
 Protection is on, previews sit behind a Vercel login — turn it off for this project, or the
 second leader cannot open the dev app.
+
+Every branch push and every pull request runs `.github/workflows/ci.yml` — lint, typecheck,
+tests and a build — on GitHub Actions; it needs no secrets.
+
+Schema and permission changes deploy through `.github/workflows/deploy-db.yml`: a push to
+`main` or `dev-preview` that touches `instant.schema.ts` or `instant.perms.ts` pushes both to
+that branch's app. It runs in a GitHub environment per app — `production` for `main`,
+`development` for `dev-preview` — each holding `INSTANT_APP_ID` and `INSTANT_APP_ADMIN_TOKEN`,
+and `production` has a required reviewer, so a prod push waits for approval. The push is
+additive-safe alongside Vercel's deploy; a change that removes or renames an attribute should
+be pushed by hand before merging, since old clients may still read it.
 
 Schema changes go to the dev app first (`pnpm db:push:dev`), get tried there, and only
 then to production (`pnpm db:push:prod`).
