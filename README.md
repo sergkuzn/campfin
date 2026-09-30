@@ -4,7 +4,7 @@
 
 <h1 align="center">campfin</h1>
 
-<p align="center"><strong>A pocket money book for a workcamp.</strong></p>
+<p align="center"><strong>Workcamp Budget Tracker</strong></p>
 
 <p align="center">
   📱 Works on any phone &nbsp;·&nbsp; 👥 Shared between leaders &nbsp;·&nbsp; 📶 Works offline
@@ -100,6 +100,19 @@ Read in this order:
    account, commands
 2. [Environments](docs/environments.md) — production and optional dev databases, hosting, CI
 3. [Deploying](docs/deploying.md) — first deployment, Telegram signup alerts
+
+## InstantDB is shutting down
+
+> [!WARNING]
+> The InstantDB team [has joined OpenAI](https://www.instantdb.com/essays/instant_team_joins_openai),
+> and **Instant Cloud**, the hosted database campfin runs on, is closing:
+>
+> - **New signups are closed**, so you may not be able to create the InstantDB app the setup needs.
+> - **31 August 2027:** all cloud apps shut down. Backups stay downloadable until 31 August 2028.
+>
+> Instant is open source and can be [self-hosted](https://www.instantdb.com/docs/self-hosting),
+> so the instructions in `docs/` still apply against your own server. In the long run campfin
+> will probably move to a different database.
 
 ## License
 

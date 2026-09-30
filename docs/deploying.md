@@ -1,5 +1,11 @@
 # Deploying
 
+> [!WARNING]
+> Instant Cloud (hosted InstantDB) has closed new signups and shuts down on 31 August 2027.
+> These instructions assume an InstantDB app, which may now mean a
+> [self-hosted](https://www.instantdb.com/docs/self-hosting) one. See
+> [the README](../README.md#instantdb-is-shutting-down).
+
 `pnpm build` produces a static `dist/` — any free static host works (Vercel, Netlify,
 Cloudflare Pages).
 
