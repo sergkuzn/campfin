@@ -205,27 +205,35 @@ describe('computeBurn', () => {
     expect(computeBurn(input({ expenses })).spentTodayCents).toBe(700)
   })
 
-  it('takes the median day as the typical day', () => {
-    expect(computeBurn(input()).medianDayCents).toBe(2000)
+  it('reads today’s own step off the plan curve', () => {
+    expect(computeBurn(input()).todayAllowanceCents).toBe(2000)
   })
 
-  it('lets a thin arrival day skew the median no further than one place', () => {
-    // Two leaders arrive a day early, then twenty people join: the mean day would be
-    // €153, which is not what any day of this camp costs.
+  it('gives a thin arrival day only what its people bring', () => {
+    // Two leaders at €8 a day arrive a day early; the group joins the day after.
     const blocks = [
-      block({ id: 'b1' }),
+      block({ id: 'b1', ratePerPersonDayCents: 800 }),
       block({ id: 'b2', numPersons: 20, startDate: '2026-07-02', endDate: '2026-07-03' }),
     ]
-    expect(computeBurn(input({ blocks })).medianDayCents).toBe(22_000)
+    expect(computeBurn(input({ blocks, todayIso: '2026-07-01' })).todayAllowanceCents).toBe(1600)
   })
 
-  it('averages the two middle days when the camp has an even number of them', () => {
-    const blocks = [
-      block({ id: 'b1', endDate: '2026-07-04' }), // €20 on all four days
-      block({ id: 'b2', numPersons: 3, startDate: '2026-07-03', endDate: '2026-07-04' }),
-    ]
-    // Days: 2000, 2000, 5000, 5000 → the middle pair averages to €35.
-    expect(computeBurn(input({ blocks })).medianDayCents).toBe(3500)
+  it('adds today’s share of a flat everyday grant', () => {
+    const topUp: AmountSource = {
+      id: 'src-food',
+      campId: 'C',
+      poolId: 'pool-e',
+      kind: 'fixed',
+      amountCents: 600,
+      createdAt: 1,
+    }
+    // Six person-days, two of them today: €20 per-diem + €2 of the flat grant.
+    expect(computeBurn(input({ sources: [perDiem, topUp] })).todayAllowanceCents).toBe(2200)
+  })
+
+  it('has no step for a day outside the camp', () => {
+    expect(computeBurn(input({ todayIso: '2026-06-30' })).todayAllowanceCents).toBeNull()
+    expect(computeBurn(input({ todayIso: '2026-07-04' })).todayAllowanceCents).toBeNull()
   })
 
   it('counts today as one of the days left', () => {

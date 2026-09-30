@@ -1,0 +1,43 @@
+# Pushes instant.schema.ts and instant.perms.ts to InstantDB when they change on a
+# deploying branch.
+name: Deploy DB
+
+on:
+  push:
+    branches: [main, dev-preview]
+    paths: [instant.schema.ts, instant.perms.ts]
+  workflow_dispatch:
+
+# Pushes to the same app queue up rather than cancel each other: a push stopped halfway
+# could leave the schema applied without the perms that go with it.
+concurrency:
+  group: deploy-db-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # The schema file imports `@instantdb/react`, so the CLI needs node_modules to load it.
+      # `--prod` skips devDependencies (Vite, Vitest, Biome, TypeScript…)
+      - run: pnpm install --prod --frozen-lockfile
+
+      - run: pnpm dlx instant-cli@1.0.67 push --app "$INSTANT_APP_ID" --token "$INSTANT_APP_ADMIN_TOKEN" --yes
+        env:
+          INSTANT_APP_ID: ${{ secrets.INSTANT_APP_ID }}
+          INSTANT_APP_ADMIN_TOKEN: ${{ secrets.INSTANT_APP_ADMIN_TOKEN }}
